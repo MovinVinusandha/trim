@@ -29,6 +29,9 @@ public class UrlController {
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
+    @Value("${app.dashboard.url:http://app.localhost}")
+    private String dashboardUrl;
+
     @PostMapping("/shorten")
     @Operation(summary = "Generate short url")
     public ResponseEntity<UrlSend> generateShortUrl(@Valid @RequestBody UrlRequest urlRequest) {
@@ -67,7 +70,7 @@ public class UrlController {
             return new ResponseEntity<>(headers, HttpStatus.FOUND);
         } catch (PasswordProtectedException e) {
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(java.net.URI.create(frontendUrl + "/secure/" + hash))
+                    .location(java.net.URI.create(dashboardUrl + "/secure/" + hash))
                     .build();
         }
     }
