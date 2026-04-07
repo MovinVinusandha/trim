@@ -18,7 +18,7 @@ const SecurePage: React.FC = () => {
     setError('');
 
     try {
-      const response = await axiosInstance.post('/unlock/' + hash, { password: password.trim() });
+      const response = await axiosInstance.post(`/api/unlock/${hash}`, { password: password.trim() });
       if (response.data && response.data.longUrl) {
         window.location.href = response.data.longUrl;
       }
