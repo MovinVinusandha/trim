@@ -84,9 +84,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
   // --- DERIVED STATE FOR EXPIRATION PRESET ---
   const getInitialExpirationPreset = (expDate: string | null | undefined): string => {
     if (!expDate) return 'None';
-    // Add logic here later to detect if it matches 1h/24h/7d if needed.
-    // For now, if a date exists, it's 'Custom'.
-    return 'Custom';
+    return '';
   };
   const [expirationPreset, setExpirationPreset] = useState(getInitialExpirationPreset(urlToEdit?.expiresAt));
   // --- END DERIVED STATE ---
@@ -148,6 +146,16 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
       setFolderSearchQuery('');
       setIsTagDropdownOpen(false);
       setIsFolderDropdownOpen(false);
+    } else {
+      setCustomAlias('');
+      setLongUrl('');
+      setPassword('');
+      setRemovePassword(false);
+      setExpiresAt('');
+      setExpirationPreset('none');
+      setSelectedTagIds([]);
+      setSelectedFolderId('');
+      setError('');
     }
   }, [isOpen, urlToEdit]);
 
@@ -202,7 +210,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
         console.log("Attempting to update hash:", hash);
         
         const isCurrentlyExpired = urlToEdit.expiresAt ? new Date(urlToEdit.expiresAt + 'Z').getTime() < Date.now() : !urlToEdit.isActive;
-        const willBeExpired = expiresAt ? new Date(expiresAt + 'Z').getTime() < Date.now() : false;
+        const willBeExpired = expiresAt && expirationPreset.toLowerCase() !== 'none' ? new Date(expiresAt + 'Z').getTime() < Date.now() : false;
 
         if (isCurrentlyExpired && !willBeExpired) {
           const confirmed = window.confirm("This link is currently expired. Updating this will reactivate the link. Do you want to proceed?");
@@ -213,7 +221,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
         }
         
         if (!isCurrentlyExpired && willBeExpired) {
-          const confirmed = window.confirm("The expiration time you selected is in the past. This will instantly expire and deactivate the link. Do you want to proceed?");
+          const confirmed = window.confirm("You have selected a time in the past. This will instantly expire and deactivate the link. Do you want to proceed?");
           if (!confirmed) {
             setLoading(false);
             return;
@@ -228,10 +236,12 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
           }
         }
 
+        const finalExpiresAt = expirationPreset.toLowerCase() === 'none' ? null : (expiresAt ? new Date(expiresAt + 'Z').toISOString() : null);
+
         const updatePayload = {
           longUrl: longUrl.trim(),
           password: removePassword ? "" : (password.trim() || null),
-          expiresAt: expiresAt ? new Date(expiresAt + 'Z').toISOString() : null,
+          expiresAt: finalExpiresAt,
           tagIds: selectedTagIds.length > 0 ? selectedTagIds : []
         };
 
@@ -287,32 +297,47 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
   const renderExpirationStatus = () => {
     // --- EDIT MODE ---
     if (urlToEdit) {
-      const originalExpireDate = urlToEdit.expiresAt ? new Date(urlToEdit.expiresAt + 'Z') : null;
-      const newExpireDate = expiresAt ? new Date(expiresAt + 'Z') : null;
+      const originalExpireDate = urlToEdit.expiresAt ? parseISO(urlToEdit.expiresAt + 'Z') : null;
+      const newExpireDate = expiresAt ? parseISO(expiresAt + 'Z') : null;
 
       const isCurrentlyExpired = urlToEdit.isActive === false || (originalExpireDate && originalExpireDate.getTime() <= Date.now());
+      const showRightSide = !originalExpireDate || expirationPreset !== '';
+
+      const renderLeft = () => {
+        if (isCurrentlyExpired) {
+          return <span className="text-red-500 font-medium">Expired</span>;
+        } else if (!originalExpireDate) {
+          return <span>Never expires</span>;
+        } else {
+          return <span>{`${formatDistanceToNow(originalExpireDate, { addSuffix: false })} remaining`}</span>;
+        }
+      };
+
+      const renderRight = () => {
+        if (!newExpireDate || expirationPreset.toLowerCase() === 'none') {
+          return <span>Never expires</span>;
+        }
+        if (newExpireDate.getTime() < Date.now()) {
+          return <span className="text-red-500 font-medium">Will expire immediately</span>;
+        }
+        return <span>Expires {formatDistanceToNow(newExpireDate, { addSuffix: true })}</span>;
+      };
 
       return (
         <div className="mt-2 flex items-center gap-3 text-sm min-h-[2rem]">
           {/* "Before" state */}
           <div className="text-gray-500" title={originalExpireDate ? format(originalExpireDate, 'PPpp') : 'No expiration set'}>
-            {isCurrentlyExpired 
-              ? <span className="text-red-500 font-medium">Expired</span>
-              : (!originalExpireDate 
-                  ? 'Never expires' 
-                  : `${formatDistanceToNow(originalExpireDate, { addSuffix: false })} remaining`)}
+            {renderLeft()}
           </div>
 
-          <ArrowRight className="w-4 h-4 text-gray-400" />
+          {showRightSide && <ArrowRight className="w-4 h-4 text-gray-400" />}
 
           {/* "After" state */}
-          <div className="font-medium text-gray-800 dark:text-gray-200" title={newExpireDate && expirationPreset.toLowerCase() !== 'none' ? format(newExpireDate, 'PPpp') : 'Will never expire'}>
-            {!newExpireDate || expirationPreset.toLowerCase() === 'none'
-              ? 'Never expires'
-              : (newExpireDate.getTime() < Date.now()
-                  ? <span className="text-red-500 font-medium">Will expire immediately</span>
-                  : `Expires ${formatDistanceToNow(newExpireDate, { addSuffix: true })}`)}
-          </div>
+          {showRightSide && (
+            <div className="font-medium text-gray-800 dark:text-gray-200" title={newExpireDate && expirationPreset.toLowerCase() !== 'none' ? format(newExpireDate, 'PPpp') : 'Will never expire'}>
+              {renderRight()}
+            </div>
+          )}
         </div>
       );
     }
@@ -341,6 +366,17 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
         )}
       </div>
     );
+  };
+
+  const getLocalInputValue = () => {
+    if (!expiresAt) return '';
+    try {
+      // Parse the UTC state and format it to local time WITHOUT seconds
+      const date = parseISO(expiresAt.endsWith('Z') ? expiresAt : expiresAt + 'Z');
+      return format(date, "yyyy-MM-dd'T'HH:mm");
+    } catch (e) {
+      return '';
+    }
   };
 
   return (
@@ -582,8 +618,16 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                     {expirationPreset.toLowerCase() === 'custom' && (
                       <input
                         type="datetime-local"
-                        value={expiresAt}
-                        onChange={(e) => setExpiresAt(e.target.value)}
+                        value={getLocalInputValue()}
+                        onChange={(e) => {
+                          if (!e.target.value) {
+                            setExpiresAt('');
+                            return;
+                          }
+                          const utcString = new Date(e.target.value).toISOString().substring(0, 19);
+                          setExpiresAt(utcString);
+                          setExpirationPreset('Custom');
+                        }}
                         className="block w-full sm:w-auto rounded-md border border-gray-300 shadow-sm focus:border-black focus:ring-1 focus:ring-black px-3 py-2 sm:text-sm text-gray-700"
                       />
                     )}
