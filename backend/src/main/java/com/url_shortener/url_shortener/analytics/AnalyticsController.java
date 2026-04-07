@@ -25,7 +25,7 @@ public class AnalyticsController {
     private final AnalyticsService analyticsService;
     private final UserRepository userRepository;
 
-    @GetMapping("/api/analytics/{hash}")
+    @GetMapping("/analytics/{hash}")
     @Operation(summary = "Get detailed analytics for a short URL")
     public ResponseEntity<AnalyticsResponseDto> getAnalytics(
             @PathVariable String hash,
@@ -43,7 +43,7 @@ public class AnalyticsController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/api/analytics")
+    @GetMapping("/analytics")
     @Operation(summary = "Get overall analytics for all URLs owned by the current user")
     public ResponseEntity<AnalyticsResponseDto> getOverallAnalytics(
             Authentication authentication,
@@ -54,7 +54,7 @@ public class AnalyticsController {
         return ResponseEntity.ok(analyticsService.getOverallAnalytics(currentUser, period));
     }
 
-    @GetMapping("/api/analytics/folder/{folderId}")
+    @GetMapping("/analytics/folder/{folderId}")
     public ResponseEntity<AnalyticsResponseDto> getFolderAnalytics(
             @PathVariable Long folderId, 
             Authentication authentication,
@@ -64,7 +64,7 @@ public class AnalyticsController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return ResponseEntity.ok(analyticsService.getFolderAnalytics(folderId, currentUser, period));
     }
-    @GetMapping("/api/analytics/usage")
+    @GetMapping("/analytics/usage")
     @Operation(summary = "Get global usage stats for the current user")
     public ResponseEntity<UserUsageStatsDto> getUserUsageStats(Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();

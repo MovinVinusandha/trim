@@ -25,7 +25,7 @@ describe('DashboardLayout', () => {
 
   it('renders sidebar and global usage stats', async () => {
     (axiosInstance.get as any).mockImplementation((url: string) => {
-      if (url === '/api/analytics/usage') {
+      if (url === '/analytics/usage') {
         return Promise.resolve({ data: { totalClicks: 1337, totalLinks: 42 } });
       }
       return Promise.resolve({ data: [] });

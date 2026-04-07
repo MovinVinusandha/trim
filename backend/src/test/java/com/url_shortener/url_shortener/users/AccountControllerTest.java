@@ -42,7 +42,7 @@ class AccountControllerTest {
         when(userService.updateMe(any(UserUpdateRequestDto.class))).thenReturn(user);
         when(userMapper.toDto(user)).thenReturn(dto);
 
-        mockMvc.perform(put("/api/users/me")
+        mockMvc.perform(put("/users/me")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -53,7 +53,7 @@ class AccountControllerTest {
     void changePassword_Success() throws Exception {
         PasswordChangeRequestDto request = new PasswordChangeRequestDto("oldPassword", "NewPassword123!");
 
-        mockMvc.perform(put("/api/users/me/password")
+        mockMvc.perform(put("/users/me/password")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNoContent());
@@ -63,7 +63,7 @@ class AccountControllerTest {
 
     @Test
     void deleteMe_Success() throws Exception {
-        mockMvc.perform(delete("/api/users/me"))
+        mockMvc.perform(delete("/users/me"))
                 .andExpect(status().isNoContent());
 
         verify(userService).deleteMe();

@@ -43,7 +43,7 @@ class AnalyticsControllerTest {
         AnalyticsResponseDto responseDto = new AnalyticsResponseDto(100L, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
         when(analyticsService.getAnalytics(eq("hash123"), eq(currentUser), eq("all"))).thenReturn(responseDto);
 
-        mockMvc.perform(get("/api/analytics/hash123")
+        mockMvc.perform(get("/analytics/hash123")
                 .principal(new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalClicks").value(100));
@@ -57,7 +57,7 @@ class AnalyticsControllerTest {
         AnalyticsResponseDto responseDto = new AnalyticsResponseDto(500L, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
         when(analyticsService.getOverallAnalytics(eq(currentUser), eq("7d"))).thenReturn(responseDto);
 
-        mockMvc.perform(get("/api/analytics")
+        mockMvc.perform(get("/analytics")
                 .param("period", "7d")
                 .principal(new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())))
                 .andExpect(status().isOk())

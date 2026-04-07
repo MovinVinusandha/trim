@@ -47,7 +47,7 @@ describe('SecurityPage', () => {
     fireEvent.click(submitBtn);
     
     await waitFor(() => {
-      expect(axiosInstance.put).toHaveBeenCalledWith('/api/users/me/password', {
+      expect(axiosInstance.put).toHaveBeenCalledWith('/users/me/password', {
         currentPassword: 'oldpass',
         newPassword: 'newpass123',
       });

@@ -31,7 +31,7 @@ const SettingsPage: React.FC = () => {
     try {
       // Endpoint requires both name and email, or we just send name and keep current email
       // Let's send the current email state so it doesn't try to change it to null
-      await axiosInstance.put('/api/users/me', { name, email: user?.email });
+      await axiosInstance.put('/users/me', { name, email: user?.email });
       setNameMessage({ type: 'success', text: 'Name updated successfully.' });
       // In a real app we'd update AuthContext here, but often a reload or login fetch is needed
     } catch (error: any) {
@@ -45,7 +45,7 @@ const SettingsPage: React.FC = () => {
     setIsUpdatingEmail(true);
     setEmailMessage(null);
     try {
-      await axiosInstance.put('/api/users/me', { name: user?.name, email });
+      await axiosInstance.put('/users/me', { name: user?.name, email });
       setEmailMessage({ type: 'success', text: 'Email updated successfully.' });
     } catch (error: any) {
       if (error.response?.status === 409) {
@@ -68,7 +68,7 @@ const SettingsPage: React.FC = () => {
     setIsDeleting(true);
     setDeleteError(null);
     try {
-      await axiosInstance.delete('/api/users/me');
+      await axiosInstance.delete('/users/me');
       logout();
     } catch (error: any) {
       setDeleteError(error.response?.data?.message || 'Failed to delete account.');
