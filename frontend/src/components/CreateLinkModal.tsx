@@ -368,6 +368,17 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
     );
   };
 
+  const getLocalInputValue = () => {
+    if (!expiresAt) return '';
+    try {
+      // Parse the UTC state and format it to local time WITHOUT seconds
+      const date = parseISO(expiresAt.endsWith('Z') ? expiresAt : expiresAt + 'Z');
+      return format(date, "yyyy-MM-dd'T'HH:mm");
+    } catch (e) {
+      return '';
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-500/30 backdrop-blur-sm z-[100] transition-opacity flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl z-[101] overflow-hidden flex flex-col relative max-h-[95vh]">
@@ -607,8 +618,16 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                     {expirationPreset.toLowerCase() === 'custom' && (
                       <input
                         type="datetime-local"
-                        value={expiresAt}
-                        onChange={(e) => setExpiresAt(e.target.value)}
+                        value={getLocalInputValue()}
+                        onChange={(e) => {
+                          if (!e.target.value) {
+                            setExpiresAt('');
+                            return;
+                          }
+                          const utcString = new Date(e.target.value).toISOString().substring(0, 19);
+                          setExpiresAt(utcString);
+                          setExpirationPreset('Custom');
+                        }}
                         className="block w-full sm:w-auto rounded-md border border-gray-300 shadow-sm focus:border-black focus:ring-1 focus:ring-black px-3 py-2 sm:text-sm text-gray-700"
                       />
                     )}
