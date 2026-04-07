@@ -14,6 +14,9 @@ import com.url_shortener.url_shortener.users.UserRepository;
 import com.url_shortener.url_shortener.users.UserNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class UrlController {
@@ -76,6 +79,7 @@ public class UrlController {
             @Valid @RequestBody UnlockRequest unlockRequest,
             HttpServletRequest request
     ) {
+        log.info("UNLOCK ENDPOINT HIT - Attempting to unlock hash: {}", hash);
         var longUrl = urlService.getUrlForUnlock(hash, unlockRequest.getPassword());
 
         String userAgent = request.getHeader("User-Agent");
