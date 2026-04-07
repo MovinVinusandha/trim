@@ -30,14 +30,17 @@ public class GlobalExceptionHandler {
     @org.springframework.beans.factory.annotation.Value("${app.domain.app:http://app.localhost}")
     private String appDomainUrl;
 
+    @org.springframework.beans.factory.annotation.Value("${app.dashboard.url:http://app.localhost}")
+    private String dashboardUrl;
+
     @ExceptionHandler(com.url_shortener.url_shortener.urls.LinkExpiredException.class)
     public void linkExpired(com.url_shortener.url_shortener.urls.LinkExpiredException ex, jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
-        response.sendRedirect(appDomainUrl + "/expired");
+        response.sendRedirect(dashboardUrl + "/expired");
     }
 
     @ExceptionHandler(com.url_shortener.url_shortener.urls.PasswordProtectedException.class)
     public void passwordProtected(com.url_shortener.url_shortener.urls.PasswordProtectedException ex, jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
-        response.sendRedirect(frontendUrl + "/secure/" + ex.getHash());
+        response.sendRedirect(dashboardUrl + "/secure/" + ex.getHash());
     }
 
     @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)

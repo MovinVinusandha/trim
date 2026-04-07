@@ -14,6 +14,9 @@ import com.url_shortener.url_shortener.users.UserRepository;
 import com.url_shortener.url_shortener.users.UserNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class UrlController {
@@ -25,6 +28,9 @@ public class UrlController {
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
+
+    @Value("${app.dashboard.url:http://app.localhost}")
+    private String dashboardUrl;
 
     @PostMapping("/shorten")
     @Operation(summary = "Generate short url")
@@ -64,7 +70,7 @@ public class UrlController {
             return new ResponseEntity<>(headers, HttpStatus.FOUND);
         } catch (PasswordProtectedException e) {
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(java.net.URI.create(frontendUrl + "/secure/" + hash))
+                    .location(java.net.URI.create(dashboardUrl + "/secure/" + hash))
                     .build();
         }
     }
@@ -76,6 +82,7 @@ public class UrlController {
             @Valid @RequestBody UnlockRequest unlockRequest,
             HttpServletRequest request
     ) {
+        log.info("UNLOCK ENDPOINT HIT - Attempting to unlock hash: {}", hash);
         var longUrl = urlService.getUrlForUnlock(hash, unlockRequest.getPassword());
 
         String userAgent = request.getHeader("User-Agent");
