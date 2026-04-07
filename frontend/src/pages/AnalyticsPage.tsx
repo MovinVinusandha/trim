@@ -40,11 +40,11 @@ const AnalyticsPage: React.FC = () => {
     const fetchAnalytics = async () => {
       setLoading(true);
       try {
-        let endpoint = '/api/analytics';
+        let endpoint = '/analytics';
         if (hash) {
-          endpoint = `/api/analytics/${hash}`;
+          endpoint = `/analytics/${hash}`;
         } else if (folderId) {
-          endpoint = `/api/analytics/folder/${folderId}`;
+          endpoint = `/analytics/folder/${folderId}`;
         }
         const response = await axiosInstance.get<AnalyticsData>(endpoint, { params: { period } });
         setData(response.data);

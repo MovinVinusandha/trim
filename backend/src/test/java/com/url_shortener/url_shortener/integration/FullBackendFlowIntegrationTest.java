@@ -60,7 +60,7 @@ class FullBackendFlowIntegrationTest {
         FolderRequestDto folderRequest = new FolderRequestDto();
         folderRequest.setName("Integration Folder");
         
-        MvcResult folderResult = mockMvc.perform(post("/api/folders")
+        MvcResult folderResult = mockMvc.perform(post("/folders")
                 .header("Authorization", bearerToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(folderRequest)))
@@ -73,7 +73,7 @@ class FullBackendFlowIntegrationTest {
         tagRequest.setName("Integration Tag");
         tagRequest.setColor("#000000");
 
-        MvcResult tagResult = mockMvc.perform(post("/api/tags")
+        MvcResult tagResult = mockMvc.perform(post("/tags")
                 .header("Authorization", bearerToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(tagRequest)))
@@ -100,7 +100,7 @@ class FullBackendFlowIntegrationTest {
         Thread.sleep(1500);
 
         // 7. Fetch overall analytics
-        mockMvc.perform(get("/api/analytics")
+        mockMvc.perform(get("/analytics")
                 .header("Authorization", bearerToken)
                 .param("period", "all"))
                 .andExpect(status().isOk())
@@ -108,14 +108,14 @@ class FullBackendFlowIntegrationTest {
 
         // 8. Change password
         PasswordChangeRequestDto pwdRequest = new PasswordChangeRequestDto("Password123!", "NewPassword123!");
-        mockMvc.perform(put("/api/users/me/password")
+        mockMvc.perform(put("/users/me/password")
                 .header("Authorization", bearerToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(pwdRequest)))
                 .andExpect(status().isNoContent());
 
         // 9. Delete account
-        mockMvc.perform(delete("/api/users/me")
+        mockMvc.perform(delete("/users/me")
                 .header("Authorization", bearerToken))
                 .andExpect(status().isNoContent());
                 

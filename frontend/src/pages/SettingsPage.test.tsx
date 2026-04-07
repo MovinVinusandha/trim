@@ -40,7 +40,7 @@ describe('SettingsPage', () => {
     fireEvent.click(saveButtons[0]);
     
     await waitFor(() => {
-      expect(axiosInstance.put).toHaveBeenCalledWith('/api/users/me', { name: 'Jane Doe', email: 'john@example.com' });
+      expect(axiosInstance.put).toHaveBeenCalledWith('/users/me', { name: 'Jane Doe', email: 'john@example.com' });
       expect(screen.getByText('Name updated successfully.')).toBeInTheDocument();
     });
   });
@@ -57,7 +57,7 @@ describe('SettingsPage', () => {
     fireEvent.click(saveButtons[1]);
     
     await waitFor(() => {
-      expect(axiosInstance.put).toHaveBeenCalledWith('/api/users/me', { name: 'John Doe', email: 'jane@example.com' });
+      expect(axiosInstance.put).toHaveBeenCalledWith('/users/me', { name: 'John Doe', email: 'jane@example.com' });
       expect(screen.getByText('Email updated successfully.')).toBeInTheDocument();
     });
   });

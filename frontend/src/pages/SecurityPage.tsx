@@ -24,7 +24,7 @@ const SecurityPage: React.FC = () => {
     setMessage(null);
 
     try {
-      await axiosInstance.put('/api/users/me/password', { currentPassword, newPassword });
+      await axiosInstance.put('/users/me/password', { currentPassword, newPassword });
       setMessage({ type: 'success', text: 'Password updated successfully!' });
       setCurrentPassword('');
       setNewPassword('');

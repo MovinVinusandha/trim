@@ -68,7 +68,7 @@ describe('AnalyticsPage', () => {
     await waitFor(() => {
       expect(screen.getByText('/abc123')).toBeInTheDocument();
       expect(screen.getByText('42')).toBeInTheDocument();
-      expect(axiosInstance.get).toHaveBeenCalledWith('/api/analytics/abc123', expect.any(Object));
+      expect(axiosInstance.get).toHaveBeenCalledWith('/analytics/abc123', expect.any(Object));
     });
   });
 
@@ -88,7 +88,7 @@ describe('AnalyticsPage', () => {
     fireEvent.click(btn7d);
 
     await waitFor(() => {
-      expect(axiosInstance.get).toHaveBeenCalledWith('/api/analytics', { params: { period: '7d' } });
+      expect(axiosInstance.get).toHaveBeenCalledWith('/analytics', { params: { period: '7d' } });
     });
   });
 });
