@@ -146,6 +146,16 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
       setFolderSearchQuery('');
       setIsTagDropdownOpen(false);
       setIsFolderDropdownOpen(false);
+    } else {
+      setCustomAlias('');
+      setLongUrl('');
+      setPassword('');
+      setRemovePassword(false);
+      setExpiresAt('');
+      setExpirationPreset('none');
+      setSelectedTagIds([]);
+      setSelectedFolderId('');
+      setError('');
     }
   }, [isOpen, urlToEdit]);
 

@@ -285,6 +285,7 @@ public class UrlService {
                 BigInteger.valueOf(clicks),
                 dto.getCreatedAt(),
                 dto.getUpdatedAt(),
+                url.getExpiresAt(),
                 url.isActive(),
                 url.getPasswordHash() != null && !url.getPasswordHash().isEmpty(),
                 dto.getTags(),
