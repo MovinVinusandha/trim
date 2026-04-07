@@ -23,7 +23,10 @@ public class UrlDto {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("isActive")
     private boolean isActive;
+    
+    @com.fasterxml.jackson.annotation.JsonProperty("hasPassword")
     private boolean hasPassword;
     private List<TagDto> tags;
     private Long folderId;

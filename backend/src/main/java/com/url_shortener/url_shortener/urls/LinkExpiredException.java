@@ -4,4 +4,8 @@ public class LinkExpiredException extends RuntimeException {
     public LinkExpiredException() {
         super("This link has expired and is no longer available.");
     }
+
+    public LinkExpiredException(String message) {
+        super(message);
+    }
 }

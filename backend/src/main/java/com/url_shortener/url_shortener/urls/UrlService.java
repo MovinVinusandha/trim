@@ -34,6 +34,9 @@ public class UrlService {
     private final TagRepository tagRepository;
     private final FolderRepository folderRepository;
 
+    @org.springframework.beans.factory.annotation.Autowired 
+    private org.springframework.cache.CacheManager cacheManager;
+
     @org.springframework.beans.factory.annotation.Value("${app.domain.root}")
     private String rootDomainUrl;
 
@@ -61,6 +64,11 @@ public class UrlService {
         }
         var url = urlMapper.toEntity(urlRequest);
         url.setShortUrl(hash);
+        
+        url.setActive(true);
+        if (urlRequest.getExpiresAt() != null && urlRequest.getExpiresAt().isBefore(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC))) {
+            url.setActive(false);
+        }
         
         if (urlRequest.getPassword() != null && !urlRequest.getPassword().trim().isEmpty()) {
             var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
@@ -152,8 +160,14 @@ public class UrlService {
         // Enforce strict lazy evaluation first
         var url = isExistsShortUrl(shortUrl);
         
+        if (url.getExpiresAt() != null && url.getExpiresAt().isBefore(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC))) {
+            url.setActive(false);
+            urlRepository.save(url);
+            redisTemplate.delete("urls::" + url.getShortUrl());
+            throw new LinkExpiredException("Link expired");
+        }
         if (!url.isActive()) {
-            throw new LinkExpiredException();
+            throw new LinkExpiredException("Link inactive");
         }
         
         log.info("Evaluating URL hash: {}. IsActive: {}, ExpiresAt: {}", url.getShortUrl(), url.isActive(), url.getExpiresAt());
@@ -297,7 +311,20 @@ public class UrlService {
         }
 
         urlMapper.updateUrl(urlRequest, url);
+        
+        if (url.getExpiresAt() == null || url.getExpiresAt().isAfter(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC))) {
+            url.setActive(true);
+        } else {
+            url.setActive(false);
+        }
+        
         urlRepository.save(url);
+        
+        redisTemplate.delete("urls::" + url.getShortUrl());
+        org.springframework.cache.Cache cache = cacheManager.getCache("urls");
+        if (cache != null) {
+            cache.evict(url.getShortUrl());
+        }
         
         String cacheKey = "urls::" + url.getShortUrl();
         if (url.getExpiresAt() != null) {
@@ -326,8 +353,12 @@ public class UrlService {
         if (request.getLongUrl() != null && !request.getLongUrl().trim().isEmpty()) {
             url.setLongUrl(request.getLongUrl().trim());
         }
-        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
-            url.setPasswordHash(passwordEncoder.encode(request.getPassword().trim()));
+        if (request.getPassword() != null) {
+            if (request.getPassword().isEmpty()) {
+                url.setPasswordHash(null);
+            } else if (!request.getPassword().trim().isEmpty()) {
+                url.setPasswordHash(passwordEncoder.encode(request.getPassword().trim()));
+            }
         }
         if (request.getExpiresAt() != null) {
             url.setExpiresAt(request.getExpiresAt());
@@ -342,10 +373,20 @@ public class UrlService {
             url.setTags(new java.util.HashSet<>(tags));
         }
 
+        if (url.getExpiresAt() == null || url.getExpiresAt().isAfter(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC))) {
+            url.setActive(true);
+        } else {
+            url.setActive(false);
+        }
+
         url = urlRepository.save(url);
         
         // CRITICAL CACHE INVALIDATION
         redisTemplate.delete("urls::" + url.getShortUrl());
+        org.springframework.cache.Cache updateCache = cacheManager.getCache("urls");
+        if (updateCache != null) {
+            updateCache.evict(url.getShortUrl());
+        }
         
         if (url.getExpiresAt() != null) {
             java.time.Duration ttl = java.time.Duration.between(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC), url.getExpiresAt());
