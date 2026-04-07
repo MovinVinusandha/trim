@@ -8,6 +8,9 @@ spring:
   profiles:
     active: dev
 
+server:
+  forward-headers-strategy: framework
+
 root:
   user:
     email: ${ROOT_USER_EMAIL}

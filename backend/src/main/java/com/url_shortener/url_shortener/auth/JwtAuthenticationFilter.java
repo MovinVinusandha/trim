@@ -15,6 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
+@lombok.extern.slf4j.Slf4j
 @Component
 @AllArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -28,24 +29,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        var token = authHeader.replace("Bearer ", "");
-        var jwt = jwtService.parseToken(token);
-        if (jwt == null || jwt.isExpired()) {
-            filterChain.doFilter(request, response);
-            return;
+        try {
+            var token = authHeader.replace("Bearer ", "");
+            var jwt = jwtService.parseToken(token);
+            if (jwt == null || jwt.isExpired()) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            var authentication = new UsernamePasswordAuthenticationToken(
+                    jwt.getUserId(),
+                    null,
+                    List.of(new SimpleGrantedAuthority("ROLE_" + jwt.getRole()))
+            );
+            authentication.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request)
+            );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            log.warn("JWT Token has expired: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("Cannot set user authentication: {}", e.getMessage());
         }
-
-
-        var authentication = new UsernamePasswordAuthenticationToken(
-                jwt.getUserId(),
-                null,
-                List.of(new SimpleGrantedAuthority("ROLE_" + jwt.getRole()))
-        );
-        authentication.setDetails(
-                new WebAuthenticationDetailsSource().buildDetails(request)
-        );
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
     }

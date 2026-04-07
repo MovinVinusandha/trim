@@ -51,16 +51,22 @@ public class UrlController {
             @PathVariable String hash,
             HttpServletRequest request
     ) {
-        var longUrl = urlService.getLongUrlForRedirect(hash);
+        try {
+            var longUrl = urlService.getLongUrlForRedirect(hash);
 
-        // Fire async click tracking — does not block the redirect response
-        String userAgent = request.getHeader("User-Agent");
-        String clientIp  = resolveClientIp(request);
-        analyticsService.trackClick(hash, userAgent, clientIp);
+            // Fire async click tracking — does not block the redirect response
+            String userAgent = request.getHeader("User-Agent");
+            String clientIp  = resolveClientIp(request);
+            analyticsService.trackClick(hash, userAgent, clientIp);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Location", longUrl);
-        return new ResponseEntity<>(headers, HttpStatus.FOUND);
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Location", longUrl);
+            return new ResponseEntity<>(headers, HttpStatus.FOUND);
+        } catch (PasswordProtectedException e) {
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(java.net.URI.create(frontendUrl + "/secure/" + hash))
+                    .build();
+        }
     }
 
     @PostMapping("/unlock/{hash}")
