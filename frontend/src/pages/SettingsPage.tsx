@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Copy, Check, AlertCircle, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
+import Skeleton from 'react-loading-skeleton';
 
 const SettingsPage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -77,6 +78,43 @@ const SettingsPage: React.FC = () => {
   };
 
   const isConfirmationMatch = confirmationText === 'confirm delete account';
+
+  if (loading) {
+    return (
+      <div className="py-8 max-w-4xl mx-auto space-y-6">
+        <div className="mb-8">
+          <Skeleton width={200} height={32} />
+          <div className="mt-1"><Skeleton width={300} height={20} /></div>
+        </div>
+
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+            <div className="p-6">
+              <Skeleton width={120} height={24} />
+              <div className="mt-1 mb-4"><Skeleton width="60%" height={20} /></div>
+              <div className="max-w-md">
+                <Skeleton height={40} borderRadius={6} />
+              </div>
+            </div>
+            <div className="px-6 py-4 bg-gray-50 dark:bg-slate-800/50 border-t border-gray-200 dark:border-slate-800 flex items-center justify-between">
+              <Skeleton width={200} height={16} />
+              <Skeleton width={120} height={36} borderRadius={6} />
+            </div>
+          </div>
+        ))}
+        
+        <div className="bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/30 rounded-xl overflow-hidden shadow-sm">
+          <div className="p-6">
+            <Skeleton width={160} height={24} />
+            <div className="mt-2 mb-4"><Skeleton width="100%" height={40} /></div>
+          </div>
+          <div className="px-6 py-4 bg-red-50 dark:bg-red-900/10 border-t border-red-100 dark:border-red-900/30 flex items-center justify-end">
+            <Skeleton width={140} height={36} borderRadius={6} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="py-8 max-w-4xl mx-auto space-y-6">

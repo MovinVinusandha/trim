@@ -13,6 +13,15 @@ html {
     box-sizing: border-box;
   }
 
+  :root {
+    --skeleton-base-color: #f1f5f9;
+    --skeleton-highlight-color: #f8fafc;
+  }
+  .dark {
+    --skeleton-base-color: #1e293b;
+    --skeleton-highlight-color: #334155;
+  }
+
   html {
     /* Default to dark; ThemeContext will remove .dark for light mode */
     @apply bg-slate-950;

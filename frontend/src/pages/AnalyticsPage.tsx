@@ -12,6 +12,7 @@ import {
   Link as LinkIcon, Activity,
   Users, Percent, Share2
 } from 'lucide-react';
+import Skeleton from 'react-loading-skeleton';
 
 interface AnalyticsData {
   totalClicks: number;
@@ -60,12 +61,51 @@ const AnalyticsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-4 border-[#7c3aed] border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-500 font-medium text-sm">Loading analytics data...</p>
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8 bg-gray-50 dark:bg-gray-900">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton width={250} height={28} />
+          </div>
         </div>
-      </div>
+
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-6 flex flex-col gap-1">
+              <Skeleton width={120} height={16} />
+              <div className="mt-2"><Skeleton width={80} height={36} /></div>
+              <Skeleton width={60} height={12} className="mt-1" />
+            </div>
+          ))}
+        </section>
+
+        <section className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-6 flex flex-col gap-6">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <Skeleton width={150} height={24} />
+              <div className="mt-1"><Skeleton width={200} height={16} /></div>
+            </div>
+            <Skeleton width={180} height={32} borderRadius={6} />
+          </div>
+          <div className="relative w-full h-[300px]">
+            <Skeleton height="100%" borderRadius={8} />
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-0 flex flex-col overflow-hidden">
+              <div className="p-4 border-b border-gray-200 dark:border-slate-800 flex items-center gap-2">
+                <Skeleton width={120} height={20} />
+              </div>
+              <div className="p-4 flex flex-col gap-3">
+                {[...Array(5)].map((_, j) => (
+                  <Skeleton key={j} height={40} borderRadius={4} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+      </main>
     );
   }
 
