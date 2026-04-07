@@ -70,9 +70,10 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
   urlToEdit,
   onOpenFolderModal
 }) => {
-  const domainPrefix = import.meta.env.VITE_API_BASE_URL || window.location.origin;
-  const rawDomain = import.meta.env.VITE_ROOT_DOMAIN || 'http://localhost';
-  const rootDomainPrefix = rawDomain.replace(/^https?:\/\//, '');
+  const rootDomain = window.location.hostname.replace('app.', '');
+  const displayDomain = rootDomain + (window.location.port && window.location.port !== '80' && window.location.port !== '443' ? ':' + window.location.port : '');
+  const protocol = window.location.protocol;
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || `${protocol}//api.${rootDomain}`;
   const [longUrl, setLongUrl] = useState(urlToEdit?.longUrl || '');
   const [customAlias, setCustomAlias] = useState(urlToEdit ? urlToEdit.shortUrl.split('/').pop() || '' : '');
   const [selectedFolderId, setSelectedFolderId] = useState(urlToEdit?.folderId || '');
@@ -154,8 +155,8 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
     const fetchQrCode = async () => {
       if (!customAlias) return;
       setIsQrLoading(true);
-      const fullShortUrl = `${domainPrefix}/${customAlias}`;
-      const previewUrl = `http://localhost:8080/api/public/qr/preview?text=${encodeURIComponent(fullShortUrl)}`;
+      const fullShortUrl = `${protocol}//${displayDomain}/${customAlias}`;
+      const previewUrl = `${apiBaseUrl}/public/qr/preview?text=${encodeURIComponent(fullShortUrl)}`;
       setQrCodeUrl(previewUrl);
       setIsQrLoading(false);
     };
@@ -413,7 +414,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                   </div>
                   <div className="flex rounded-md shadow-sm">
                     <div className="relative flex-grow focus-within:z-10 w-1/3 border border-gray-300 border-r-0 bg-gray-50 flex items-center justify-center rounded-l-md px-3 text-sm text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">
-                      {rootDomainPrefix}/
+                      {displayDomain}/
                     </div>
                     <input 
                       type="text" 
