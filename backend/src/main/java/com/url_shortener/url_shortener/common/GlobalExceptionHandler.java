@@ -26,10 +26,13 @@ public class GlobalExceptionHandler {
 
     @org.springframework.beans.factory.annotation.Value("${app.frontend.url:http://localhost}")
     private String frontendUrl;
+    
+    @org.springframework.beans.factory.annotation.Value("${app.domain.app:http://app.localhost}")
+    private String appDomainUrl;
 
     @ExceptionHandler(com.url_shortener.url_shortener.urls.LinkExpiredException.class)
     public void linkExpired(com.url_shortener.url_shortener.urls.LinkExpiredException ex, jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
-        response.sendRedirect(frontendUrl + "/expired");
+        response.sendRedirect(appDomainUrl + "/expired");
     }
 
     @ExceptionHandler(com.url_shortener.url_shortener.urls.PasswordProtectedException.class)
