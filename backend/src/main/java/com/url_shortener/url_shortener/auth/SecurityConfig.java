@@ -59,7 +59,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(c -> {
                             c.requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll();
-                            c.requestMatchers(org.springframework.http.HttpMethod.POST, "/user", "/auth/login", "/unlock/{hash:[a-zA-Z0-9-_]+}").permitAll();
+                            c.requestMatchers(org.springframework.http.HttpMethod.POST, "/user", "/auth/login", "/api/unlock/**").permitAll();
                             c.requestMatchers(org.springframework.http.HttpMethod.GET, "/{hash:[a-zA-Z0-9-_]+}").permitAll();
                             featureSecurityRules.forEach(r -> r.configure(c));
                             c.anyRequest().authenticated();

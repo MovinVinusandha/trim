@@ -69,7 +69,7 @@ public class UrlController {
         }
     }
 
-    @PostMapping("/unlock/{hash}")
+    @PostMapping("/api/unlock/{hash}")
     @Operation(summary = "Unlock a password protected short url")
     public ResponseEntity<UnlockResponse> unlockUrl(
             @PathVariable String hash,
