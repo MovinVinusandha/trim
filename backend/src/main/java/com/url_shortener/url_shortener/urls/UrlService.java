@@ -360,9 +360,7 @@ public class UrlService {
                 url.setPasswordHash(passwordEncoder.encode(request.getPassword().trim()));
             }
         }
-        if (request.getExpiresAt() != null) {
-            url.setExpiresAt(request.getExpiresAt());
-        }
+        url.setExpiresAt(request.getExpiresAt());
         if (request.getTagIds() != null) {
             List<Tag> tags = tagRepository.findAllById(request.getTagIds());
             for (Tag t : tags) {

@@ -226,10 +226,12 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
           }
         }
 
+        const finalExpiresAt = expirationPreset.toLowerCase() === 'none' ? null : (expiresAt ? new Date(expiresAt + 'Z').toISOString() : null);
+
         const updatePayload = {
           longUrl: longUrl.trim(),
           password: removePassword ? "" : (password.trim() || null),
-          expiresAt: expiresAt ? new Date(expiresAt + 'Z').toISOString() : null,
+          expiresAt: finalExpiresAt,
           tagIds: selectedTagIds.length > 0 ? selectedTagIds : []
         };
 
