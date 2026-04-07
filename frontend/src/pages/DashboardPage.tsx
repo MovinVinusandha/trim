@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useOutletContext, Link, useSearchParams } from 'react-router-dom';
-import { X, BarChart2, Search, Copy, QrCode, Edit2, Trash2, CornerDownRight, MoreVertical, Filter, SlidersHorizontal, ChevronDown, ArrowUpDown, Check, ArrowDownWideNarrow, Tag, ChevronLeft, CheckCircle2, XCircle } from 'lucide-react';
+import { X, BarChart2, Search, Copy, QrCode, Edit2, Trash2, CornerDownRight, MoreVertical, Filter, SlidersHorizontal, ChevronDown, ArrowUpDown, Check, ArrowDownWideNarrow, Tag, ChevronLeft, CheckCircle2, XCircle, Lock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 import CreateLinkModal from '../components/CreateLinkModal';
@@ -77,7 +77,7 @@ const DashboardPage: React.FC = () => {
   
   const [sortBy, setSortBy] = useState('dateCreated');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [displayProps, setDisplayProps] = useState({ destinationUrl: true, tags: true, clicks: true, createdAt: true, status: true });
+  const [displayProps, setDisplayProps] = useState({ destinationUrl: true, tags: true, clicks: true, createdAt: true, status: true, password: true });
   const [isDisplayOpen, setIsDisplayOpen] = useState(false);
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState('none');
@@ -573,6 +573,12 @@ const DashboardPage: React.FC = () => {
                         >
                           Status
                         </button>
+                        <button 
+                          onClick={() => setDisplayProps(prev => ({ ...prev, password: !prev.password }))}
+                          className={`px-2 py-1 text-xs border rounded-md font-medium transition-colors ${displayProps.password ? 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-gray-200' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800'}`}
+                        >
+                          Password
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -716,6 +722,12 @@ const DashboardPage: React.FC = () => {
                     
                     {/* Actions */}
                     <div className="shrink-0 flex items-center gap-3 ml-4">
+                      {displayProps.password && url.hasPassword && (
+                        <div className="flex items-center justify-center p-1 rounded-md bg-gray-50 text-gray-500 border border-gray-200 dark:bg-slate-800 dark:text-gray-400 dark:border-slate-700" title="Password Protected">
+                          <Lock className="w-3.5 h-3.5" />
+                        </div>
+                      )}
+                      
                       {displayProps.status && url.expiresAt && (() => {
                         const expDate = new Date(url.expiresAt.endsWith('Z') ? url.expiresAt : url.expiresAt + 'Z');
                         const isExpired = !url.isActive || expDate < new Date();
