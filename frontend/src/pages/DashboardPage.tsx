@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useOutletContext, Link, useSearchParams } from 'react-router-dom';
-import { X, BarChart2, Search, Copy, QrCode, Edit2, Trash2, CornerDownRight, MoreVertical, Filter, SlidersHorizontal, ChevronDown, ArrowUpDown, Check, ArrowDownWideNarrow, Tag, ChevronLeft } from 'lucide-react';
+import { X, BarChart2, Search, Copy, QrCode, Edit2, Trash2, CornerDownRight, MoreVertical, Filter, SlidersHorizontal, ChevronDown, ArrowUpDown, Check, ArrowDownWideNarrow, Tag, ChevronLeft, CheckCircle2, XCircle } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 
 import CreateLinkModal from '../components/CreateLinkModal';
 import ClickArrowIcon from '../components/icons/ClickArrowIcon';
@@ -76,7 +77,7 @@ const DashboardPage: React.FC = () => {
   
   const [sortBy, setSortBy] = useState('dateCreated');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [displayProps, setDisplayProps] = useState({ destinationUrl: true, tags: true, clicks: true, createdAt: true });
+  const [displayProps, setDisplayProps] = useState({ destinationUrl: true, tags: true, clicks: true, createdAt: true, status: true });
   const [isDisplayOpen, setIsDisplayOpen] = useState(false);
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState('none');
@@ -566,6 +567,12 @@ const DashboardPage: React.FC = () => {
                         >
                           Tags
                         </button>
+                        <button 
+                          onClick={() => setDisplayProps(prev => ({ ...prev, status: !prev.status }))}
+                          className={`px-2 py-1 text-xs border rounded-md font-medium transition-colors ${displayProps.status ? 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-gray-200' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800'}`}
+                        >
+                          Status
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -709,6 +716,26 @@ const DashboardPage: React.FC = () => {
                     
                     {/* Actions */}
                     <div className="shrink-0 flex items-center gap-3 ml-4">
+                      {displayProps.status && url.expiresAt && (() => {
+                        const expDate = new Date(url.expiresAt.endsWith('Z') ? url.expiresAt : url.expiresAt + 'Z');
+                        const isExpired = !url.isActive || expDate < new Date();
+                        if (!isExpired) {
+                          return (
+                            <div title={`${formatDistanceToNow(expDate)} remaining`} className="flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-800 px-2 py-1 rounded-md text-xs font-medium cursor-help">
+                              <CheckCircle2 className="w-3 h-3" />
+                              Active
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div title="Expired" className="flex items-center gap-1 bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/30 dark:border-red-800 px-2 py-1 rounded-md text-xs font-medium cursor-help">
+                              <XCircle className="w-3 h-3" />
+                              Expired
+                            </div>
+                          );
+                        }
+                      })()}
+                      
                       {displayProps.clicks && (
                         <Link to={`/analytics/${extractHash(url.shortUrl)}`} className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors px-2 py-1 rounded-md border border-gray-100 dark:border-slate-700">
                           <ClickArrowIcon className="w-3 h-3 text-blue-500" />
