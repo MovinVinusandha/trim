@@ -3,6 +3,7 @@ import { useOutletContext, useNavigate } from 'react-router-dom';
 import { Search, MoreVertical, Trash2, Link as LinkIcon, Tag as TagIcon, Pen } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import type { DashboardLayoutContext } from '../layouts/DashboardLayout';
+import Skeleton from 'react-loading-skeleton';
 
 const TAG_COLORS = [
   { name: 'red', classes: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800/50' },
@@ -17,7 +18,7 @@ const getTagColor = (colorName: string | undefined) => {
 };
 
 const TagsPage: React.FC = () => {
-  const { tags, setTags, setTagToEdit, setIsCreateTagModalOpen } = useOutletContext<DashboardLayoutContext>();
+  const { tags, setTags, setTagToEdit, setIsCreateTagModalOpen, isTagsLoading } = useOutletContext<DashboardLayoutContext>();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
@@ -49,7 +50,20 @@ const TagsPage: React.FC = () => {
         </div>
 
         <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl overflow-visible shadow-sm flex flex-col gap-0 divide-y divide-gray-100 dark:divide-slate-800">
-          {filteredTags.length === 0 ? (
+          {isTagsLoading ? (
+            [...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center justify-between p-4 h-[72px]">
+                <div className="flex items-center gap-3">
+                  <Skeleton width={24} height={24} borderRadius={4} />
+                  <Skeleton width={100} height={20} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton width={70} height={32} borderRadius={6} />
+                  <Skeleton width={32} height={32} borderRadius={6} />
+                </div>
+              </div>
+            ))
+          ) : filteredTags.length === 0 ? (
             <div className="p-12 text-center text-gray-500">No tags found.</div>
           ) : (
             filteredTags.map((tag) => (

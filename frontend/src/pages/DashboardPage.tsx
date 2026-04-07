@@ -8,10 +8,24 @@ import type { DashboardLayoutContext } from '../layouts/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import type { UrlEntry, UrlDto } from '../types';
+import Skeleton from 'react-loading-skeleton';
+import { toast } from 'react-hot-toast';
 
 /** Helper to extract hash from short URL */
 const extractHash = (shortUrl: string): string =>
   shortUrl.split('/').pop() ?? shortUrl;
+
+/** Helper to get actual root domain dynamically */
+const getRootDomain = () => {
+  const hostname = window.location.hostname;
+  if (hostname.startsWith('app.')) {
+    return hostname.substring(4);
+  }
+  return hostname;
+};
+const rootDomain = getRootDomain();
+const displayDomain = rootDomain + (window.location.port && window.location.port !== '80' && window.location.port !== '443' ? ':' + window.location.port : '');
+const protocol = window.location.protocol;
 
 const mapDtoToEntry = (d: UrlDto): UrlEntry => ({
   longUrl: d.longUrl,
@@ -20,8 +34,8 @@ const mapDtoToEntry = (d: UrlDto): UrlEntry => ({
   createdAt: d.createdAt,
   updatedAt: d.updatedAt,
   expiresAt: d.expiresAt,
-  isActive: d.isActive ?? true,
-  hasPassword: d.hasPassword,
+  isActive: d.isActive ?? (d as any).active ?? true,
+  hasPassword: d.hasPassword ?? (d as any).password ?? false,
   tags: d.tags,
   folderId: d.folderId,
   folderName: d.folderName,
@@ -58,6 +72,7 @@ const DashboardPage: React.FC = () => {
   const [activeFilterTagId] = useState<number | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [copiedHash, setCopiedHash] = useState<string | null>(null);
   
   const [sortBy, setSortBy] = useState('dateCreated');
   const [sortOrder, setSortOrder] = useState('desc');
@@ -238,10 +253,20 @@ const DashboardPage: React.FC = () => {
     };
   }, [urls.length, syncClickCounts, saveToStorage]);
 
-  /** Called when ShortenForm successfully shortens a URL */
-  const handleShortened = useCallback((newEntry: UrlEntry) => {
+  /** Called when ShortenForm successfully shortens or updates a URL */
+  const handleShortened = useCallback((newEntry: any) => {
+    const entry = newEntry.accessed_times !== undefined ? newEntry : mapDtoToEntry(newEntry);
     setUrls((prev) => {
-      const updatedList = [newEntry, ...prev];
+      const hashToFind = extractHash(entry.shortUrl);
+      const existingIdx = prev.findIndex(u => extractHash(u.shortUrl) === hashToFind);
+      
+      let updatedList;
+      if (existingIdx !== -1) {
+        updatedList = prev.map((u, i) => (i === existingIdx ? entry : u));
+      } else {
+        updatedList = [entry, ...prev];
+      }
+      
       saveToStorage(updatedList);
       return updatedList;
     });
@@ -561,9 +586,22 @@ const DashboardPage: React.FC = () => {
           </div>
 
           {loadingAll ? (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-12 flex flex-col items-center justify-center">
-              <div className="w-8 h-8 border-4 border-black dark:border-white border-t-transparent rounded-full animate-spin mb-3" />
-              <p className="text-slate-400 dark:text-slate-500 text-sm">Loading your links…</p>
+            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm flex flex-col gap-0 divide-y divide-gray-100 dark:divide-slate-800">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex items-center p-4">
+                  <div className="shrink-0 mr-4">
+                    <Skeleton circle width={40} height={40} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="mb-2"><Skeleton width="40%" height={20} /></div>
+                    <div><Skeleton width="60%" height={16} /></div>
+                  </div>
+                  <div className="shrink-0 ml-4 flex items-center gap-3">
+                    <Skeleton width={60} height={30} borderRadius={6} />
+                    <Skeleton width={32} height={32} borderRadius={6} />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl overflow-visible shadow-sm flex flex-col gap-0 divide-y divide-gray-100 dark:divide-slate-800">
@@ -589,18 +627,22 @@ const DashboardPage: React.FC = () => {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <a href={url.shortUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-gray-900 dark:text-white truncate hover:underline">
-                          {url.shortUrl.replace(/^https?:\/\//, '')}
+                        <a href={`${protocol}//${displayDomain}/${extractHash(url.shortUrl)}`} target="_blank" rel="noreferrer" className="text-sm font-semibold text-gray-900 dark:text-white truncate hover:underline">
+                          {displayDomain}/{extractHash(url.shortUrl)}
                         </a>
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                           <button 
                             onClick={() => {
-                              navigator.clipboard.writeText(url.shortUrl);
+                              const copyUrl = `${protocol}//${displayDomain}/${extractHash(url.shortUrl)}`;
+                              navigator.clipboard.writeText(copyUrl);
+                              setCopiedHash(url.shortUrl);
+                              toast.success("Link copied to clipboard");
+                              setTimeout(() => setCopiedHash(null), 2000);
                             }}
-                            className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded text-gray-400 hover:text-gray-700 dark:hover:text-white"
+                            className={`p-1 rounded transition-colors ${copiedHash === url.shortUrl ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-700'}`}
                             title="Copy link"
                           >
-                            <Copy className="w-3.5 h-3.5" />
+                            {copiedHash === url.shortUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                           </button>
                           <button 
                             onClick={() => handleOpenQr(extractHash(url.shortUrl))}
@@ -783,9 +825,10 @@ const DashboardPage: React.FC = () => {
           tags={tags}
           urlToEdit={editingUrl}
           onSuccess={(updatedEntry) => {
+            const entry = updatedEntry.accessed_times !== undefined ? updatedEntry : mapDtoToEntry(updatedEntry);
             const idx = urls.findIndex(u => u.shortUrl === editingUrl.shortUrl);
             if (idx !== -1) {
-              handleUpdated(idx, updatedEntry);
+              handleUpdated(idx, entry);
             }
           }}
         />

@@ -10,6 +10,7 @@ import FolderModal from '../components/FolderModal';
 import BrandLogo from '../components/BrandLogo';
 import ClickArrowIcon from '../components/icons/ClickArrowIcon';
 import { Toaster, toast } from 'react-hot-toast';
+import Skeleton from 'react-loading-skeleton';
 
 export type DashboardLayoutContext = {
   triggerRefresh: UrlEntry | null;
@@ -23,6 +24,8 @@ export type DashboardLayoutContext = {
   setIsCreateTagModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setFolderToEdit: React.Dispatch<React.SetStateAction<any | null>>;
   setTagToEdit: React.Dispatch<React.SetStateAction<any | null>>;
+  isTagsLoading: boolean;
+  isFoldersLoading: boolean;
 };
 
 const DashboardLayout: React.FC = () => {
@@ -40,6 +43,9 @@ const DashboardLayout: React.FC = () => {
   const [tags, setTags] = useState<Tag[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [activeFolderId, setActiveFolderId] = useState<number | null>(null);
+  
+  const [isTagsLoading, setIsTagsLoading] = useState(true);
+  const [isFoldersLoading, setIsFoldersLoading] = useState(true);
   
   const [isFolderSwitcherOpen, setIsFolderSwitcherOpen] = useState(false);
   const [folderSearch, setFolderSearch] = useState('');
@@ -63,6 +69,7 @@ const DashboardLayout: React.FC = () => {
   
   // Stats for the sub-nav (populated by children)
   const [navStats, setNavStats] = useState({ totalClicks: 0, linkCount: 0 });
+  const [isStatsLoading, setIsStatsLoading] = useState(true);
 
   // Function to pass down to children to trigger refresh
   const [latestNewEntry, setLatestNewEntry] = useState<UrlEntry | null>(null);
@@ -77,19 +84,26 @@ const DashboardLayout: React.FC = () => {
       try {
         const { data } = await axiosInstance.get<Tag[]>('/api/tags');
         if (isMounted) setTags(data);
-      } catch (err) {}
+      } catch (err) {} finally {
+        if (isMounted) setIsTagsLoading(false);
+      }
     };
 
     const loadFolders = async () => {
       try {
         const { data } = await axiosInstance.get<Folder[]>('/api/folders');
         if (isMounted) setFolders(data);
-      } catch (err) {}
+      } catch (err) {} finally {
+        if (isMounted) setIsFoldersLoading(false);
+      }
     };
 
     if (user && user.role !== 'ROOT' && user.role !== 'ROLE_ROOT') {
       loadTags();
       loadFolders();
+    } else {
+      setIsTagsLoading(false);
+      setIsFoldersLoading(false);
     }
 
     return () => { isMounted = false; };
@@ -103,11 +117,15 @@ const DashboardLayout: React.FC = () => {
         if (isMounted) setNavStats({ totalClicks: data.totalClicks, linkCount: data.totalLinks });
       } catch (err) {
         console.error("Failed to load usage stats", err);
+      } finally {
+        if (isMounted) setIsStatsLoading(false);
       }
     };
 
     if (user && user.role !== 'ROOT' && user.role !== 'ROLE_ROOT') {
       loadUsageStats();
+    } else {
+      setIsStatsLoading(false);
     }
     return () => { isMounted = false; };
   }, [user, latestNewEntry]);
@@ -404,14 +422,23 @@ const DashboardLayout: React.FC = () => {
           
           {!location.pathname.startsWith('/settings') && (
             <div className="flex items-center gap-4 ml-auto pl-4 text-xs text-gray-500 shrink-0">
-              <span className="flex items-center gap-1.5" title={`Total Clicks: ${navStats.totalClicks}`}>
-                <ClickArrowIcon className="w-4 h-4 text-gray-500" />
-                {navStats.totalClicks}
-              </span>
-              <span className="flex items-center gap-1.5" title={`Total Links: ${navStats.linkCount}`}>
-                <LinkIcon className="w-4 h-4" />
-                {navStats.linkCount}
-              </span>
+              {isStatsLoading ? (
+                <>
+                  <div className="flex items-center gap-1.5"><Skeleton width={40} height={16} /></div>
+                  <div className="flex items-center gap-1.5"><Skeleton width={40} height={16} /></div>
+                </>
+              ) : (
+                <>
+                  <span className="flex items-center gap-1.5" title={`Total Clicks: ${navStats.totalClicks}`}>
+                    <ClickArrowIcon className="w-4 h-4 text-gray-500" />
+                    {navStats.totalClicks}
+                  </span>
+                  <span className="flex items-center gap-1.5" title={`Total Links: ${navStats.linkCount}`}>
+                    <LinkIcon className="w-4 h-4" />
+                    {navStats.linkCount}
+                  </span>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -430,7 +457,9 @@ const DashboardLayout: React.FC = () => {
               setIsFolderModalOpen,
               setIsCreateTagModalOpen,
               setFolderToEdit,
-              setTagToEdit
+              setTagToEdit,
+              isTagsLoading,
+              isFoldersLoading
             } satisfies DashboardLayoutContext} />
           </div>
         </main>

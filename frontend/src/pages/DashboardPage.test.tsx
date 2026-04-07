@@ -56,11 +56,11 @@ describe('DashboardPage', () => {
     render(<MemoryRouter><DashboardPage /></MemoryRouter>);
     
     await waitFor(() => {
-      expect(screen.getByText('trim.sh/abc123')).toBeInTheDocument();
+      expect(screen.getByText(/abc123/)).toBeInTheDocument();
       expect(screen.getByText('https://example.com/one')).toBeInTheDocument();
       expect(screen.getByText('42')).toBeInTheDocument();
       
-      expect(screen.getByText('trim.sh/def456')).toBeInTheDocument();
+      expect(screen.getByText(/def456/)).toBeInTheDocument();
       expect(screen.getByText('https://example.com/two')).toBeInTheDocument();
       expect(screen.getByText('7')).toBeInTheDocument();
     });
@@ -88,13 +88,13 @@ describe('DashboardPage', () => {
     render(<MemoryRouter><DashboardPage /></MemoryRouter>);
     
     await waitFor(() => {
-      expect(screen.getByText('trim.sh/abc123')).toBeInTheDocument();
+      expect(screen.getByText(/abc123/)).toBeInTheDocument();
     });
     
     const searchInput = screen.getByPlaceholderText('Search by short link or URL');
     fireEvent.change(searchInput, { target: { value: 'def' } });
     
-    expect(screen.queryByText('trim.sh/abc123')).not.toBeInTheDocument();
-    expect(screen.getByText('trim.sh/def456')).toBeInTheDocument();
+    expect(screen.queryByText(/abc123/)).not.toBeInTheDocument();
+    expect(screen.getByText(/def456/)).toBeInTheDocument();
   });
 });

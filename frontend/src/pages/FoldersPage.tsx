@@ -3,9 +3,10 @@ import { useOutletContext, useSearchParams, useNavigate } from 'react-router-dom
 import { Search, MoreVertical, Trash2, Link as LinkIcon, Folder as FolderIcon, Pen } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import type { DashboardLayoutContext } from '../layouts/DashboardLayout';
+import Skeleton from 'react-loading-skeleton';
 
 const FoldersPage: React.FC = () => {
-  const { folders, setFolders, setActiveFolderId, setFolderToEdit, setIsFolderModalOpen } = useOutletContext<DashboardLayoutContext>();
+  const { folders, setFolders, setActiveFolderId, setFolderToEdit, setIsFolderModalOpen, isFoldersLoading } = useOutletContext<DashboardLayoutContext>();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
@@ -53,72 +54,88 @@ const FoldersPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {filteredFolders.map(folder => (
-            <div key={folder.id} onClick={() => handleFolderClick(folder.id)} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow group relative cursor-pointer">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg text-emerald-600 dark:text-emerald-400">
-                    <FolderIcon className="w-5 h-5" />
+          {isFoldersLoading ? (
+            [...Array(6)].map((_, i) => (
+              <div key={i} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-4 h-32 flex flex-col justify-between">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <Skeleton width={36} height={36} borderRadius={8} />
+                    <Skeleton width={120} height={20} />
                   </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900 dark:text-white line-clamp-1">{folder.name}</h3>
-                  </div>
+                  <Skeleton width={28} height={28} borderRadius={6} />
                 </div>
-
-                <div className="relative">
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenMenuId(openMenuId === folder.id ? null : folder.id);
-                    }}
-                    className="p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 rounded-md transition-colors"
-                  >
-                    <MoreVertical className="w-4 h-4" />
-                  </button>
-                  
-                  {openMenuId === folder.id && (
-                    <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-md shadow-lg z-[60] overflow-hidden">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenMenuId(null);
-                          setFolderToEdit(folder);
-                          setIsFolderModalOpen(true);
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-2"
-                      >
-                        <Pen className="w-4 h-4" />
-                        Edit
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenMenuId(null);
-                          setFolderToDelete(folder);
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete
-                      </button>
+                <div className="flex items-center justify-between mt-4">
+                  <Skeleton width={80} height={28} borderRadius={6} />
+                </div>
+              </div>
+            ))
+          ) : (
+            filteredFolders.map(folder => (
+              <div key={folder.id} onClick={() => handleFolderClick(folder.id)} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow group relative cursor-pointer">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg text-emerald-600 dark:text-emerald-400">
+                      <FolderIcon className="w-5 h-5" />
                     </div>
-                  )}
+                    <div>
+                      <h3 className="font-medium text-gray-900 dark:text-white line-clamp-1">{folder.name}</h3>
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuId(openMenuId === folder.id ? null : folder.id);
+                      }}
+                      className="p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+                    
+                    {openMenuId === folder.id && (
+                      <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-md shadow-lg z-[60] overflow-hidden">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuId(null);
+                            setFolderToEdit(folder);
+                            setIsFolderModalOpen(true);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-2"
+                        >
+                          <Pen className="w-4 h-4" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuId(null);
+                            setFolderToDelete(folder);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div 
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    <LinkIcon className="w-3.5 h-3.5" />
+                    {folder.linkCount || 0} {(folder.linkCount || 0) === 1 ? 'link' : 'links'}
+                  </div>
                 </div>
               </div>
-              
-              <div className="flex items-center justify-between">
-                <div 
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
-                >
-                  <LinkIcon className="w-3.5 h-3.5" />
-                  {folder.linkCount || 0} {(folder.linkCount || 0) === 1 ? 'link' : 'links'}
-                </div>
-                {/* Optional Default badge logic can go here if needed */}
-              </div>
-            </div>
-          ))}
+            ))
+          )}
           
-          {filteredFolders.length === 0 && (
+          {!isFoldersLoading && filteredFolders.length === 0 && (
             <div className="col-span-full py-12 text-center text-gray-500 dark:text-gray-400">
               No folders found.
             </div>
