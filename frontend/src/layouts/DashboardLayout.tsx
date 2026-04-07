@@ -186,9 +186,9 @@ const DashboardLayout: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-slate-100 font-sans">
+    <div className="h-screen flex overflow-hidden bg-[#E4E4E4] dark:bg-slate-950 text-gray-900 dark:text-slate-100 font-sans">
       {/* ── Sidebar ────────────────────────────────────────── */}
-      <aside className="w-20 shrink-0 border-r border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 hidden sm:flex flex-col items-center py-4 z-20">
+      <aside className="w-20 shrink-0 bg-transparent hidden sm:flex flex-col items-center py-4 z-20">
         <div className="mb-8 flex items-center justify-center w-full px-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
           <BrandLogo className="w-10 h-10 text-black dark:text-white" />
         </div>
@@ -264,11 +264,13 @@ const DashboardLayout: React.FC = () => {
         </div>
       </aside>
 
-      {/* ── Main Content Area ───────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-slate-900">
+      {/* ── Main Content Area (The "Island") ───────────────────────────────────── */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen pt-2 pr-2 pb-2 pl-0 gap-1.5">
         
-        {/* Top Header */}
-        <header className="shrink-0 h-16 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 flex items-center justify-between z-40">
+        {/* Combined Top Header and Navigation Tabs */}
+        <div className="flex flex-col rounded-xl overflow-hidden shrink-0 shadow-sm border border-gray-200 dark:border-slate-800">
+          {/* Top Header */}
+          <header className="h-16 bg-[#F5F5F5] dark:bg-slate-900 px-6 flex items-center justify-between z-40 border-b border-gray-200 dark:border-slate-800">
           <div className="flex items-center gap-2 relative" ref={folderSwitcherRef}>
             {location.pathname.startsWith('/settings') ? (
               <div className="flex items-center gap-3">
@@ -366,21 +368,21 @@ const DashboardLayout: React.FC = () => {
           {!location.pathname.startsWith('/settings') && renderHeaderButton()}
         </header>
 
-        {/* Top Navigation Tabs */}
-        <div className="shrink-0 h-12 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-900 px-6 flex items-center justify-between text-sm z-30">
-          <div className="flex items-center overflow-x-auto whitespace-nowrap h-full gap-2">
+          {/* Top Navigation Tabs */}
+          <div className="h-14 bg-[#F5F5F5] dark:bg-slate-900 px-6 flex items-center justify-between text-sm z-30">
+          <div className="flex items-center overflow-x-auto whitespace-nowrap gap-2">
             {location.pathname.startsWith('/settings') ? (
               <>
                 <Link 
                   to="/settings" 
-                  className={`flex items-center gap-2 px-4 h-full font-medium transition-colors border-b-2 ${location.pathname === '/settings' ? 'text-black dark:text-white border-black dark:border-white' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 border-transparent'}`}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium transition-colors ${location.pathname === '/settings' ? 'bg-[#E7EFF9] text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-600 hover:bg-[#EAEAEA] hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-100'}`}
                 >
                   <Settings className="w-4 h-4" />
                   General
                 </Link>
                 <Link 
                   to="/settings/security" 
-                  className={`flex items-center gap-2 px-4 h-full font-medium transition-colors border-b-2 ${location.pathname === '/settings/security' ? 'text-black dark:text-white border-black dark:border-white' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 border-transparent'}`}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium transition-colors ${location.pathname === '/settings/security' ? 'bg-[#E7EFF9] text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-600 hover:bg-[#EAEAEA] hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-100'}`}
                 >
                   <Shield className="w-4 h-4" />
                   Security
@@ -390,31 +392,31 @@ const DashboardLayout: React.FC = () => {
               <>
                 <Link 
                   to="/dashboard" 
-              className={`flex items-center gap-2 px-4 h-full font-medium transition-colors border-b-2 ${location.pathname === '/dashboard' ? 'text-black dark:text-white border-black dark:border-white' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 border-transparent'}`}
-            >
-              <LinkIcon className="w-4 h-4" />
-              Links
-            </Link>
-            <Link 
-              to={activeFolderId ? `/analytics?folderId=${activeFolderId}` : "/analytics"} 
-              className={`flex items-center gap-2 px-4 h-full font-medium transition-colors border-b-2 ${location.pathname.startsWith('/analytics') ? 'text-black dark:text-white border-black dark:border-white' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 border-transparent'}`}
-            >
-              <BarChart2 className="w-4 h-4" />
-              Analytics
-            </Link>
-            <Link 
-              to="/folders" 
-              className={`flex items-center gap-2 px-4 h-full font-medium transition-colors border-b-2 ${location.pathname === '/folders' ? 'text-black dark:text-white border-black dark:border-white' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 border-transparent'}`}
-            >
-              <FolderIcon className="w-4 h-4" />
-              Folders
-            </Link>
-            <Link 
-              to="/tags" 
-              className={`flex items-center gap-2 px-4 h-full font-medium transition-colors border-b-2 ${location.pathname === '/tags' ? 'text-black dark:text-white border-black dark:border-white' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 border-transparent'}`}
-            >
-              <TagIcon className="w-4 h-4" />
-              Tags
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium transition-colors ${location.pathname === '/dashboard' ? 'bg-[#E7EFF9] text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-600 hover:bg-[#EAEAEA] hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-100'}`}
+                >
+                  <LinkIcon className="w-4 h-4" />
+                  Links
+                </Link>
+                <Link 
+                  to={activeFolderId ? `/analytics?folderId=${activeFolderId}` : "/analytics"} 
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium transition-colors ${location.pathname.startsWith('/analytics') ? 'bg-[#E7EFF9] text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-600 hover:bg-[#EAEAEA] hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-100'}`}
+                >
+                  <BarChart2 className="w-4 h-4" />
+                  Analytics
+                </Link>
+                <Link 
+                  to="/folders" 
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium transition-colors ${location.pathname === '/folders' ? 'bg-[#E7EFF9] text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-600 hover:bg-[#EAEAEA] hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-100'}`}
+                >
+                  <FolderIcon className="w-4 h-4" />
+                  Folders
+                </Link>
+                <Link 
+                  to="/tags" 
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium transition-colors ${location.pathname === '/tags' ? 'bg-[#E7EFF9] text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-600 hover:bg-[#EAEAEA] hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-100'}`}
+                >
+                  <TagIcon className="w-4 h-4" />
+                  Tags
                 </Link>
               </>
             )}
@@ -441,10 +443,11 @@ const DashboardLayout: React.FC = () => {
               )}
             </div>
           )}
+          </div>
         </div>
 
         {/* Main Content Rendered Here */}
-        <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <main className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-[#FFFFFF] dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800">
           <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
             <Outlet context={{ 
               triggerRefresh: latestNewEntry, 
