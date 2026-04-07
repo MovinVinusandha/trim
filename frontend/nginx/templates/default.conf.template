@@ -55,7 +55,7 @@ server {
     }
 
     # Redirect frontend paths typed on the root domain to the app subdomain
-    location ~ ^/(dashboard|analytics|folders|tags|settings|login|register|expired)(/.*)?$ {
+    location ~ ^/(dashboard|analytics|folders|tags|settings|login|register|expired|secure)(/.*)?$ {
         return 301 $scheme://${APP_DOMAIN_NAME}$request_uri;
     }
 

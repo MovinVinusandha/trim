@@ -96,6 +96,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [isQrLoading, setIsQrLoading] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [removePassword, setRemovePassword] = useState(false);
 
 
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
@@ -126,6 +127,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
         setCustomAlias(urlToEdit.shortUrl ? extractHash(urlToEdit.shortUrl) : '');
         setLongUrl(urlToEdit.longUrl || '');
         setPassword('');
+        setRemovePassword(false);
         setExpiresAt(urlToEdit.expiresAt ? format(parseISO(urlToEdit.expiresAt + 'Z'), "yyyy-MM-dd'T'HH:mm") : '');
         setExpirationPreset(getInitialExpirationPreset(urlToEdit.expiresAt));
         setSelectedTagIds(urlToEdit.tags?.map((t: { id: number; name: string }) => t.id) || []);
@@ -134,6 +136,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
         setCustomAlias(generateRandomHash());
         setLongUrl('');
         setPassword('');
+        setRemovePassword(false);
         setExpiresAt('');
         setExpirationPreset('none');
         setSelectedTagIds([]);
@@ -216,9 +219,17 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
           }
         }
 
+        if (removePassword) {
+          const confirmed = window.confirm("Are you sure you want to remove the password protection from this link?");
+          if (!confirmed) {
+            setLoading(false);
+            return;
+          }
+        }
+
         const updatePayload = {
           longUrl: longUrl.trim(),
-          password: password.trim() || null,
+          password: removePassword ? "" : (password.trim() || null),
           expiresAt: expiresAt ? new Date(expiresAt + 'Z').toISOString() : null,
           tagIds: selectedTagIds.length > 0 ? selectedTagIds : []
         };
@@ -505,19 +516,35 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                     </div>
                     <input 
                       type={showPassword ? "text" : "password"} 
-                      placeholder={urlToEdit?.hasPassword ? "Password is set. Enter a new one to change." : "Optional password..."}
+                      placeholder={urlToEdit?.hasPassword && !removePassword ? "Password is set. Enter a new one to change." : (removePassword ? "Password will be removed" : "Optional password...")}
                       value={password}
+                      disabled={removePassword}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full rounded-md border border-gray-300 py-2 pl-9 pr-10 shadow-sm focus:border-black focus:ring-1 focus:ring-black sm:text-sm placeholder:text-gray-400"
+                      className="block w-full rounded-md border border-gray-300 py-2 pl-9 pr-10 shadow-sm focus:border-black focus:ring-1 focus:ring-black sm:text-sm placeholder:text-gray-400 disabled:bg-gray-100 disabled:text-gray-500"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                      disabled={removePassword}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 disabled:opacity-50"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                  {urlToEdit?.hasPassword && (
+                    <div className="flex justify-end mt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRemovePassword(!removePassword);
+                          if (!removePassword) setPassword('');
+                        }}
+                        className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+                      >
+                        {removePassword ? "Cancel password removal" : "Remove current password"}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Expiration */}
