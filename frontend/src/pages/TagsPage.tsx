@@ -45,11 +45,11 @@ const TagsPage: React.FC = () => {
             placeholder="Search tags..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-slate-700 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black dark:bg-slate-900 dark:text-white"
+            className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black dark:bg-[#1E1E21] dark:text-[#EDEDED]"
           />
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl overflow-visible shadow-sm flex flex-col gap-0 divide-y divide-gray-100 dark:divide-slate-800">
+        <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl overflow-visible shadow-sm flex flex-col gap-0 divide-y divide-gray-100 dark:divide-slate-800">
           {isTagsLoading ? (
             [...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center justify-between p-4 h-[72px]">
@@ -70,18 +70,18 @@ const TagsPage: React.FC = () => {
               <div 
                 key={tag.id} 
                 onClick={() => navigate(`/dashboard?tag=${encodeURIComponent(tag.name)}`)}
-                className="group relative flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                className="group relative flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-[#2B2B30]/50 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-6 h-6 rounded flex items-center justify-center border ${getTagColor(tag.color).classes}`}>
                     <TagIcon className={`w-3.5 h-3.5 ${getTagColor(tag.color).classes.split(' ').find(c => c.startsWith('text-') && !c.includes('dark:'))}`} />
                   </div>
-                  <span className="font-medium text-gray-900 dark:text-white">{tag.name}</span>
+                  <span className="font-medium text-gray-900 dark:text-[#EDEDED]">{tag.name}</span>
                 </div>
                 
                 <div className="flex items-center gap-2">
                   <div 
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-[#A1A1AA] bg-white dark:bg-[#222222] border border-gray-200 dark:border-[#2B2B30] rounded-md hover:bg-gray-50 dark:hover:bg-[#2B2B30] transition-colors"
                   >
                     <LinkIcon className="w-3.5 h-3.5" />
                     {tag.linkCount || 0} {(tag.linkCount || 0) === 1 ? 'link' : 'links'}
@@ -93,13 +93,13 @@ const TagsPage: React.FC = () => {
                         e.stopPropagation();
                         setOpenMenuId(openMenuId === tag.id ? null : tag.id);
                       }}
-                      className="p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-700 rounded-md transition-colors"
+                      className="p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-[#2B2B30] rounded-md transition-colors"
                     >
                       <MoreVertical className="w-4 h-4" />
                     </button>
                     
                     {openMenuId === tag.id && (
-                      <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-md shadow-lg z-50 overflow-hidden">
+                      <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg z-50 overflow-hidden">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -107,7 +107,7 @@ const TagsPage: React.FC = () => {
                             setTagToEdit(tag);
                             setIsCreateTagModalOpen(true);
                           }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-2"
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] flex items-center gap-2"
                         >
                           <Pen className="w-4 h-4" />
                           Edit
@@ -134,15 +134,15 @@ const TagsPage: React.FC = () => {
 
       {tagToDelete && (
         <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 max-w-sm w-full rounded-xl p-6 shadow-xl border border-gray-200 dark:border-slate-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete Tag</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          <div className="bg-white dark:bg-[#1E1E21] max-w-sm w-full rounded-xl p-6 shadow-xl border border-gray-200 dark:border-[#2B2B30]">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED] mb-2">Delete Tag</h3>
+            <p className="text-sm text-gray-500 dark:text-[#A1A1AA] mb-6">
               Are you sure you want to delete the "{tagToDelete.name}" tag? {tagToDelete.linkCount > 0 ? `This tag is currently used in ${tagToDelete.linkCount} links. It will be removed from all links, but the links will not be deleted.` : ''}
             </p>
             <div className="flex items-center justify-end gap-3">
               <button 
                 onClick={() => setTagToDelete(null)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded-md transition-colors"
               >
                 Cancel
               </button>

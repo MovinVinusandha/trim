@@ -49,14 +49,14 @@ const FoldersPage: React.FC = () => {
             placeholder="Search folders..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-slate-700 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black dark:bg-slate-900 dark:text-white"
+            className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black dark:bg-[#1E1E21] dark:text-[#EDEDED]"
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {isFoldersLoading ? (
             [...Array(6)].map((_, i) => (
-              <div key={i} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-4 h-32 flex flex-col justify-between">
+              <div key={i} className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-4 h-32 flex flex-col justify-between">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <Skeleton width={36} height={36} borderRadius={8} />
@@ -71,14 +71,14 @@ const FoldersPage: React.FC = () => {
             ))
           ) : (
             filteredFolders.map(folder => (
-              <div key={folder.id} onClick={() => handleFolderClick(folder.id)} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow group relative cursor-pointer">
+              <div key={folder.id} onClick={() => handleFolderClick(folder.id)} className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow group relative cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg text-emerald-600 dark:text-emerald-400">
                       <FolderIcon className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900 dark:text-white line-clamp-1">{folder.name}</h3>
+                      <h3 className="font-medium text-gray-900 dark:text-[#EDEDED] line-clamp-1">{folder.name}</h3>
                     </div>
                   </div>
 
@@ -88,13 +88,13 @@ const FoldersPage: React.FC = () => {
                         e.stopPropagation();
                         setOpenMenuId(openMenuId === folder.id ? null : folder.id);
                       }}
-                      className="p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+                      className="p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded-md transition-colors"
                     >
                       <MoreVertical className="w-4 h-4" />
                     </button>
                     
                     {openMenuId === folder.id && (
-                      <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-md shadow-lg z-[60] overflow-hidden">
+                      <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg z-[60] overflow-hidden">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -102,7 +102,7 @@ const FoldersPage: React.FC = () => {
                             setFolderToEdit(folder);
                             setIsFolderModalOpen(true);
                           }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-2"
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] flex items-center gap-2"
                         >
                           <Pen className="w-4 h-4" />
                           Edit
@@ -125,7 +125,7 @@ const FoldersPage: React.FC = () => {
                 
                 <div className="flex items-center justify-between">
                   <div 
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-[#A1A1AA] bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#2B2B30] rounded-md hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors"
                   >
                     <LinkIcon className="w-3.5 h-3.5" />
                     {folder.linkCount || 0} {(folder.linkCount || 0) === 1 ? 'link' : 'links'}
@@ -136,7 +136,7 @@ const FoldersPage: React.FC = () => {
           )}
           
           {!isFoldersLoading && filteredFolders.length === 0 && (
-            <div className="col-span-full py-12 text-center text-gray-500 dark:text-gray-400">
+            <div className="col-span-full py-12 text-center text-gray-500 dark:text-[#A1A1AA]">
               No folders found.
             </div>
           )}
@@ -145,15 +145,15 @@ const FoldersPage: React.FC = () => {
 
       {folderToDelete && (
         <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 max-w-sm w-full rounded-xl p-6 shadow-xl border border-gray-200 dark:border-slate-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete Folder</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          <div className="bg-white dark:bg-[#1E1E21] max-w-sm w-full rounded-xl p-6 shadow-xl border border-gray-200 dark:border-[#2B2B30]">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED] mb-2">Delete Folder</h3>
+            <p className="text-sm text-gray-500 dark:text-[#A1A1AA] mb-6">
               Are you sure you want to delete the "{folderToDelete.name}" folder? {folderToDelete.linkCount > 0 ? `This folder currently contains ${folderToDelete.linkCount} links. The folder will be deleted and the links will be moved out of it, but the links themselves will not be deleted.` : ''}
             </p>
             <div className="flex items-center justify-end gap-3">
               <button 
                 onClick={() => setFolderToDelete(null)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded-md transition-colors"
               >
                 Cancel
               </button>

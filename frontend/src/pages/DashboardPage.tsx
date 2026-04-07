@@ -365,7 +365,7 @@ const DashboardPage: React.FC = () => {
               <div className="relative" ref={filterRef}>
                 <button 
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
-                  className={`flex items-center gap-2 px-3 py-1.5 border rounded-md text-sm font-medium shadow-sm transition-colors ${selectedFilterTags.length > 0 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+                  className={`flex items-center gap-2 px-3 py-1.5 border rounded-md text-sm font-medium shadow-sm transition-colors ${selectedFilterTags.length > 0 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50' : 'bg-white dark:bg-[#222222] border-gray-200 dark:border-[#2B2B30] text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
                 >
                   <Filter className="w-4 h-4" />
                   Filter
@@ -374,7 +374,7 @@ const DashboardPage: React.FC = () => {
                 </button>
 
                 {isFilterOpen && (
-                  <div className="absolute left-0 top-full mt-2 w-64 rounded-lg shadow-xl bg-white dark:bg-slate-900 ring-1 ring-black/5 dark:ring-white/10 border border-gray-200 dark:border-slate-800 divide-y divide-gray-100 dark:divide-slate-800 focus:outline-none z-[60] overflow-hidden">
+                  <div className="absolute left-0 top-full mt-2 w-64 rounded-lg shadow-xl bg-white dark:bg-[#1E1E21] ring-1 ring-black/5 dark:ring-white/10 border border-gray-200 dark:border-[#2B2B30] divide-y divide-gray-100 dark:divide-slate-800 focus:outline-none z-[60] overflow-hidden">
                     {activeFilter === 'none' ? (
                       <>
                         <div className="p-2">
@@ -382,17 +382,17 @@ const DashboardPage: React.FC = () => {
                             <input 
                               type="text"
                               placeholder="Filter..." 
-                              className="block w-full pl-3 pr-8 py-2 border-none bg-transparent text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:ring-0"
+                              className="block w-full pl-3 pr-8 py-2 border-none bg-white dark:bg-[#111113] text-sm text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:ring-0"
                             />
                             <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                              <kbd className="inline-flex items-center border border-gray-200 dark:border-slate-700 rounded px-1.5 text-xs font-medium text-gray-400 bg-gray-50 dark:bg-slate-800">F</kbd>
+                              <kbd className="inline-flex items-center border border-gray-200 dark:border-[#2B2B30] rounded px-1.5 text-xs font-medium text-gray-400 bg-gray-50 dark:bg-[#222222]">F</kbd>
                             </div>
                           </div>
                         </div>
                         <div className="py-1 p-1">
                           <button 
                             onClick={() => setActiveFilter('tag')}
-                            className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-md transition-colors group"
+                            className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-md transition-colors group"
                           >
                             <div className="flex items-center">
                               <Tag className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
@@ -404,10 +404,10 @@ const DashboardPage: React.FC = () => {
                       </>
                     ) : activeFilter === 'tag' ? (
                       <>
-                        <div className="p-2 border-b border-gray-100 dark:border-slate-800 flex items-center gap-2">
+                        <div className="p-2 border-b border-gray-100 dark:border-[#2B2B30] flex items-center gap-2">
                           <button 
                             onClick={() => { setActiveFilter('none'); setTagSearch(''); }} 
-                            className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded text-gray-500"
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded text-gray-500"
                           >
                             <ChevronLeft className="w-4 h-4" />
                           </button>
@@ -418,13 +418,13 @@ const DashboardPage: React.FC = () => {
                               value={tagSearch}
                               onChange={e => setTagSearch(e.target.value)}
                               placeholder="Search tags..." 
-                              className="block w-full pl-9 pr-3 py-1.5 border border-gray-200 dark:border-slate-700 rounded-md text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                              className="block w-full pl-9 pr-3 py-1.5 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm bg-white dark:bg-[#1E1E21] text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                             />
                           </div>
                         </div>
                         <div className="py-1 p-1 max-h-48 overflow-y-auto">
                           {tags.filter(t => t.name.toLowerCase().includes(tagSearch.toLowerCase())).map(t => (
-                            <label key={t.id} className="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-md cursor-pointer group">
+                            <label key={t.id} className="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-md cursor-pointer group">
                               <input 
                                 type="checkbox" 
                                 checked={selectedFilterTags.includes(t.id)}
@@ -433,7 +433,7 @@ const DashboardPage: React.FC = () => {
                                     prev.includes(t.id) ? prev.filter(id => id !== t.id) : [...prev, t.id]
                                   )
                                 }}
-                                className="rounded border-gray-300 dark:border-slate-600 text-black dark:text-white focus:ring-black dark:focus:ring-white mr-3 bg-white dark:bg-slate-900"
+                                className="rounded border-gray-300 dark:border-slate-600 text-black dark:text-[#EDEDED] focus:ring-black dark:focus:ring-white mr-3 bg-white dark:bg-[#1E1E21]"
                               />
                               <span className="flex-1 flex items-center gap-2">
                                 <span 
@@ -457,12 +457,12 @@ const DashboardPage: React.FC = () => {
                 const tag = tags.find(t => t.id === tagId);
                 if (!tag) return null;
                 return (
-                  <div key={tag.id} className="flex items-center gap-1.5 px-2 py-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md text-xs font-medium text-gray-700 dark:text-gray-300 shadow-sm">
+                  <div key={tag.id} className="flex items-center gap-1.5 px-2 py-1 bg-white dark:bg-[#222222] border border-gray-200 dark:border-[#2B2B30] rounded-md text-xs font-medium text-gray-700 dark:text-[#A1A1AA] shadow-sm">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color || '#374151' }} />
                     {tag.name}
                     <button 
                       onClick={() => setSelectedFilterTags(prev => prev.filter(id => id !== tag.id))}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -472,7 +472,7 @@ const DashboardPage: React.FC = () => {
               <div className="relative" ref={displayRef}>
                 <button 
                   onClick={() => setIsDisplayOpen(!isDisplayOpen)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 shadow-sm transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#222222] border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm font-medium text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] shadow-sm transition-colors"
                 >
                   <SlidersHorizontal className="w-4 h-4" />
                   Display
@@ -480,17 +480,17 @@ const DashboardPage: React.FC = () => {
                 </button>
                 
                 {isDisplayOpen && (
-                  <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-900 rounded-lg shadow-xl ring-1 ring-gray-100 dark:ring-slate-800 border border-gray-200 dark:border-slate-800 w-[320px] z-50 flex flex-col">
+                  <div className="absolute top-full left-0 mt-2 bg-white dark:bg-[#1E1E21] rounded-lg shadow-xl ring-1 ring-gray-100 dark:ring-slate-800 border border-gray-200 dark:border-[#2B2B30] w-[320px] z-50 flex flex-col">
                     {/* Ordering Section */}
-                    <div className="p-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm font-medium">
+                    <div className="p-4 border-b border-gray-100 dark:border-[#2B2B30] flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-gray-700 dark:text-[#A1A1AA] text-sm font-medium">
                         <ArrowUpDown className="h-4 w-4 text-gray-500" />
                         Ordering
                       </div>
                       <div className="relative flex items-center gap-2">
                         <button 
                           onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                          className="p-1.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                          className="p-1.5 bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#2B2B30] rounded-md text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
                           title={sortOrder === 'asc' ? 'Sort Ascending' : 'Sort Descending'}
                         >
                           <ArrowUpDown className={`h-4 w-4 transform transition-transform ${sortOrder === 'asc' ? 'rotate-180' : ''}`} />
@@ -499,7 +499,7 @@ const DashboardPage: React.FC = () => {
                         <div className="relative" ref={sortMenuRef}>
                           <button 
                             onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
-                            className="flex items-center justify-between w-36 px-3 py-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                            className="flex items-center justify-between w-36 px-3 py-1.5 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] transition-colors"
                           >
                             <span className="flex items-center gap-2">
                               {sortBy === 'dateCreated' ? 'Date created' : 'Total clicks'}
@@ -508,27 +508,27 @@ const DashboardPage: React.FC = () => {
                           </button>
                           
                           {isSortMenuOpen && (
-                            <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-slate-900 rounded-lg shadow-xl ring-1 ring-gray-100 dark:ring-slate-800 border border-gray-200 dark:border-slate-800 z-[60] overflow-hidden py-1">
+                            <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-[#1E1E21] rounded-lg shadow-xl ring-1 ring-gray-100 dark:ring-slate-800 border border-gray-200 dark:border-[#2B2B30] z-[60] overflow-hidden py-1">
                               <button
                                 onClick={() => { setSortBy('dateCreated'); setIsSortMenuOpen(false); }}
-                                className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                                className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] transition-colors"
                               >
                                 <span className="flex items-center gap-2">
                                   <ArrowDownWideNarrow className="w-4 h-4 text-gray-500" />
                                   Date created
                                 </span>
-                                {sortBy === 'dateCreated' && <Check className="w-4 h-4 text-gray-900 dark:text-white" />}
+                                {sortBy === 'dateCreated' && <Check className="w-4 h-4 text-gray-900 dark:text-[#EDEDED]" />}
                               </button>
                               
                               <button
                                 onClick={() => { setSortBy('totalClicks'); setIsSortMenuOpen(false); }}
-                                className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                                className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] transition-colors"
                               >
                                 <span className="flex items-center gap-2">
                                   <ArrowDownWideNarrow className="w-4 h-4 text-gray-500" />
                                   Total clicks
                                 </span>
-                                {sortBy === 'totalClicks' && <Check className="w-4 h-4 text-gray-900 dark:text-white" />}
+                                {sortBy === 'totalClicks' && <Check className="w-4 h-4 text-gray-900 dark:text-[#EDEDED]" />}
                               </button>
                             </div>
                           )}
@@ -540,42 +540,42 @@ const DashboardPage: React.FC = () => {
                     <div className="p-4 flex flex-col gap-3">
                       <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Display Properties</h3>
                       <div className="flex flex-wrap gap-2">
-                        <button className="px-2 py-1 text-xs border border-transparent rounded-md bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 font-medium cursor-not-allowed">
+                        <button className="px-2 py-1 text-xs border border-transparent rounded-md bg-gray-100 dark:bg-[#222222] text-gray-500 dark:text-[#A1A1AA] font-medium cursor-not-allowed">
                           Short link
                         </button>
                         <button 
                           onClick={() => setDisplayProps(prev => ({ ...prev, destinationUrl: !prev.destinationUrl }))}
-                          className={`px-2 py-1 text-xs border rounded-md font-medium transition-colors ${displayProps.destinationUrl ? 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-gray-200' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800'}`}
+                          className={`px-2 py-1 text-xs border rounded-md font-medium transition-colors ${displayProps.destinationUrl ? 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-[#222222] text-gray-800 dark:text-gray-200' : 'border-gray-200 dark:border-[#2B2B30] bg-white dark:bg-[#1E1E21] text-gray-500 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
                         >
                           Destination URL
                         </button>
                         <button 
                           onClick={() => setDisplayProps(prev => ({ ...prev, clicks: !prev.clicks }))}
-                          className={`px-2 py-1 text-xs border rounded-md font-medium transition-colors ${displayProps.clicks ? 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-gray-200' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800'}`}
+                          className={`px-2 py-1 text-xs border rounded-md font-medium transition-colors ${displayProps.clicks ? 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-[#222222] text-gray-800 dark:text-gray-200' : 'border-gray-200 dark:border-[#2B2B30] bg-white dark:bg-[#1E1E21] text-gray-500 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
                         >
                           Analytics
                         </button>
                         <button 
                           onClick={() => setDisplayProps(prev => ({ ...prev, createdAt: !prev.createdAt }))}
-                          className={`px-2 py-1 text-xs border rounded-md font-medium transition-colors ${displayProps.createdAt ? 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-gray-200' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800'}`}
+                          className={`px-2 py-1 text-xs border rounded-md font-medium transition-colors ${displayProps.createdAt ? 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-[#222222] text-gray-800 dark:text-gray-200' : 'border-gray-200 dark:border-[#2B2B30] bg-white dark:bg-[#1E1E21] text-gray-500 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
                         >
                           Created Date
                         </button>
                         <button 
                           onClick={() => setDisplayProps(prev => ({ ...prev, tags: !prev.tags }))}
-                          className={`px-2 py-1 text-xs border rounded-md font-medium transition-colors ${displayProps.tags ? 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-gray-200' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800'}`}
+                          className={`px-2 py-1 text-xs border rounded-md font-medium transition-colors ${displayProps.tags ? 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-[#222222] text-gray-800 dark:text-gray-200' : 'border-gray-200 dark:border-[#2B2B30] bg-white dark:bg-[#1E1E21] text-gray-500 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
                         >
                           Tags
                         </button>
                         <button 
                           onClick={() => setDisplayProps(prev => ({ ...prev, status: !prev.status }))}
-                          className={`px-2 py-1 text-xs border rounded-md font-medium transition-colors ${displayProps.status ? 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-gray-200' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800'}`}
+                          className={`px-2 py-1 text-xs border rounded-md font-medium transition-colors ${displayProps.status ? 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-[#222222] text-gray-800 dark:text-gray-200' : 'border-gray-200 dark:border-[#2B2B30] bg-white dark:bg-[#1E1E21] text-gray-500 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
                         >
                           Status
                         </button>
                         <button 
                           onClick={() => setDisplayProps(prev => ({ ...prev, password: !prev.password }))}
-                          className={`px-2 py-1 text-xs border rounded-md font-medium transition-colors ${displayProps.password ? 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-gray-200' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800'}`}
+                          className={`px-2 py-1 text-xs border rounded-md font-medium transition-colors ${displayProps.password ? 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-[#222222] text-gray-800 dark:text-gray-200' : 'border-gray-200 dark:border-[#2B2B30] bg-white dark:bg-[#1E1E21] text-gray-500 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
                         >
                           Password
                         </button>
@@ -593,13 +593,13 @@ const DashboardPage: React.FC = () => {
                 placeholder="Search by short link or URL" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full sm:w-auto pl-9 pr-4 py-1.5 border border-gray-200 dark:border-slate-700 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black dark:bg-slate-900 dark:text-white"
+                className="w-full sm:w-auto pl-9 pr-4 py-1.5 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black dark:bg-[#1E1E21] dark:text-[#EDEDED]"
               />
             </div>
           </div>
 
           {loadingAll ? (
-            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm flex flex-col gap-0 divide-y divide-gray-100 dark:divide-slate-800">
+            <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl overflow-hidden shadow-sm flex flex-col gap-0 divide-y divide-gray-100 dark:divide-slate-800">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="flex items-center p-4">
                   <div className="shrink-0 mr-4">
@@ -617,15 +617,15 @@ const DashboardPage: React.FC = () => {
               ))}
             </div>
           ) : (
-            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl overflow-visible shadow-sm flex flex-col gap-0 divide-y divide-gray-100 dark:divide-slate-800">
+            <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl overflow-visible shadow-sm flex flex-col gap-0 divide-y divide-gray-100 dark:divide-slate-800">
               {displayedUrls.length === 0 ? (
                 <div className="p-12 text-center text-gray-500">No links found.</div>
               ) : (
                 displayedUrls.map((url) => (
-                  <div key={url.shortUrl} className="group relative flex items-center p-4 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
+                  <div key={url.shortUrl} className="group relative flex items-center p-4 hover:bg-gray-50 dark:hover:bg-[#2B2B30]/50 transition-colors">
                     {/* Favicon */}
                     <div className="shrink-0 mr-4">
-                      <div className="w-10 h-10 rounded-full border border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 overflow-hidden flex items-center justify-center p-1">
+                      <div className="w-10 h-10 rounded-full border border-gray-100 dark:border-[#2B2B30] bg-gray-50 dark:bg-[#222222] overflow-hidden flex items-center justify-center p-1">
                         <img 
                           src={`https://www.google.com/s2/favicons?domain=${url.longUrl}&sz=64`} 
                           alt="Favicon" 
@@ -640,7 +640,7 @@ const DashboardPage: React.FC = () => {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <a href={`${protocol}//${displayDomain}/${extractHash(url.shortUrl)}`} target="_blank" rel="noreferrer" className="text-sm font-semibold text-gray-900 dark:text-white truncate hover:underline">
+                        <a href={`${protocol}//${displayDomain}/${extractHash(url.shortUrl)}`} target="_blank" rel="noreferrer" className="text-sm font-semibold text-gray-900 dark:text-[#EDEDED] truncate hover:underline">
                           {displayDomain}/{extractHash(url.shortUrl)}
                         </a>
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
@@ -652,14 +652,14 @@ const DashboardPage: React.FC = () => {
                               toast.success("Link copied to clipboard");
                               setTimeout(() => setCopiedHash(null), 2000);
                             }}
-                            className={`p-1 rounded transition-colors ${copiedHash === url.shortUrl ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-700'}`}
+                            className={`p-1 rounded transition-colors ${copiedHash === url.shortUrl ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-[#2B2B30]'}`}
                             title="Copy link"
                           >
                             {copiedHash === url.shortUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                           </button>
                           <button 
                             onClick={() => handleOpenQr(extractHash(url.shortUrl))}
-                            className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded text-gray-400 hover:text-gray-700 dark:hover:text-white"
+                            className="p-1 hover:bg-gray-200 dark:hover:bg-[#2B2B30] rounded text-gray-400 hover:text-gray-700 dark:hover:text-white"
                             title="QR Code"
                           >
                             <QrCode className="w-3.5 h-3.5" />
@@ -667,7 +667,7 @@ const DashboardPage: React.FC = () => {
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-[#A1A1AA]">
                         {displayProps.destinationUrl && (
                           <div className="flex items-center gap-1.5 text-gray-400 text-xs mt-0.5 ml-1">
                             <CornerDownRight className="w-3 h-3 shrink-0" />
@@ -700,7 +700,7 @@ const DashboardPage: React.FC = () => {
                           
                           {/* Tooltip */}
                           {url.tags.length > 1 && (
-                            <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex bg-white dark:bg-slate-900 shadow-xl border border-gray-200 dark:border-slate-700 rounded-lg p-2 gap-2 z-[60] min-w-max">
+                            <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex bg-white dark:bg-[#1E1E21] shadow-xl border border-gray-200 dark:border-[#2B2B30] rounded-lg p-2 gap-2 z-[60] min-w-max">
                               {url.tags.map(t => (
                                 <span 
                                   key={t.id} 
@@ -723,7 +723,7 @@ const DashboardPage: React.FC = () => {
                     {/* Actions */}
                     <div className="shrink-0 flex items-center gap-3 ml-4">
                       {displayProps.password && url.hasPassword && (
-                        <div className="flex items-center justify-center p-1 rounded-md bg-gray-50 text-gray-500 border border-gray-200 dark:bg-slate-800 dark:text-gray-400 dark:border-slate-700" title="Password Protected">
+                        <div className="flex items-center justify-center p-1 rounded-md bg-gray-50 text-gray-500 border border-gray-200 dark:bg-[#222222] dark:text-[#A1A1AA] dark:border-[#2B2B30]" title="Password Protected">
                           <Lock className="w-3.5 h-3.5" />
                         </div>
                       )}
@@ -749,7 +749,7 @@ const DashboardPage: React.FC = () => {
                       })()}
                       
                       {displayProps.clicks && (
-                        <Link to={`/analytics/${extractHash(url.shortUrl)}`} className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors px-2 py-1 rounded-md border border-gray-100 dark:border-slate-700">
+                        <Link to={`/analytics/${extractHash(url.shortUrl)}`} className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-[#A1A1AA] bg-gray-50 dark:bg-[#222222] hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors px-2 py-1 rounded-md border border-gray-100 dark:border-[#2B2B30]">
                           <ClickArrowIcon className="w-3 h-3 text-blue-500" />
                           {url.accessed_times}
                           <span className="hidden sm:inline ml-1 text-gray-400 font-normal">clicks</span>
@@ -759,16 +759,16 @@ const DashboardPage: React.FC = () => {
                       <div className="relative">
                         <button 
                           onClick={() => setOpenMenuId(openMenuId === url.shortUrl ? null : url.shortUrl)}
-                          className="p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+                          className="p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded-md transition-colors"
                         >
                           <MoreVertical className="w-4 h-4" />
                         </button>
                         
                         {openMenuId === url.shortUrl && (
-                          <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-md shadow-lg z-50 overflow-hidden">
+                          <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg z-50 overflow-hidden">
                             <Link
                               to={`/analytics/${extractHash(url.shortUrl)}`}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-2"
+                              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] flex items-center gap-2"
                             >
                               <BarChart2 className="w-4 h-4" />
                               View Analytics
@@ -779,7 +779,7 @@ const DashboardPage: React.FC = () => {
                                 setIsCreateModalOpen(true);
                                 setOpenMenuId(null);
                               }}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-2"
+                              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] flex items-center gap-2"
                             >
                               <Edit2 className="w-4 h-4" />
                               Edit
@@ -813,23 +813,23 @@ const DashboardPage: React.FC = () => {
       {/* ── QR Code Modal ────────────────────────────────── */}
       {isQrModalOpen && (
         <div className="bg-black/50 fixed inset-0 z-50 flex items-center justify-center animate-fade-in px-4">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-xl w-80 text-center relative animate-slide-up">
+          <div className="bg-white dark:bg-[#1E1E21] p-6 rounded-xl shadow-xl w-80 text-center relative animate-slide-up">
             <button
               onClick={closeQrModal}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">QR Code</h3>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-[#EDEDED] mb-4">QR Code</h3>
             
             {isQrLoading ? (
               <div className="flex flex-col items-center justify-center py-8 space-y-3">
                 <span className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-slate-500 dark:text-slate-400 text-sm">Generating QR...</p>
+                <p className="text-slate-500 dark:text-[#A1A1AA] text-sm">Generating QR...</p>
               </div>
             ) : qrImageUrl ? (
               <div className="flex flex-col items-center">
-                <img src={qrImageUrl} alt="QR Code" className="mx-auto rounded-lg mb-4 border border-gray-200 dark:border-slate-700 w-48 h-48 bg-white" />
+                <img src={qrImageUrl} alt="QR Code" className="mx-auto rounded-lg mb-4 border border-gray-200 dark:border-[#2B2B30] w-48 h-48 bg-white" />
                 <a
                   href={qrImageUrl}
                   download={`qr-${activeQrHash}.png`}
@@ -844,7 +844,7 @@ const DashboardPage: React.FC = () => {
             
             <button
               onClick={closeQrModal}
-              className="mt-4 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white text-sm font-medium transition-colors"
+              className="mt-4 text-slate-500 dark:text-[#A1A1AA] hover:text-slate-800 dark:hover:text-white text-sm font-medium transition-colors"
             >
               Close
             </button>

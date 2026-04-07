@@ -61,7 +61,7 @@ const AnalyticsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8 bg-gray-50 dark:bg-gray-900">
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8 bg-gray-50 dark:bg-[#111113]">
         <div className="flex items-center justify-between">
           <div>
             <Skeleton width={250} height={28} />
@@ -70,7 +70,7 @@ const AnalyticsPage: React.FC = () => {
 
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-6 flex flex-col gap-1">
+            <div key={i} className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-6 flex flex-col gap-1">
               <Skeleton width={120} height={16} />
               <div className="mt-2"><Skeleton width={80} height={36} /></div>
               <Skeleton width={60} height={12} className="mt-1" />
@@ -78,7 +78,7 @@ const AnalyticsPage: React.FC = () => {
           ))}
         </section>
 
-        <section className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-6 flex flex-col gap-6">
+        <section className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-6 flex flex-col gap-6">
           <div className="flex items-center justify-between mb-2">
             <div>
               <Skeleton width={150} height={24} />
@@ -93,8 +93,8 @@ const AnalyticsPage: React.FC = () => {
 
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-0 flex flex-col overflow-hidden">
-              <div className="p-4 border-b border-gray-200 dark:border-slate-800 flex items-center gap-2">
+            <div key={i} className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-0 flex flex-col overflow-hidden">
+              <div className="p-4 border-b border-gray-200 dark:border-[#2B2B30] flex items-center gap-2">
                 <Skeleton width={120} height={20} />
               </div>
               <div className="p-4 flex flex-col gap-3">
@@ -111,13 +111,13 @@ const AnalyticsPage: React.FC = () => {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-gray-200 dark:border-slate-800 p-8 text-center max-w-md w-full">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#111113] flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-[#1E1E21] rounded-lg shadow-sm border border-gray-200 dark:border-[#2B2B30] p-8 text-center max-w-md w-full">
           <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
             <Activity className="w-6 h-6" />
           </div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Error Loading Analytics</h2>
-          <p className="text-gray-500 dark:text-gray-400 mb-6">{error}</p>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-[#EDEDED] mb-2">Error Loading Analytics</h2>
+          <p className="text-gray-500 dark:text-[#A1A1AA] mb-6">{error}</p>
           <button 
             onClick={() => navigate('/dashboard')}
             className="px-4 py-2 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black rounded-md transition-colors text-sm font-medium w-full flex items-center justify-center gap-2"
@@ -149,11 +149,11 @@ const AnalyticsPage: React.FC = () => {
 
   return (
     <>
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8 bg-gray-50 dark:bg-gray-900">
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8 bg-gray-50 dark:bg-[#111113]">
         
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-[#EDEDED]">
               {hash ? (
                 <>Analytics for <span className="text-[#7c3aed]">/{hash}</span></>
               ) : folderId ? (
@@ -168,50 +168,50 @@ const AnalyticsPage: React.FC = () => {
         {/* Summary Grid */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           
-          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-6 flex flex-col gap-1">
+          <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-6 flex flex-col gap-1">
             <div className="flex items-center justify-between">
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium flex items-center gap-2">
+              <p className="text-gray-500 dark:text-[#A1A1AA] text-sm font-medium flex items-center gap-2">
                 <MousePointerClick className="w-4 h-4" /> Total Clicks
               </p>
             </div>
             <div className="mt-2 flex items-baseline gap-2">
-              <p className="text-gray-900 dark:text-white text-3xl font-semibold tracking-tight">{totalClicks.toLocaleString()}</p>
+              <p className="text-gray-900 dark:text-[#EDEDED] text-3xl font-semibold tracking-tight">{totalClicks.toLocaleString()}</p>
             </div>
             <p className="text-xs text-gray-400 mt-1">All time</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-6 flex flex-col gap-1">
+          <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-6 flex flex-col gap-1">
             <div className="flex items-center justify-between">
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium flex items-center gap-2">
+              <p className="text-gray-500 dark:text-[#A1A1AA] text-sm font-medium flex items-center gap-2">
                 <Users className="w-4 h-4" /> Unique Visitors
               </p>
             </div>
             <div className="mt-2 flex items-baseline gap-2">
-              <p className="text-gray-900 dark:text-white text-3xl font-semibold tracking-tight">-</p>
+              <p className="text-gray-900 dark:text-[#EDEDED] text-3xl font-semibold tracking-tight">-</p>
             </div>
             <p className="text-xs text-gray-400 mt-1">Not tracked yet</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-6 flex flex-col gap-1">
+          <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-6 flex flex-col gap-1">
             <div className="flex items-center justify-between">
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium flex items-center gap-2">
+              <p className="text-gray-500 dark:text-[#A1A1AA] text-sm font-medium flex items-center gap-2">
                 <Percent className="w-4 h-4" /> Avg. CTR
               </p>
             </div>
             <div className="mt-2 flex items-baseline gap-2">
-              <p className="text-gray-900 dark:text-white text-3xl font-semibold tracking-tight">-</p>
+              <p className="text-gray-900 dark:text-[#EDEDED] text-3xl font-semibold tracking-tight">-</p>
             </div>
             <p className="text-xs text-gray-400 mt-1">Not tracked yet</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-6 flex flex-col gap-1">
+          <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-6 flex flex-col gap-1">
             <div className="flex items-center justify-between">
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium flex items-center gap-2">
+              <p className="text-gray-500 dark:text-[#A1A1AA] text-sm font-medium flex items-center gap-2">
                 <Share2 className="w-4 h-4" /> Top Source
               </p>
             </div>
             <div className="mt-2 flex items-baseline gap-2">
-              <p className="text-gray-900 dark:text-white text-3xl font-semibold tracking-tight truncate">
+              <p className="text-gray-900 dark:text-[#EDEDED] text-3xl font-semibold tracking-tight truncate">
                 {clicksByBrowser.length > 0 ? clicksByBrowser[0].browser : 'N/A'}
               </p>
             </div>
@@ -221,20 +221,20 @@ const AnalyticsPage: React.FC = () => {
         </section>
 
         {/* Main Chart */}
-        <section className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-6 flex flex-col gap-6">
+        <section className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-6 flex flex-col gap-6">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Clicks over time</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Daily breakdown of link performance</p>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED]">Clicks over time</h2>
+              <p className="text-sm text-gray-500 dark:text-[#A1A1AA]">Daily breakdown of link performance</p>
             </div>
-            <div className="inline-flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800 p-1">
+            <div className="inline-flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#222222] p-1">
               {['24h', '7d', '30d', 'all'].map(p => (
                 <button
                   key={p}
                   onClick={() => setPeriod(p)}
                   className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                     period === p 
-                    ? 'bg-white dark:bg-slate-700 text-black dark:text-white shadow-sm' 
+                    ? 'bg-white dark:bg-[#2B2B30] text-black dark:text-[#EDEDED] shadow-sm' 
                     : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
@@ -270,7 +270,7 @@ const AnalyticsPage: React.FC = () => {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-600 border border-dashed border-gray-200 dark:border-slate-800 rounded-lg">
+              <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-600 border border-dashed border-gray-200 dark:border-[#2B2B30] rounded-lg">
                 No data available for the selected period
               </div>
             )}
@@ -281,23 +281,23 @@ const AnalyticsPage: React.FC = () => {
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Countries */}
-          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-0 flex flex-col overflow-hidden">
-            <div className="p-4 border-b border-gray-200 dark:border-slate-800 flex items-center gap-2">
-              <Globe className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <h3 className="font-medium text-sm text-gray-900 dark:text-white">Top Countries</h3>
+          <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-0 flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-gray-200 dark:border-[#2B2B30] flex items-center gap-2">
+              <Globe className="w-4 h-4 text-gray-500 dark:text-[#A1A1AA]" />
+              <h3 className="font-medium text-sm text-gray-900 dark:text-[#EDEDED]">Top Countries</h3>
             </div>
             <div className="flex flex-col flex-1 overflow-y-auto max-h-[300px]">
               {clicksByCountry.length > 0 ? (
                 clicksByCountry.slice(0, 5).map((country) => {
                   const pct = totalClicks > 0 ? (country.count / totalClicks) * 100 : 0;
                   return (
-                    <div key={country.country} className="group flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors border-b border-gray-100 dark:border-slate-800/50 last:border-0 relative">
+                    <div key={country.country} className="group flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-[#2B2B30]/50 transition-colors border-b border-gray-100 dark:border-[#2B2B30]/50 last:border-0 relative">
                       <div className="absolute left-0 top-0 bottom-0 bg-[#7c3aed]/10 z-0 rounded-r-sm transition-all" style={{ width: `${pct}%` }}></div>
                       <div className="flex items-center gap-3 z-10">
                         <Globe className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{country.country}</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-[#EDEDED] truncate">{country.country}</span>
                       </div>
-                      <span className="text-sm text-gray-500 dark:text-gray-400 z-10">{country.count}</span>
+                      <span className="text-sm text-gray-500 dark:text-[#A1A1AA] z-10">{country.count}</span>
                     </div>
                   )
                 })
@@ -308,10 +308,10 @@ const AnalyticsPage: React.FC = () => {
           </div>
 
           {/* Devices */}
-          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-0 flex flex-col overflow-hidden">
-            <div className="p-4 border-b border-gray-200 dark:border-slate-800 flex items-center gap-2">
-              <Monitor className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <h3 className="font-medium text-sm text-gray-900 dark:text-white">Devices</h3>
+          <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-0 flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-gray-200 dark:border-[#2B2B30] flex items-center gap-2">
+              <Monitor className="w-4 h-4 text-gray-500 dark:text-[#A1A1AA]" />
+              <h3 className="font-medium text-sm text-gray-900 dark:text-[#EDEDED]">Devices</h3>
             </div>
             <div className="p-6 flex-1 flex flex-col justify-center items-center h-[300px]">
               {clicksByDevice.length > 0 ? (
@@ -342,7 +342,7 @@ const AnalyticsPage: React.FC = () => {
                       return (
                         <div key={device.device} className="flex items-center gap-2">
                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">{device.device} ({pct}%)</span>
+                          <span className="text-xs text-gray-500 dark:text-[#A1A1AA]">{device.device} ({pct}%)</span>
                         </div>
                       )
                     })}
@@ -355,25 +355,25 @@ const AnalyticsPage: React.FC = () => {
           </div>
 
           {/* Referrers */}
-          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm p-0 flex flex-col overflow-hidden">
-            <div className="p-4 border-b border-gray-200 dark:border-slate-800 flex items-center gap-2">
-              <LinkIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <h3 className="font-medium text-sm text-gray-900 dark:text-white">Referrers</h3>
+          <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-0 flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-gray-200 dark:border-[#2B2B30] flex items-center gap-2">
+              <LinkIcon className="w-4 h-4 text-gray-500 dark:text-[#A1A1AA]" />
+              <h3 className="font-medium text-sm text-gray-900 dark:text-[#EDEDED]">Referrers</h3>
             </div>
             <div className="flex flex-col flex-1 overflow-y-auto max-h-[300px]">
               {clicksByBrowser.length > 0 ? (
                 clicksByBrowser.slice(0, 5).map((browser) => {
                   const pct = totalClicks > 0 ? (browser.count / totalClicks) * 100 : 0;
                   return (
-                    <div key={browser.browser} className="group flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors border-b border-gray-100 dark:border-slate-800/50 last:border-0 relative">
+                    <div key={browser.browser} className="group flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-[#2B2B30]/50 transition-colors border-b border-gray-100 dark:border-[#2B2B30]/50 last:border-0 relative">
                       <div className="absolute left-0 top-0 bottom-0 bg-[#7c3aed]/10 z-0 rounded-r-sm transition-all" style={{ width: `${pct}%` }}></div>
                       <div className="flex items-center gap-3 z-10">
-                        <div className="w-6 h-6 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded flex items-center justify-center text-[10px] font-bold text-gray-900 dark:text-white shadow-sm uppercase">
+                        <div className="w-6 h-6 bg-white dark:bg-[#222222] border border-gray-200 dark:border-[#2B2B30] rounded flex items-center justify-center text-[10px] font-bold text-gray-900 dark:text-[#EDEDED] shadow-sm uppercase">
                           {browser.browser.substring(0, 1)}
                         </div>
-                        <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{browser.browser}</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-[#EDEDED] truncate">{browser.browser}</span>
                       </div>
-                      <span className="text-sm text-gray-500 dark:text-gray-400 z-10">{browser.count}</span>
+                      <span className="text-sm text-gray-500 dark:text-[#A1A1AA] z-10">{browser.count}</span>
                     </div>
                   )
                 })

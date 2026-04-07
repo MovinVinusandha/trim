@@ -63,16 +63,16 @@ const CreateTagModal: React.FC<CreateTagModalProps> = ({ isOpen, onClose, onSucc
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative border border-gray-200 dark:border-slate-800">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-slate-800 z-10">
+    <div className="fixed inset-0 z-[100] bg-white/50 dark:bg-[#1E1E21]/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-[#1E1E21] rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative border border-gray-200 dark:border-[#2B2B30]">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-[#2B2B30] z-10">
           <X className="w-5 h-5" />
         </button>
 
         <form onSubmit={handleSubmit}>
           <div className="p-8">
             <div className="flex flex-col items-center text-center mb-8">
-              <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center mb-4 border border-gray-200 dark:border-slate-700">
+              <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center mb-4 border border-gray-200 dark:border-[#2B2B30]">
                 <InfinityIcon className="w-6 h-6 text-gray-900 dark:text-white" />
               </div>
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">{tagToEdit ? 'Edit tag' : 'Create tag'}</h2>
@@ -90,7 +90,7 @@ const CreateTagModal: React.FC<CreateTagModalProps> = ({ isOpen, onClose, onSucc
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   autoFocus
-                  className="block w-full rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm shadow-sm focus:border-black focus:ring-1 focus:ring-black dark:focus:border-white dark:focus:ring-white dark:text-white placeholder:text-gray-400 transition-colors" 
+                  className="block w-full rounded-lg border border-gray-300 dark:border-[#2B2B30] bg-white dark:bg-[#1E1E21] px-3 py-2 text-sm shadow-sm focus:border-black focus:ring-1 focus:ring-black dark:focus:border-white dark:focus:ring-white dark:text-white placeholder:text-gray-400 transition-colors" 
                   placeholder="e.g. Marketing" 
                 />
               </div>

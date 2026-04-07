@@ -607,7 +607,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                           onClick={() => handleExpirationPresetChange(preset.id)}
                           className={expirationPreset.toLowerCase() === preset.id.toLowerCase() 
                             ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900 border border-transparent px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
-                            : "bg-transparent text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-slate-800 px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
+                            : "bg-transparent text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#2B2B30] px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
                           }
                         >
                           {preset.label}
@@ -647,7 +647,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                   </div>
 
                   {urlToEdit ? (
-                    <div className="flex items-center gap-2 w-full border border-gray-200 dark:border-slate-700 bg-gray-100 dark:bg-slate-800 rounded-md px-3 py-2 text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed">
+                    <div className="flex items-center gap-2 w-full border border-gray-200 dark:border-[#2B2B30] bg-gray-100 dark:bg-[#2B2B30] rounded-md px-3 py-2 text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed">
                       <Folder className="w-4 h-4 text-emerald-500" />
                       <span className="truncate">
                         {urlToEdit?.folderName || (folders || []).find(f => f.id === urlToEdit?.folderId)?.name || 'Uncategorized'}
@@ -762,7 +762,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
         </div>
 
         {/* Footer */}
-        <footer className="border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 px-6 py-4 flex items-center justify-between gap-4 shrink-0">
+        <footer className="border-t border-gray-200 dark:border-[#2B2B30] bg-gray-50 dark:bg-[#2B2B30]/50 px-6 py-4 flex items-center justify-between gap-4 shrink-0">
           <div></div>
           <div>
             <button 

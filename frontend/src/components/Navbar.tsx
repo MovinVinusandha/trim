@@ -14,7 +14,7 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md transition-colors duration-200">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-[#2B2B30] bg-white/80 dark:bg-[#111113]/80 backdrop-blur-md transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
 
@@ -63,7 +63,7 @@ const Navbar: React.FC = () => {
                 <button
                   id="logout-button"
                   onClick={handleLogout}
-                  className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-300 dark:border-[#2B2B30] hover:border-slate-400 dark:hover:border-slate-500 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 hover:bg-slate-100 dark:hover:bg-[#2B2B30]"
                 >
                   <LogOut className="w-4 h-4" />
                   <span className="hidden sm:inline">Logout</span>
@@ -74,7 +74,7 @@ const Navbar: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Link
                   to="/login"
-                  className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-sm font-medium px-3 py-2 rounded-xl transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-sm font-medium px-3 py-2 rounded-xl transition-colors hover:bg-slate-100 dark:hover:bg-[#2B2B30]"
                 >
                   Sign in
                 </Link>
