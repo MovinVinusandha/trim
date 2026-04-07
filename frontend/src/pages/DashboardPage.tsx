@@ -20,8 +20,8 @@ const mapDtoToEntry = (d: UrlDto): UrlEntry => ({
   createdAt: d.createdAt,
   updatedAt: d.updatedAt,
   expiresAt: d.expiresAt,
-  isActive: d.isActive ?? true,
-  hasPassword: d.hasPassword,
+  isActive: d.isActive ?? (d as any).active ?? true,
+  hasPassword: d.hasPassword ?? (d as any).password ?? false,
   tags: d.tags,
   folderId: d.folderId,
   folderName: d.folderName,
@@ -238,10 +238,20 @@ const DashboardPage: React.FC = () => {
     };
   }, [urls.length, syncClickCounts, saveToStorage]);
 
-  /** Called when ShortenForm successfully shortens a URL */
-  const handleShortened = useCallback((newEntry: UrlEntry) => {
+  /** Called when ShortenForm successfully shortens or updates a URL */
+  const handleShortened = useCallback((newEntry: any) => {
+    const entry = newEntry.accessed_times !== undefined ? newEntry : mapDtoToEntry(newEntry);
     setUrls((prev) => {
-      const updatedList = [newEntry, ...prev];
+      const hashToFind = extractHash(entry.shortUrl);
+      const existingIdx = prev.findIndex(u => extractHash(u.shortUrl) === hashToFind);
+      
+      let updatedList;
+      if (existingIdx !== -1) {
+        updatedList = prev.map((u, i) => (i === existingIdx ? entry : u));
+      } else {
+        updatedList = [entry, ...prev];
+      }
+      
       saveToStorage(updatedList);
       return updatedList;
     });
@@ -783,9 +793,10 @@ const DashboardPage: React.FC = () => {
           tags={tags}
           urlToEdit={editingUrl}
           onSuccess={(updatedEntry) => {
+            const entry = updatedEntry.accessed_times !== undefined ? updatedEntry : mapDtoToEntry(updatedEntry);
             const idx = urls.findIndex(u => u.shortUrl === editingUrl.shortUrl);
             if (idx !== -1) {
-              handleUpdated(idx, updatedEntry);
+              handleUpdated(idx, entry);
             }
           }}
         />

@@ -126,7 +126,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
         setCustomAlias(urlToEdit.shortUrl ? extractHash(urlToEdit.shortUrl) : '');
         setLongUrl(urlToEdit.longUrl || '');
         setPassword('');
-        setExpiresAt(urlToEdit.expiresAt ? urlToEdit.expiresAt.substring(0, 16) : '');
+        setExpiresAt(urlToEdit.expiresAt ? format(parseISO(urlToEdit.expiresAt + 'Z'), "yyyy-MM-dd'T'HH:mm") : '');
         setExpirationPreset(getInitialExpirationPreset(urlToEdit.expiresAt));
         setSelectedTagIds(urlToEdit.tags?.map((t: { id: number; name: string }) => t.id) || []);
         setSelectedFolderId(urlToEdit.folderId || '');
@@ -172,13 +172,13 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
     if (preset === 'none') {
       setExpiresAt('');
     } else if (preset === '1hour') {
-      setExpiresAt(new Date(Date.now() + 60 * 60 * 1000).toISOString().substring(0, 19));
+      setExpiresAt(new Date(Date.now() + 3600000).toISOString().substring(0, 19));
     } else if (preset === '24hours') {
-      setExpiresAt(new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().substring(0, 19));
+      setExpiresAt(new Date(Date.now() + 86400000).toISOString().substring(0, 19));
     } else if (preset === '7days') {
-      setExpiresAt(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().substring(0, 19));
+      setExpiresAt(new Date(Date.now() + 604800000).toISOString().substring(0, 19));
     } else if (preset === 'custom') {
-      setExpiresAt(new Date(Date.now() + 60 * 60 * 1000).toISOString().substring(0, 19));
+      setExpiresAt(new Date(Date.now() + 3600000).toISOString().substring(0, 19));
     }
   };
 
@@ -197,27 +197,34 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
         }
         console.log("Attempting to update hash:", hash);
         
+        const isCurrentlyExpired = urlToEdit.expiresAt ? new Date(urlToEdit.expiresAt + 'Z').getTime() < Date.now() : !urlToEdit.isActive;
+        const willBeExpired = expiresAt ? new Date(expiresAt + 'Z').getTime() < Date.now() : false;
+
+        if (isCurrentlyExpired && !willBeExpired) {
+          const confirmed = window.confirm("This link is currently expired. Updating this will reactivate the link. Do you want to proceed?");
+          if (!confirmed) {
+            setLoading(false);
+            return;
+          }
+        }
+        
+        if (!isCurrentlyExpired && willBeExpired) {
+          const confirmed = window.confirm("The expiration time you selected is in the past. This will instantly expire and deactivate the link. Do you want to proceed?");
+          if (!confirmed) {
+            setLoading(false);
+            return;
+          }
+        }
+
         const updatePayload = {
           longUrl: longUrl.trim(),
           password: password.trim() || null,
-          expiresAt: expiresAt ? new Date(expiresAt).toISOString().substring(0, 19) : null,
+          expiresAt: expiresAt ? new Date(expiresAt + 'Z').toISOString() : null,
           tagIds: selectedTagIds.length > 0 ? selectedTagIds : []
         };
 
         const { data } = await axiosInstance.put(`/url/${hash}`, updatePayload);
-        const mappedEntry = {
-          longUrl: data.longUrl,
-          shortUrl: data.shortUrl,
-          accessed_times: urlToEdit.accessed_times,
-          createdAt: urlToEdit.createdAt,
-          expiresAt: data.expiresAt,
-          isActive: data.isActive ?? true,
-          hasPassword: !!password.trim() || urlToEdit.hasPassword,
-          tags: data.tags,
-          folderId: urlToEdit.folderId, // Folder wasn't updated via API
-          folderName: urlToEdit.folderName
-        };
-        onSuccess(mappedEntry);
+        onSuccess(data);
       } else {
         const createPayload: any = {
           longUrl: longUrl.trim(),
@@ -227,24 +234,11 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
           folderId: selectedFolderId !== '' ? selectedFolderId : undefined
         };
         if (expiresAt) {
-          createPayload.expiresAt = new Date(expiresAt).toISOString().substring(0, 19);
+          createPayload.expiresAt = new Date(expiresAt + 'Z').toISOString();
         }
         
         const { data } = await axiosInstance.post('/shorten', createPayload);
-        
-        const mappedEntry = {
-          longUrl: data.longUrl,
-          shortUrl: data.shortUrl,
-          accessed_times: 0,
-          createdAt: data.createdAt,
-          expiresAt: data.expiresAt,
-          isActive: data.isActive ?? true,
-          hasPassword: !!password.trim(),
-          tags: data.tags,
-          folderId: data.folderId,
-          folderName: data.folderName
-        };
-        onSuccess(mappedEntry);
+        onSuccess(data);
       }
       onClose();
     } catch (err: any) {
@@ -281,25 +275,31 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
   const renderExpirationStatus = () => {
     // --- EDIT MODE ---
     if (urlToEdit) {
-      const originalExpireDate = safeParseISO(urlToEdit.expiresAt ? urlToEdit.expiresAt + 'Z' : null);
-      const newExpireDate = safeParseISO(expiresAt ? expiresAt + 'Z' : null);
+      const originalExpireDate = urlToEdit.expiresAt ? new Date(urlToEdit.expiresAt + 'Z') : null;
+      const newExpireDate = expiresAt ? new Date(expiresAt + 'Z') : null;
+
+      const isCurrentlyExpired = urlToEdit.isActive === false || (originalExpireDate && originalExpireDate.getTime() <= Date.now());
 
       return (
         <div className="mt-2 flex items-center gap-3 text-sm min-h-[2rem]">
           {/* "Before" state */}
           <div className="text-gray-500" title={originalExpireDate ? format(originalExpireDate, 'PPpp') : 'No expiration set'}>
-            {originalExpireDate && new Date() < originalExpireDate 
-              ? `${formatDistanceToNow(originalExpireDate, { addSuffix: false })} remaining`
-              : 'Expired'}
+            {isCurrentlyExpired 
+              ? <span className="text-red-500 font-medium">Expired</span>
+              : (!originalExpireDate 
+                  ? 'Never expires' 
+                  : `${formatDistanceToNow(originalExpireDate, { addSuffix: false })} remaining`)}
           </div>
 
           <ArrowRight className="w-4 h-4 text-gray-400" />
 
           {/* "After" state */}
-          <div className="font-medium text-gray-800 dark:text-gray-200" title={newExpireDate ? format(newExpireDate, 'PPpp') : 'Will never expire'}>
-            {newExpireDate 
-              ? `Expires ${formatDistanceToNow(newExpireDate, { addSuffix: true })}`
-              : 'Never expires'}
+          <div className="font-medium text-gray-800 dark:text-gray-200" title={newExpireDate && expirationPreset.toLowerCase() !== 'none' ? format(newExpireDate, 'PPpp') : 'Will never expire'}>
+            {!newExpireDate || expirationPreset.toLowerCase() === 'none'
+              ? 'Never expires'
+              : (newExpireDate.getTime() < Date.now()
+                  ? <span className="text-red-500 font-medium">Will expire immediately</span>
+                  : `Expires ${formatDistanceToNow(newExpireDate, { addSuffix: true })}`)}
           </div>
         </div>
       );
@@ -308,17 +308,25 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
     // --- CREATE MODE ---
     if (!expiresAt || expirationPreset.toLowerCase() === 'none') return null;
     
-    const expireDate = safeParseISO(expiresAt + 'Z');
+    const expireDate = expiresAt ? new Date(expiresAt + 'Z') : null;
     if (!expireDate) return null;
 
     return (
       <div className="mt-2 flex flex-col min-h-[2rem]" title={format(expireDate, 'PPpp')}>
-        <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-          Expires {formatDistanceToNow(expireDate, { addSuffix: true })}
-        </span>
-        <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-          {format(expireDate, "PPpp")}
-        </span>
+        {expireDate.getTime() > Date.now() ? (
+          <>
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              Expires {formatDistanceToNow(expireDate, { addSuffix: true })}
+            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              {format(expireDate, "PPpp")}
+            </span>
+          </>
+        ) : (
+          <span className="text-sm font-medium text-red-500">
+            Will expire immediately
+          </span>
+        )}
       </div>
     );
   };
