@@ -14,6 +14,10 @@ vi.mock('../context/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
+vi.mock('../context/ThemeContext', () => ({
+  useTheme: vi.fn(() => ({ theme: 'light', setTheme: vi.fn() })),
+}));
+
 describe('DashboardLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -67,12 +71,15 @@ describe('DashboardLayout', () => {
     await waitFor(() => {
       expect(screen.getAllByText('Analytics').length).toBeGreaterThan(0);
     });
+  });
 
-    rerender(
+  it('dynamic top header title changes to Folders based on location', async () => {
+    (axiosInstance.get as any).mockResolvedValue({ data: [] });
+
+    render(
       <MemoryRouter initialEntries={['/folders']}>
         <Routes>
           <Route path="/" element={<DashboardLayout />}>
-            <Route path="analytics" element={<div>Analytics Content</div>} />
             <Route path="folders" element={<div>Folders Content</div>} />
           </Route>
         </Routes>
@@ -81,6 +88,61 @@ describe('DashboardLayout', () => {
 
     await waitFor(() => {
       expect(screen.getAllByText('Folders').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('global create button is Create link on /dashboard', async () => {
+    (axiosInstance.get as any).mockResolvedValue({ data: [] });
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <Routes>
+          <Route path="/" element={<DashboardLayout />}>
+            <Route path="dashboard" element={<div>Dashboard Content</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    );
+    
+    await waitFor(() => {
+      expect(screen.getByText('Create link')).toBeInTheDocument();
+    });
+  });
+
+  it('global create button is Create folder on /folders', async () => {
+    (axiosInstance.get as any).mockResolvedValue({ data: [] });
+
+    render(
+      <MemoryRouter initialEntries={['/folders']}>
+        <Routes>
+          <Route path="/" element={<DashboardLayout />}>
+            <Route path="folders" element={<div>Folders Content</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Create folder')).toBeInTheDocument();
+      expect(screen.queryByText('Create link')).not.toBeInTheDocument();
+    });
+  });
+
+  it('global create button is Create tag on /tags', async () => {
+    (axiosInstance.get as any).mockResolvedValue({ data: [] });
+
+    render(
+      <MemoryRouter initialEntries={['/tags']}>
+        <Routes>
+          <Route path="/" element={<DashboardLayout />}>
+            <Route path="tags" element={<div>Tags Content</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Create tag')).toBeInTheDocument();
     });
   });
 });

@@ -91,4 +91,73 @@ describe('CreateLinkModal', () => {
     fireEvent.click(toggleButton);
     expect((input as HTMLInputElement).type).toBe('password');
   });
+
+  describe('Edit Mode', () => {
+    const mockUrlToEdit = {
+      shortUrl: 'http://trim.sh/abc123',
+      longUrl: 'https://example.com/edit',
+      folderId: 1,
+      folderName: 'My Folder',
+      tags: [{ id: 1, name: 'youtube', color: 'red' }],
+      hasPassword: true,
+      expiresAt: '2025-12-31T23:59:59',
+      isActive: true,
+    };
+
+    it('pre-fills inputs and disables short URL input', () => {
+      render(
+        <CreateLinkModal 
+          isOpen={true} 
+          onClose={vi.fn()} 
+          onSuccess={vi.fn()} 
+          folders={[{ id: 1, name: 'My Folder' }]} 
+          tags={[{ id: 1, name: 'youtube', color: 'red' }]}
+          urlToEdit={mockUrlToEdit}
+        />
+      );
+
+      // Destination URL is pre-filled
+      const longUrlInput = screen.getByDisplayValue('https://example.com/edit');
+      expect(longUrlInput).toBeInTheDocument();
+
+      // Short Link is disabled
+      const shortUrlInput = screen.getByDisplayValue('abc123');
+      expect(shortUrlInput).toBeDisabled();
+      
+      // Submit button text changes
+      expect(screen.getByText('Save changes')).toBeInTheDocument();
+    });
+
+    it('submits using axiosInstance.put when in edit mode', async () => {
+      const onSuccessMock = vi.fn();
+      
+      // Need to mock axiosInstance for put
+      const axiosInstance = (await import('../api/axiosInstance')).default;
+      (axiosInstance.put as any) = vi.fn().mockResolvedValue({ data: { success: true } });
+
+      render(
+        <CreateLinkModal 
+          isOpen={true} 
+          onClose={vi.fn()} 
+          onSuccess={onSuccessMock} 
+          folders={[]} 
+          tags={[]}
+          urlToEdit={mockUrlToEdit}
+        />
+      );
+
+      // Change long URL
+      const longUrlInput = screen.getByDisplayValue('https://example.com/edit');
+      fireEvent.change(longUrlInput, { target: { value: 'https://example.com/updated' } });
+
+      // Click save
+      const saveBtn = screen.getByText('Save changes');
+      fireEvent.click(saveBtn);
+
+      // Assert put was called correctly
+      expect(axiosInstance.put).toHaveBeenCalledWith('/url/abc123', expect.objectContaining({
+        longUrl: 'https://example.com/updated',
+      }));
+    });
+  });
 });
