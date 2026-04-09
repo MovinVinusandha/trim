@@ -308,9 +308,9 @@ const DashboardLayout: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0 h-screen pt-2 pr-2 pb-2 pl-0 gap-1.5">
         
         {/* Combined Top Header and Navigation Tabs */}
-        <div className="flex flex-col rounded-xl overflow-hidden shrink-0 shadow-sm border border-gray-200 dark:border-[#2B2B30]">
+        <div className="flex flex-col rounded-xl shrink-0 shadow-sm border border-gray-200 dark:border-[#2B2B30] relative z-40">
           {/* Top Header */}
-          <header className="h-16 bg-[#F5F5F5] dark:bg-[#1D1D1F] px-6 flex items-center justify-between z-40 border-b border-gray-200 dark:border-[#2B2B30]">
+          <header className="h-16 bg-[#F5F5F5] dark:bg-[#1D1D1F] px-6 flex items-center justify-between relative z-[60] rounded-t-xl border-b border-gray-200 dark:border-[#2B2B30]">
           <div className="flex items-center gap-2 relative" ref={folderSwitcherRef}>
             {location.pathname.startsWith('/settings') ? (
               <div className="flex items-center gap-3">
@@ -335,7 +335,7 @@ const DashboardLayout: React.FC = () => {
                 </button>
                 
                 {isFolderSwitcherOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] shadow-lg rounded-lg p-2 z-50 flex flex-col gap-2">
+                  <div className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] shadow-xl rounded-lg p-2 z-[100] flex flex-col gap-2">
                     <div className="relative flex items-center justify-between gap-2 border border-gray-200 dark:border-[#2B2B30] rounded-md bg-white dark:bg-[#1E1E21] focus-within:ring-2 focus-within:ring-black dark:focus-within:ring-white transition-shadow px-2">
                       <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
                       <input 
@@ -409,7 +409,7 @@ const DashboardLayout: React.FC = () => {
         </header>
 
           {/* Top Navigation Tabs */}
-          <div className="h-14 bg-[#F5F5F5] dark:bg-[#1D1D1F] px-6 flex items-center justify-between text-sm z-30">
+          <div className="h-14 bg-[#F5F5F5] dark:bg-[#1D1D1F] px-6 flex items-center justify-between text-sm relative z-[40] rounded-b-xl">
           <div className="flex items-center overflow-x-auto whitespace-nowrap gap-2">
             {location.pathname.startsWith('/settings') ? (
               <>
