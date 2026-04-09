@@ -6,7 +6,9 @@ import {
 } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import axios from 'axios';
-import { format, formatDistanceToNow, parseISO } from 'date-fns';
+import type { UrlEntry } from '../types';
+import { format, parseISO, formatDistanceToNow, addDays, startOfDay } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { Tag as TagType, Folder as FolderType } from '../types';
 
 interface CreateLinkModalProps {
@@ -171,7 +173,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
     fetchQrCode();
   }, [customAlias]);
 
-  if (!isOpen) return null;
+  // removed early return for AnimatePresence
 
   const toggleTag = (id: number) => {
     setSelectedTagIds(prev => 
@@ -380,8 +382,22 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-500/30 backdrop-blur-sm z-[100] transition-opacity flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-[#1E1E21] rounded-2xl shadow-xl w-full max-w-5xl z-[101] overflow-hidden flex flex-col relative max-h-[95vh] border border-transparent dark:border-[#2B2B30]">
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          exit={{ opacity: 0 }} 
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 bg-gray-500/30 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+        >
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="bg-white dark:bg-[#1E1E21] rounded-2xl shadow-xl w-full max-w-5xl z-[101] overflow-hidden flex flex-col relative max-h-[95vh] border border-transparent dark:border-[#2B2B30]"
+          >
         {/* Header */}
         <header className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#2B2B30] shrink-0">
           <div className="flex items-center gap-2 text-sm">
@@ -510,7 +526,8 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                       </div>
                       <div className="max-h-60 overflow-y-auto p-1 space-y-1">
                         {filteredTags.map(tag => (
-                          <button
+                          <motion.button
+                            layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
                             key={tag.id}
                             type="button"
                             onClick={() => toggleTag(tag.id)}
@@ -521,7 +538,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                             </div>
                             <Tag className={`w-3.5 h-3.5 ${getTagColor(tag.color).classes.split(' ').find(c => c.startsWith('text-') && !c.includes('dark:'))}`} />
                             <span>{tag.name}</span>
-                          </button>
+                          </motion.button>
                         ))}
                       </div>
                       {tagSearchQuery && !localTags.some(t => t.name.toLowerCase() === tagSearchQuery.toLowerCase()) && (
@@ -698,7 +715,8 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                               {selectedFolderId === '' && <Check className="w-3.5 h-3.5 text-black" />}
                             </button>
                             {filteredFolders.map(folder => (
-                              <button
+                              <motion.button
+                                layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
                                 key={folder.id}
                                 type="button"
                                 onClick={() => { setSelectedFolderId(folder.id); setIsFolderDropdownOpen(false); }}
@@ -706,7 +724,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                               >
                                 <span className="truncate">{folder.name}</span>
                                 {selectedFolderId === folder.id && <Check className="w-3.5 h-3.5 text-black" />}
-                              </button>
+                              </motion.button>
                             ))}
                           </div>
                           <div className="p-1 border-t border-gray-100">
@@ -778,8 +796,10 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
             </button>
           </div>
         </footer>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

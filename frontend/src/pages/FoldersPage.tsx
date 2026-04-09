@@ -4,6 +4,7 @@ import { Search, MoreVertical, Trash2, Link as LinkIcon, Folder as FolderIcon, P
 import axiosInstance from '../api/axiosInstance';
 import type { DashboardLayoutContext } from '../layouts/DashboardLayout';
 import Skeleton from 'react-loading-skeleton';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const FoldersPage: React.FC = () => {
   const { folders, setFolders, setActiveFolderId, setFolderToEdit, setIsFolderModalOpen, isFoldersLoading } = useOutletContext<DashboardLayoutContext>();
@@ -39,7 +40,7 @@ const FoldersPage: React.FC = () => {
   );
 
   return (
-    <div className="flex-1 py-8 w-full">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 py-8 w-full">
       <div className="space-y-6">
         
         <div className="relative w-full max-w-md">
@@ -71,7 +72,7 @@ const FoldersPage: React.FC = () => {
             ))
           ) : (
             filteredFolders.map(folder => (
-              <div key={folder.id} onClick={() => handleFolderClick(folder.id)} className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow group relative cursor-pointer">
+              <motion.div layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2 }} key={folder.id} onClick={() => handleFolderClick(folder.id)} className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow group relative cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg text-emerald-600 dark:text-emerald-400">
@@ -93,8 +94,15 @@ const FoldersPage: React.FC = () => {
                       <MoreVertical className="w-4 h-4" />
                     </button>
                     
+                    <AnimatePresence>
                     {openMenuId === folder.id && (
-                      <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg z-[60] overflow-hidden">
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        className="absolute right-0 mt-1 w-32 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg z-[60] overflow-hidden"
+                      >
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -118,8 +126,9 @@ const FoldersPage: React.FC = () => {
                           <Trash2 className="w-4 h-4" />
                           Delete
                         </button>
-                      </div>
+                      </motion.div>
                     )}
+                    </AnimatePresence>
                   </div>
                 </div>
                 
@@ -131,7 +140,7 @@ const FoldersPage: React.FC = () => {
                     {folder.linkCount || 0} {(folder.linkCount || 0) === 1 ? 'link' : 'links'}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))
           )}
           
@@ -143,8 +152,9 @@ const FoldersPage: React.FC = () => {
         </div>
       </div>
 
+      <AnimatePresence>
       {folderToDelete && (
-        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#1E1E21] max-w-sm w-full rounded-xl p-6 shadow-xl border border-gray-200 dark:border-[#2B2B30]">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED] mb-2">Delete Folder</h3>
             <p className="text-sm text-gray-500 dark:text-[#A1A1AA] mb-6">
@@ -165,9 +175,10 @@ const FoldersPage: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

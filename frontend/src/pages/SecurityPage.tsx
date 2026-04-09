@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Check, AlertCircle } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
+import { motion } from 'framer-motion';
 
 const SecurityPage: React.FC = () => {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -37,7 +38,7 @@ const SecurityPage: React.FC = () => {
   };
 
   return (
-    <div className="py-8 max-w-4xl mx-auto space-y-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-8 max-w-4xl mx-auto space-y-6">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Security Settings</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your password and security preferences.</p>
@@ -108,7 +109,7 @@ const SecurityPage: React.FC = () => {
           </form>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

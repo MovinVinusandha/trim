@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useOutletContext, Link, useSearchParams } from 'react-router-dom';
 import { X, BarChart2, Search, Copy, QrCode, Edit2, Trash2, CornerDownRight, MoreVertical, Filter, SlidersHorizontal, ChevronDown, ArrowUpDown, Check, ArrowDownWideNarrow, Tag, ChevronLeft, CheckCircle2, XCircle, Lock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import CreateLinkModal from '../components/CreateLinkModal';
 import ClickArrowIcon from '../components/icons/ClickArrowIcon';
@@ -357,7 +358,7 @@ const DashboardPage: React.FC = () => {
 
 
   return (
-    <>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col h-full w-full">
 
         <div className="flex-1 py-6 w-full">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 mt-2">
@@ -373,8 +374,15 @@ const DashboardPage: React.FC = () => {
                   <ChevronDown className="w-3 h-3 opacity-70" />
                 </button>
 
+                <AnimatePresence>
                 {isFilterOpen && (
-                  <div className="absolute left-0 top-full mt-2 w-64 rounded-lg shadow-xl bg-white dark:bg-[#1E1E21] ring-1 ring-black/5 dark:ring-white/10 border border-gray-200 dark:border-[#2B2B30] divide-y divide-gray-100 dark:divide-slate-800 focus:outline-none z-[60] overflow-hidden">
+                  <motion.div 
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className="absolute left-0 top-full mt-2 w-64 rounded-lg shadow-xl bg-white dark:bg-[#1E1E21] ring-1 ring-black/5 dark:ring-white/10 border border-gray-200 dark:border-[#2B2B30] divide-y divide-gray-100 dark:divide-slate-800 focus:outline-none z-[60] overflow-hidden"
+                  >
                     {activeFilter === 'none' ? (
                       <>
                         <div className="p-2">
@@ -448,8 +456,9 @@ const DashboardPage: React.FC = () => {
                         </div>
                       </>
                     ) : null}
-                  </div>
+                  </motion.div>
                 )}
+                </AnimatePresence>
               </div>
               
               {/* Active Filters Pills */}
@@ -479,8 +488,15 @@ const DashboardPage: React.FC = () => {
                   <ChevronDown className="w-3 h-3 text-gray-400" />
                 </button>
                 
+                <AnimatePresence>
                 {isDisplayOpen && (
-                  <div className="absolute top-full left-0 mt-2 bg-white dark:bg-[#1E1E21] rounded-lg shadow-xl ring-1 ring-gray-100 dark:ring-slate-800 border border-gray-200 dark:border-[#2B2B30] w-[320px] z-50 flex flex-col">
+                  <motion.div 
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className="absolute top-full left-0 mt-2 bg-white dark:bg-[#1E1E21] rounded-lg shadow-xl ring-1 ring-gray-100 dark:ring-slate-800 border border-gray-200 dark:border-[#2B2B30] w-[320px] z-50 flex flex-col"
+                  >
                     {/* Ordering Section */}
                     <div className="p-4 border-b border-gray-100 dark:border-[#2B2B30] flex items-center justify-between">
                       <div className="flex items-center gap-2 text-gray-700 dark:text-[#A1A1AA] text-sm font-medium">
@@ -507,8 +523,15 @@ const DashboardPage: React.FC = () => {
                             <ChevronDown className="w-4 h-4 text-gray-400" />
                           </button>
                           
+                          <AnimatePresence>
                           {isSortMenuOpen && (
-                            <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-[#1E1E21] rounded-lg shadow-xl ring-1 ring-gray-100 dark:ring-slate-800 border border-gray-200 dark:border-[#2B2B30] z-[60] overflow-hidden py-1">
+                            <motion.div 
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              transition={{ duration: 0.15, ease: "easeOut" }}
+                              className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-[#1E1E21] rounded-lg shadow-xl ring-1 ring-gray-100 dark:ring-slate-800 border border-gray-200 dark:border-[#2B2B30] z-[60] overflow-hidden py-1"
+                            >
                               <button
                                 onClick={() => { setSortBy('dateCreated'); setIsSortMenuOpen(false); }}
                                 className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] transition-colors"
@@ -530,8 +553,9 @@ const DashboardPage: React.FC = () => {
                                 </span>
                                 {sortBy === 'totalClicks' && <Check className="w-4 h-4 text-gray-900 dark:text-[#EDEDED]" />}
                               </button>
-                            </div>
+                            </motion.div>
                           )}
+                          </AnimatePresence>
                         </div>
                       </div>
                     </div>
@@ -581,8 +605,9 @@ const DashboardPage: React.FC = () => {
                         </button>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 )}
+                </AnimatePresence>
               </div>
             </div>
             {/* Search Input */}
@@ -622,7 +647,7 @@ const DashboardPage: React.FC = () => {
                 <div className="p-12 text-center text-gray-500">No links found.</div>
               ) : (
                 displayedUrls.map((url) => (
-                  <div key={url.shortUrl} className="group relative flex items-center p-4 hover:bg-gray-50 dark:hover:bg-[#2B2B30]/50 transition-colors">
+                  <motion.div layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} key={url.shortUrl} className="group relative flex items-center p-4 hover:bg-gray-50 dark:hover:bg-[#2B2B30]/50 transition-colors">
                     {/* Favicon */}
                     <div className="shrink-0 mr-4">
                       <div className="w-10 h-10 rounded-full border border-gray-100 dark:border-[#2B2B30] bg-gray-50 dark:bg-[#222222] overflow-hidden flex items-center justify-center p-1">
@@ -764,8 +789,15 @@ const DashboardPage: React.FC = () => {
                           <MoreVertical className="w-4 h-4" />
                         </button>
                         
+                        <AnimatePresence>
                         {openMenuId === url.shortUrl && (
-                          <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg z-50 overflow-hidden">
+                          <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.15, ease: "easeOut" }}
+                            className="absolute right-0 mt-2 w-40 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg z-50 overflow-hidden"
+                          >
                             <Link
                               to={`/analytics/${extractHash(url.shortUrl)}`}
                               className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] flex items-center gap-2"
@@ -799,11 +831,12 @@ const DashboardPage: React.FC = () => {
                               <Trash2 className="w-4 h-4" />
                               Delete
                             </button>
-                          </div>
+                          </motion.div>
                         )}
+                        </AnimatePresence>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))
               )}
             </div>
@@ -872,7 +905,7 @@ const DashboardPage: React.FC = () => {
           }}
         />
       )}
-    </>
+    </motion.div>
   );
 };
 

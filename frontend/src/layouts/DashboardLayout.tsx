@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
 import { Link as LinkIcon, BarChart2, Folder as FolderIcon, Tag as TagIcon, ChevronDown, FolderPlus, Search, HelpCircle, User, Settings, Gift, LogOut, ArrowLeft, Shield, Download, Sun, Moon, Monitor } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import axiosInstance from '../api/axiosInstance';
@@ -218,8 +219,15 @@ const DashboardLayout: React.FC = () => {
               {theme === 'system' ? <Monitor className="w-5 h-5" /> : theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             </button>
 
+            <AnimatePresence>
             {isThemeMenuOpen && (
-              <div className="absolute left-full ml-4 bottom-0 z-50 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] shadow-xl rounded-lg w-32 p-1 flex flex-col gap-1">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="absolute left-full ml-4 bottom-0 z-50 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] shadow-xl rounded-lg w-32 p-1 flex flex-col gap-1"
+              >
                 <button
                   onClick={() => { setTheme('light'); setIsThemeMenuOpen(false); }}
                   className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors w-full text-left ${theme === 'light' ? 'bg-gray-100 dark:bg-[#222222] text-gray-900 dark:text-[#EDEDED]' : 'text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
@@ -238,8 +246,9 @@ const DashboardLayout: React.FC = () => {
                 >
                   <Monitor className="w-4 h-4" /> System
                 </button>
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
           </div>
 
           <div className="relative" ref={userMenuRef}>
@@ -250,8 +259,15 @@ const DashboardLayout: React.FC = () => {
               {user?.name ? user.name.charAt(0) : user?.email ? user.email.charAt(0) : 'U'}
             </button>
 
+            <AnimatePresence>
             {isUserMenuOpen && (
-              <div className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-xl z-50 p-2">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-xl z-50 p-2"
+              >
                 <div className="px-3 py-2 border-b border-gray-100 dark:border-[#2B2B30] mb-1">
                   <div className="font-medium text-gray-900 dark:text-[#EDEDED] truncate">{user?.name || 'User'}</div>
                   <div className="text-sm text-gray-500 dark:text-[#A1A1AA] truncate">{user?.email}</div>
@@ -298,8 +314,9 @@ const DashboardLayout: React.FC = () => {
                     Log out
                   </button>
                 </div>
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
           </div>
         </div>
       </aside>
@@ -334,8 +351,15 @@ const DashboardLayout: React.FC = () => {
                   <ChevronDown className="w-4 h-4 text-gray-400" />
                 </button>
                 
+                <AnimatePresence>
                 {isFolderSwitcherOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] shadow-xl rounded-lg p-2 z-[100] flex flex-col gap-2">
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] shadow-xl rounded-lg p-2 z-[100] flex flex-col gap-2"
+                  >
                     <div className="relative flex items-center justify-between gap-2 border border-gray-200 dark:border-[#2B2B30] rounded-md bg-white dark:bg-[#1E1E21] focus-within:ring-2 focus-within:ring-black dark:focus-within:ring-white transition-shadow px-2">
                       <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
                       <input 
@@ -370,7 +394,8 @@ const DashboardLayout: React.FC = () => {
                     
                     <div className="max-h-48 overflow-y-auto flex flex-col gap-1 border-y border-gray-100 dark:border-[#2B2B30] py-1">
                       {folders.filter(f => f.name.toLowerCase().includes(folderSearch.toLowerCase())).map(folder => (
-                        <button
+                        <motion.button
+                          layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
                           key={folder.id}
                           onClick={() => {
                             setActiveFolderId(folder.id);
@@ -381,7 +406,7 @@ const DashboardLayout: React.FC = () => {
                         >
                           <FolderIcon className="w-4 h-4 text-emerald-500" />
                           {folder.name}
-                        </button>
+                        </motion.button>
                       ))}
                       {folders.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No folders found</div>}
                     </div>
@@ -396,8 +421,9 @@ const DashboardLayout: React.FC = () => {
                       <FolderPlus className="w-4 h-4 text-gray-400" />
                       Create new folder
                     </button>
-                  </div>
+                  </motion.div>
                 )}
+                </AnimatePresence>
               </>
             ) : (
               <h1 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED] px-2 py-1">
@@ -489,21 +515,23 @@ const DashboardLayout: React.FC = () => {
         {/* Main Content Rendered Here */}
         <main className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-[#FFFFFF] dark:bg-[#1E1E21] rounded-xl shadow-sm border border-gray-200 dark:border-[#2B2B30]">
           <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Outlet context={{ 
-              triggerRefresh: latestNewEntry, 
-              tags, 
-              folders, 
-              setTags, 
-              setFolders, 
-              activeFolderId, 
-              setActiveFolderId,
-              setIsFolderModalOpen,
-              setIsCreateTagModalOpen,
-              setFolderToEdit,
-              setTagToEdit,
-              isTagsLoading,
-              isFoldersLoading
-            } satisfies DashboardLayoutContext} />
+            <AnimatePresence mode="wait">
+              <Outlet key={location.pathname} context={{ 
+                triggerRefresh: latestNewEntry, 
+                tags, 
+                folders, 
+                setTags, 
+                setFolders, 
+                activeFolderId, 
+                setActiveFolderId,
+                setIsFolderModalOpen,
+                setIsCreateTagModalOpen,
+                setFolderToEdit,
+                setTagToEdit,
+                isTagsLoading,
+                isFoldersLoading
+              } satisfies DashboardLayoutContext} />
+            </AnimatePresence>
           </div>
         </main>
 

@@ -3,6 +3,7 @@ import { Copy, Check, AlertCircle, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import Skeleton from 'react-loading-skeleton';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const SettingsPage: React.FC = () => {
   const { user, logout, loading } = useAuth();
@@ -81,7 +82,7 @@ const SettingsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="py-8 max-w-4xl mx-auto space-y-6">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-8 max-w-4xl mx-auto space-y-6">
         <div className="mb-8">
           <Skeleton width={200} height={32} />
           <div className="mt-1"><Skeleton width={300} height={20} /></div>
@@ -112,12 +113,12 @@ const SettingsPage: React.FC = () => {
             <Skeleton width={140} height={36} borderRadius={6} />
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="py-8 max-w-4xl mx-auto space-y-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-8 max-w-4xl mx-auto space-y-6">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Account Settings</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your account settings and preferences.</p>
@@ -237,8 +238,9 @@ const SettingsPage: React.FC = () => {
         </div>
       </div>
 
+      <AnimatePresence>
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#1E1E21] max-w-md w-full rounded-xl p-6 shadow-2xl relative">
             <button 
               onClick={() => setIsDeleteModalOpen(false)}
@@ -292,9 +294,10 @@ const SettingsPage: React.FC = () => {
                {isDeleting ? 'Deleting...' : 'Delete Account'}
             </button>
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

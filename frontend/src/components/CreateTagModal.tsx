@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Infinity as InfinityIcon } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import type { Tag } from '../types';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface CreateTagModalProps {
   isOpen: boolean;
@@ -34,7 +35,7 @@ const CreateTagModal: React.FC<CreateTagModalProps> = ({ isOpen, onClose, onSucc
     }
   }, [isOpen, tagToEdit]);
 
-  if (!isOpen) return null;
+  // removed early return for AnimatePresence
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,8 +64,22 @@ const CreateTagModal: React.FC<CreateTagModalProps> = ({ isOpen, onClose, onSucc
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white/50 dark:bg-[#1E1E21]/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-[#1E1E21] rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative border border-gray-200 dark:border-[#2B2B30]">
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          exit={{ opacity: 0 }} 
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+        >
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="bg-white dark:bg-[#1E1E21] rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative border border-gray-200 dark:border-[#2B2B30]"
+          >
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-[#2B2B30] z-10">
           <X className="w-5 h-5" />
         </button>
@@ -134,8 +149,10 @@ const CreateTagModal: React.FC<CreateTagModalProps> = ({ isOpen, onClose, onSucc
             </div>
           </div>
         </form>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

@@ -4,6 +4,7 @@ import { Search, MoreVertical, Trash2, Link as LinkIcon, Tag as TagIcon, Pen } f
 import axiosInstance from '../api/axiosInstance';
 import type { DashboardLayoutContext } from '../layouts/DashboardLayout';
 import Skeleton from 'react-loading-skeleton';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const TAG_COLORS = [
   { name: 'red', classes: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800/50' },
@@ -37,7 +38,7 @@ const TagsPage: React.FC = () => {
   const filteredTags = tags.filter(t => t.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="flex-1 py-8 flex flex-col gap-4 w-full">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 py-8 flex flex-col gap-4 w-full">
         <div className="relative w-full max-w-md">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input 
@@ -67,7 +68,8 @@ const TagsPage: React.FC = () => {
             <div className="p-12 text-center text-gray-500">No tags found.</div>
           ) : (
             filteredTags.map((tag) => (
-              <div 
+              <motion.div 
+                layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
                 key={tag.id} 
                 onClick={() => navigate(`/dashboard?tag=${encodeURIComponent(tag.name)}`)}
                 className="group relative flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-[#2B2B30]/50 transition-colors cursor-pointer"
@@ -98,8 +100,15 @@ const TagsPage: React.FC = () => {
                       <MoreVertical className="w-4 h-4" />
                     </button>
                     
+                    <AnimatePresence>
                     {openMenuId === tag.id && (
-                      <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg z-50 overflow-hidden">
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        className="absolute right-0 mt-2 w-32 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg z-50 overflow-hidden"
+                      >
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -123,17 +132,19 @@ const TagsPage: React.FC = () => {
                           <Trash2 className="w-4 h-4" />
                           Delete
                         </button>
-                      </div>
+                      </motion.div>
                     )}
+                    </AnimatePresence>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))
           )}
         </div>
 
+      <AnimatePresence>
       {tagToDelete && (
-        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#1E1E21] max-w-sm w-full rounded-xl p-6 shadow-xl border border-gray-200 dark:border-[#2B2B30]">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED] mb-2">Delete Tag</h3>
             <p className="text-sm text-gray-500 dark:text-[#A1A1AA] mb-6">
@@ -154,9 +165,10 @@ const TagsPage: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

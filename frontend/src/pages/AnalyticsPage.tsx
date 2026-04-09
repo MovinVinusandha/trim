@@ -13,6 +13,7 @@ import {
   Users, Percent, Share2
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
+import { motion } from 'framer-motion';
 
 interface AnalyticsData {
   totalClicks: number;
@@ -61,7 +62,7 @@ const AnalyticsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
+      <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
         <div className="flex items-center justify-between">
           <div>
             <Skeleton width={250} height={28} />
@@ -105,13 +106,13 @@ const AnalyticsPage: React.FC = () => {
             </div>
           ))}
         </section>
-      </main>
+      </motion.main>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-screen flex items-center justify-center p-4">
         <div className="bg-white dark:bg-[#1E1E21] rounded-lg shadow-sm border border-gray-200 dark:border-[#2B2B30] p-8 text-center max-w-md w-full">
           <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
             <Activity className="w-6 h-6" />
@@ -125,7 +126,7 @@ const AnalyticsPage: React.FC = () => {
             <ArrowLeft className="w-4 h-4" /> Back to Dashboard
           </button>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -148,8 +149,7 @@ const AnalyticsPage: React.FC = () => {
   const clicksByBrowser = data?.clicksByBrowser || [];
 
   return (
-    <>
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
+    <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
         
         <div className="flex items-center justify-between">
           <div>
@@ -384,8 +384,7 @@ const AnalyticsPage: React.FC = () => {
           </div>
 
         </section>
-      </main>
-    </>
+      </motion.main>
   );
 };
 

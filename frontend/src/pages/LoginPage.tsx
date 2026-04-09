@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import { motion } from 'framer-motion';
 import axiosInstance, { extractBackendError } from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import BrandLogo from '../components/BrandLogo';
@@ -85,7 +86,13 @@ const LoginPage: React.FC = () => {
 
       {/* BEGIN: Main Content */}
       <main className="flex-grow flex flex-col items-center justify-center pt-8 pb-16 px-4 z-10 relative">
-        <div className="w-full max-w-md mx-auto">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.98 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
+          className="w-full max-w-md mx-auto"
+        >
           
           {/* Brand Logo Outside Card */}
           <div className="mb-8 flex justify-center">
@@ -194,7 +201,7 @@ const LoginPage: React.FC = () => {
             By continuing, you agree to Trim's <a className="font-medium text-gray-700 dark:text-gray-300 hover:underline" href="#">Terms of Service</a> and <a className="font-medium text-gray-700 dark:text-gray-300 hover:underline" href="#">Privacy Policy</a>
           </div>
 
-        </div>
+        </motion.div>
       </main>
       {/* END: Main Content */}
     </div>
