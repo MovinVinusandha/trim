@@ -124,4 +124,20 @@ class UserServiceTest {
         verify(folderRepository).deleteAll(any());
         verify(userRepository).delete(user);
     }
+
+    @Test
+    void testPublicIdGeneration_User() {
+        User newUser = User.builder().name("Test").role(Role.USER).build();
+        newUser.onCreate();
+        assertThat(newUser.getPublicId()).startsWith("user_");
+        assertThat(newUser.getPublicId()).hasSize("user_".length() + 10);
+    }
+
+    @Test
+    void testPublicIdGeneration_Root() {
+        User rootUser = User.builder().name("Root").role(Role.ROOT).build();
+        rootUser.onCreate();
+        assertThat(rootUser.getPublicId()).startsWith("root_");
+        assertThat(rootUser.getPublicId()).hasSize("root_".length() + 10);
+    }
 }

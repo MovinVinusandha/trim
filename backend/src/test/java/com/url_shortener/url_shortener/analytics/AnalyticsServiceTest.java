@@ -16,6 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,6 +40,9 @@ class AnalyticsServiceTest {
 
     @InjectMocks
     private AnalyticsService analyticsService;
+
+    @Captor
+    private ArgumentCaptor<LocalDateTime> dateCaptor;
 
     private User currentUser;
 
@@ -90,5 +95,20 @@ class AnalyticsServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.getTotalClicks()).isEqualTo(75L);
+    }
+
+    @Test
+    void dateRangeFiltering_7d() {
+        when(clickEventRepository.countTotalOverallClicks(eq(1L), dateCaptor.capture())).thenReturn(100L);
+        when(clickEventRepository.countOverallClicksByDate(eq(1L), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countOverallClicksByCountry(eq(1L), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countOverallClicksByDevice(eq(1L), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countOverallClicksByBrowser(eq(1L), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
+
+        analyticsService.getOverallAnalytics(currentUser, "7d");
+
+        LocalDateTime capturedDate = dateCaptor.getValue();
+        assertThat(capturedDate).isAfter(LocalDateTime.now().minusDays(8));
+        assertThat(capturedDate).isBefore(LocalDateTime.now().minusDays(6));
     }
 }

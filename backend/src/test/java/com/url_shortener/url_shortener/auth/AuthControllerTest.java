@@ -71,7 +71,9 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value("access_token_123"))
                 .andExpect(cookie().exists("refreshToken"))
-                .andExpect(cookie().httpOnly("refreshToken", true));
+                .andExpect(cookie().httpOnly("refreshToken", true))
+                .andExpect(cookie().secure("refreshToken", true))
+                .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("SameSite=None")));
     }
 
     @Test
