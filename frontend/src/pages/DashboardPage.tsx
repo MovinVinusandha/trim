@@ -685,7 +685,7 @@ const DashboardPage: React.FC = () => {
                       </div>
                       
                       {displayProps.tags && url.tags && url.tags.length > 0 && (
-                        <div className="relative group inline-flex items-center mt-2">
+                        <div className="relative group/tag inline-flex items-center mt-2">
                           <span 
                             className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border"
                             style={{ 
@@ -700,7 +700,7 @@ const DashboardPage: React.FC = () => {
                           
                           {/* Tooltip */}
                           {url.tags.length > 1 && (
-                            <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex bg-white dark:bg-[#1E1E21] shadow-xl border border-gray-200 dark:border-[#2B2B30] rounded-lg p-2 gap-2 z-[60] min-w-max">
+                            <div className="absolute bottom-full left-0 mb-2 hidden group-hover/tag:flex bg-white dark:bg-[#1E1E21] shadow-xl border border-gray-200 dark:border-[#2B2B30] rounded-lg p-2 gap-2 z-[60] min-w-max">
                               {url.tags.map(t => (
                                 <span 
                                   key={t.id} 
