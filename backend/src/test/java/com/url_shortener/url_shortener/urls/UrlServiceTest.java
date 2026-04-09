@@ -13,6 +13,7 @@ import org.springframework.security.access.AccessDeniedException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import java.time.LocalDateTime;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -23,6 +24,9 @@ public class UrlServiceTest {
 
     @Mock
     private UrlRepository urlRepository;
+
+    @Mock
+    private com.url_shortener.url_shortener.analytics.ClickEventRepository clickEventRepository;
 
     @Mock
     private StringRedisTemplate redisTemplate;
@@ -121,5 +125,53 @@ public class UrlServiceTest {
         });
 
         verify(urlRepository, never()).save(any(Url.class));
+    }
+
+    @Test
+    void testUpdateUrl_LinkReactivation() {
+        User owner = new User();
+        owner.setId(1L);
+        owner.setRole(Role.USER);
+
+        Url existingUrl = new Url();
+        existingUrl.setShortUrl("hash123");
+        existingUrl.setUser(owner);
+        existingUrl.setActive(false);
+
+        UrlUpdateRequestDto requestDto = new UrlUpdateRequestDto();
+        requestDto.setExpiresAt(LocalDateTime.now().plusDays(5));
+
+        when(urlRepository.findByShortUrl("hash123")).thenReturn(existingUrl);
+        when(urlRepository.save(any(Url.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UrlDto mockDto = new UrlDto(java.math.BigInteger.ONE, "some-url", "hash123", java.math.BigInteger.ZERO, null, null, null, true, false, null, null, null);
+        when(urlMapper.toDto(any(Url.class))).thenReturn(mockDto);
+        org.springframework.cache.CacheManager cacheManager = mock(org.springframework.cache.CacheManager.class);
+        org.springframework.cache.Cache cache = mock(org.springframework.cache.Cache.class);
+        when(cacheManager.getCache("urls")).thenReturn(cache);
+        org.springframework.test.util.ReflectionTestUtils.setField(urlService, "cacheManager", cacheManager);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(clickEventRepository.countByUrl_Id(any(), any())).thenReturn(0L);
+
+        urlService.updateUrl("hash123", requestDto, owner);
+
+        assertTrue(existingUrl.isActive());
+        verify(urlRepository).save(existingUrl);
+    }
+
+    @Test
+    void testShortenUrl_InvalidCustomAlias() {
+        UrlRequest request = new UrlRequest(
+                "https://example.com",
+                "my/link",
+                null,
+                null,
+                null,
+                null
+        );
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
+            urlService.generateShortUrl(request);
+        });
+        assertEquals("Custom alias can only contain letters, numbers, hyphens, and underscores.", thrown.getMessage());
     }
 }
