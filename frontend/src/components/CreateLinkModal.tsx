@@ -449,7 +449,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                     </div>
                   </div>
                   <div className="flex rounded-md shadow-sm">
-                    <div className="relative flex-grow focus-within:z-10 w-1/3 border border-gray-300 dark:border-[#2B2B30] border-r-0 bg-gray-50 dark:bg-[#111113] flex items-center justify-center rounded-l-md px-3 text-sm text-gray-500 dark:text-[#A1A1AA] overflow-hidden text-ellipsis whitespace-nowrap">
+                    <div className="flex items-center whitespace-nowrap shrink-0 px-5 sm:px-6 py-2 bg-gray-50 dark:bg-[#111113] border border-gray-300 dark:border-[#2B2B30] border-r-0 rounded-l-md text-sm text-gray-500 dark:text-[#A1A1AA]">
                       {displayDomain}/
                     </div>
                     <input 
@@ -457,7 +457,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                       value={customAlias}
                       onChange={(e) => setCustomAlias(e.target.value.replace(/[^a-zA-Z0-9-_]/g, ''))}
                       disabled={!!urlToEdit}
-                      className="block w-full rounded-none rounded-r-md border border-gray-300 dark:border-[#2B2B30] focus:border-black focus:ring-1 focus:ring-black focus:dark:ring-white px-3 py-2 sm:text-sm w-2/3 disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-slate-800 dark:bg-[#111113] dark:text-[#EDEDED] dark:placeholder-[#6b7280]"
+                      className="block flex-1 min-w-0 w-full rounded-none rounded-r-md border border-gray-300 dark:border-[#2B2B30] focus:border-black focus:ring-1 focus:ring-black focus:dark:ring-white px-4 sm:px-5 py-2 sm:text-sm disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-slate-800 dark:bg-[#111113] dark:text-[#EDEDED] dark:placeholder-[#6b7280]" 
                     />
                   </div>
                 </div>
