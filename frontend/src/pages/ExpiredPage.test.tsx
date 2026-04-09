@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import ExpiredPage from './ExpiredPage';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('../context/AuthContext', () => ({
+  useAuth: vi.fn(() => ({ user: null })),
+}));
 
 describe('ExpiredPage', () => {
   it('testRendersExpiredPageHeading', () => {
@@ -19,7 +23,7 @@ describe('ExpiredPage', () => {
         <ExpiredPage />
       </BrowserRouter>
     );
-    expect(screen.getByText(/Log in/i)).toBeInTheDocument();
-    expect(screen.getByText(/Sign up/i)).toBeInTheDocument();
+    expect(screen.getByText(/Login/i)).toBeInTheDocument();
+    expect(screen.getByText(/Get Started/i)).toBeInTheDocument();
   });
 });

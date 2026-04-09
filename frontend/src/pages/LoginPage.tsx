@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import { motion } from 'framer-motion';
 import axiosInstance, { extractBackendError } from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
+import BrandLogo from '../components/BrandLogo';
 import type { JwtResponse } from '../types';
 import { toast } from 'react-hot-toast';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, token } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,43 +41,85 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div 
-      className="font-sans antialiased bg-white dark:bg-black text-gray-900 dark:text-white min-h-screen flex flex-col relative bg-[length:40px_40px] bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#2a2a2a_1px,transparent_1px),linear-gradient(to_bottom,#2a2a2a_1px,transparent_1px)]"
-    >
-      <div className="flex-1 flex flex-col items-center pt-16 pb-8 px-6 sm:px-12 relative overflow-y-auto w-full">
-        
-        <div className="flex items-center gap-2 mb-12 relative z-10">
-          <img 
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUAklCfWlFP_lC7C5MiKEbMf6DXDMrH6xTFnjLpDt2iO7Xt1lTJ6ub55qVAKIZRtGzGEiaj01zBHRoyv3hVCik3zr-G6CxFqHUf_w3O9MWPwwcDCZ4J4KfxMZ7nDcbSO4EyvJsMlaVDdQerQC_tw5R3MyX_XPlqp0YTG3SlpnNvi3An3N72hH7Td1U6VW4X6bBPVx6z8sDqiT7zdFOSBSlEevfPk98IV2vUsa-uBCbNdyBw8skAdAXjYUJMKPcAjidBMU" 
-            alt="Logo" 
-            className="h-8 w-auto object-contain mx-auto"
-          />
-        </div>
+    <div className="antialiased min-h-screen flex flex-col bg-gray-50 dark:bg-[#111113] text-black dark:text-[#EDEDED] font-sans relative">
+      {/* Background Dot Mesh */}
+      <div 
+        className="absolute inset-0 z-0 dark:hidden"
+        style={{ backgroundImage: 'radial-gradient(#e5e7eb 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+      />
+      <div 
+        className="absolute inset-0 z-0 hidden dark:block"
+        style={{ backgroundImage: 'radial-gradient(#2B2B30 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+      />
 
-        <div 
-          className="w-full max-w-sm relative z-10 mb-16 bg-white dark:bg-black rounded-xl border border-gray-200 dark:border-gray-800 p-8 space-y-8" 
-          style={{ boxShadow: "rgba(0, 0, 0, 0.02) 0px 1px 2px, rgba(0, 0, 0, 0.02) 0px 2px 4px, rgba(0, 0, 0, 0.02) 0px 4px 8px, rgba(0, 0, 0, 0.02) 0px 8px 16px, rgba(0, 0, 0, 0.02) 0px 16px 32px, rgba(0, 0, 0, 0.02) 0px 32px 64px" }}
-        >
-          <div className="text-center">
-            <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white mb-2">Log in to your trim account</h1>
+      {/* BEGIN: Navigation Bar */}
+      <header className="sticky top-0 z-50 bg-white/90 dark:bg-[#111113]/90 backdrop-blur-sm border-b border-gray-100 dark:border-[#2B2B30]">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 h-14 flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
+              <BrandLogo className="h-9 w-auto text-[#12141D] dark:text-white" />
+            </Link>
           </div>
 
-          <div className="mt-8 space-y-6">
+          {/* Auth Button */}
+          <div className="flex items-center gap-3">
+            {token ? (
+              <Link 
+                to="/dashboard" 
+                className="px-4 py-2 bg-[#12141D] dark:bg-white text-white dark:text-black text-sm font-semibold rounded-xl hover:bg-[#201F22] dark:hover:bg-gray-200 transition-colors"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <Link 
+                to="/register" 
+                className="px-4 py-2 bg-[#12141D] dark:bg-white text-white dark:text-black text-sm font-semibold rounded-xl hover:bg-[#201F22] dark:hover:bg-gray-200 transition-colors"
+              >
+                Sign up
+              </Link>
+            )}
+          </div>
+        </div>
+      </header>
+      {/* END: Navigation Bar */}
+
+      {/* BEGIN: Main Content */}
+      <main className="flex-grow flex flex-col items-center justify-center pt-8 pb-16 px-4 z-10 relative">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.98 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
+          className="w-full max-w-md mx-auto"
+        >
+          
+          {/* Brand Logo Outside Card */}
+          <div className="mb-8 flex justify-center">
+            <BrandLogo className="h-10 w-auto text-gray-900 dark:text-white mx-auto" />
+          </div>
+
+          {/* Card Container */}
+          <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-2xl p-8 shadow-xl max-w-md w-full mx-auto">
+            <div className="text-center mb-6">
+              <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-[#EDEDED] mb-2">Log in to your trim account</h1>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-900 dark:text-white text-left">Work email</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-[#EDEDED] text-left">Work email</label>
                 <input 
                   type="email" 
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="panic@thedis.co" 
-                  className="w-full px-4 py-2.5 border-2 rounded-lg focus:outline-none focus:ring-0 text-gray-900 dark:text-white bg-white dark:bg-black border-gray-200 dark:border-gray-800"
+                  className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-900 dark:text-white text-left">Password</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-[#EDEDED] text-left">Password</label>
                 <div className="relative">
                   <input 
                     type={showPassword ? 'text' : 'password'}
@@ -83,7 +127,7 @@ const LoginPage: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••" 
-                    className="w-full px-4 py-2.5 border-2 rounded-lg focus:outline-none focus:ring-0 text-gray-900 dark:text-white bg-white dark:bg-black border-gray-200 dark:border-gray-800"
+                    className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500"
                   />
                   <button 
                     type="button" 
@@ -104,18 +148,18 @@ const LoginPage: React.FC = () => {
               <button 
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center px-4 py-2.5 rounded-lg bg-black dark:bg-white text-sm font-medium text-white dark:text-black hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors disabled:opacity-50"
+                className="w-full bg-black text-white dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 rounded-lg py-2.5 font-medium transition-colors disabled:opacity-50 mt-2"
               >
                 {loading ? 'Logging in...' : 'Log in with email'}
               </button>
             </form>
 
-            <div className="relative">
+            <div className="relative my-6">
               <div aria-hidden="true" className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
+                <div className="w-full border-t border-gray-200 dark:border-[#2B2B30]"></div>
               </div>
               <div className="relative flex justify-center text-sm font-medium leading-6">
-                <span className="bg-white dark:bg-black px-2 text-gray-400 dark:text-gray-500 text-xs uppercase tracking-wider">OR</span>
+                <span className="bg-white dark:bg-[#1E1E21] px-2 text-gray-400 dark:text-gray-500 text-xs uppercase tracking-wider">OR</span>
               </div>
             </div>
 
@@ -123,7 +167,7 @@ const LoginPage: React.FC = () => {
               <button 
                 type="button"
                 onClick={() => toast('Social login is coming soon!', { icon: '🚧' })}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm bg-white dark:bg-black text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm bg-white dark:bg-[#111113] text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#2B2B30] transition-colors"
               >
                 <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
@@ -136,7 +180,7 @@ const LoginPage: React.FC = () => {
               <button 
                 type="button"
                 onClick={() => toast('Social login is coming soon!', { icon: '🚧' })}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm bg-white dark:bg-black text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm bg-white dark:bg-[#111113] text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#2B2B30] transition-colors"
               >
                 <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
@@ -145,20 +189,21 @@ const LoginPage: React.FC = () => {
               </button>
             </div>
 
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-center text-sm text-gray-500 dark:text-[#A1A1AA] mt-6">
               Don't have an account?{' '}
-              <Link to="/register" className="font-bold text-gray-900 dark:text-white hover:underline">
+              <Link to="/register" className="font-bold text-gray-900 dark:text-[#EDEDED] hover:underline">
                 Sign up
               </Link>
             </p>
           </div>
-        </div>
 
-        <div className="text-center text-xs text-gray-500 dark:text-gray-400 max-w-sm px-4 mt-auto relative z-10">
-          By continuing, you agree to Dub's <a className="font-medium text-gray-700 dark:text-gray-300 hover:underline" href="#">Terms of Service</a> and <a className="font-medium text-gray-700 dark:text-gray-300 hover:underline" href="#">Privacy Policy</a>
-        </div>
-        
-      </div>
+          <div className="text-center text-xs text-gray-500 dark:text-[#A1A1AA] max-w-sm px-4 mt-8 mx-auto">
+            By continuing, you agree to Trim's <a className="font-medium text-gray-700 dark:text-gray-300 hover:underline" href="#">Terms of Service</a> and <a className="font-medium text-gray-700 dark:text-gray-300 hover:underline" href="#">Privacy Policy</a>
+          </div>
+
+        </motion.div>
+      </main>
+      {/* END: Main Content */}
     </div>
   );
 };

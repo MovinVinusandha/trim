@@ -3,6 +3,7 @@ import { Copy, Check, AlertCircle, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import Skeleton from 'react-loading-skeleton';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const SettingsPage: React.FC = () => {
   const { user, logout, loading } = useAuth();
@@ -81,14 +82,14 @@ const SettingsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="py-8 max-w-4xl mx-auto space-y-6">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-8 max-w-4xl mx-auto space-y-6">
         <div className="mb-8">
           <Skeleton width={200} height={32} />
           <div className="mt-1"><Skeleton width={300} height={20} /></div>
         </div>
 
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+          <div key={i} className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl overflow-hidden shadow-sm">
             <div className="p-6">
               <Skeleton width={120} height={24} />
               <div className="mt-1 mb-4"><Skeleton width="60%" height={20} /></div>
@@ -96,14 +97,14 @@ const SettingsPage: React.FC = () => {
                 <Skeleton height={40} borderRadius={6} />
               </div>
             </div>
-            <div className="px-6 py-4 bg-gray-50 dark:bg-slate-800/50 border-t border-gray-200 dark:border-slate-800 flex items-center justify-between">
+            <div className="px-6 py-4 bg-gray-50 dark:bg-[#2B2B30]/50 border-t border-gray-200 dark:border-[#2B2B30] flex items-center justify-between">
               <Skeleton width={200} height={16} />
               <Skeleton width={120} height={36} borderRadius={6} />
             </div>
           </div>
         ))}
         
-        <div className="bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/30 rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-white dark:bg-[#1E1E21] border border-red-200 dark:border-red-900/30 rounded-xl overflow-hidden shadow-sm">
           <div className="p-6">
             <Skeleton width={160} height={24} />
             <div className="mt-2 mb-4"><Skeleton width="100%" height={40} /></div>
@@ -112,19 +113,19 @@ const SettingsPage: React.FC = () => {
             <Skeleton width={140} height={36} borderRadius={6} />
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="py-8 max-w-4xl mx-auto space-y-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-8 max-w-4xl mx-auto space-y-6">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Account Settings</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your account settings and preferences.</p>
       </div>
 
       {/* Your Name Card */}
-      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl overflow-hidden shadow-sm">
         <div className="p-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">Your Name</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-4">
@@ -135,7 +136,7 @@ const SettingsPage: React.FC = () => {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-md focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-[#2B2B30] rounded-md focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-[#2B2B30] text-gray-900 dark:text-white"
             />
           </div>
           {nameMessage && (
@@ -145,7 +146,7 @@ const SettingsPage: React.FC = () => {
             </div>
           )}
         </div>
-        <div className="px-6 py-4 bg-gray-50 dark:bg-slate-800/50 border-t border-gray-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="px-6 py-4 bg-gray-50 dark:bg-[#2B2B30]/50 border-t border-gray-200 dark:border-[#2B2B30] flex items-center justify-between">
           <p className="text-xs text-gray-500 dark:text-gray-400">Please use 32 characters at maximum.</p>
           <button
             onClick={handleUpdateName}
@@ -158,7 +159,7 @@ const SettingsPage: React.FC = () => {
       </div>
 
       {/* Your Email Card */}
-      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl overflow-hidden shadow-sm">
         <div className="p-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">Your Email</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-4">
@@ -169,7 +170,7 @@ const SettingsPage: React.FC = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-md focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-[#2B2B30] rounded-md focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-[#2B2B30] text-gray-900 dark:text-white"
             />
           </div>
           {emailMessage && (
@@ -179,7 +180,7 @@ const SettingsPage: React.FC = () => {
             </div>
           )}
         </div>
-        <div className="px-6 py-4 bg-gray-50 dark:bg-slate-800/50 border-t border-gray-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="px-6 py-4 bg-gray-50 dark:bg-[#2B2B30]/50 border-t border-gray-200 dark:border-[#2B2B30] flex items-center justify-between">
           <p className="text-xs text-gray-500 dark:text-gray-400">We will email you to verify the change.</p>
           <button
             onClick={handleUpdateEmail}
@@ -192,7 +193,7 @@ const SettingsPage: React.FC = () => {
       </div>
 
       {/* Your User ID Card */}
-      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl overflow-hidden shadow-sm">
         <div className="p-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">Your User ID</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-4">
@@ -203,11 +204,11 @@ const SettingsPage: React.FC = () => {
               type="text"
               readOnly
               value={userIdDisplay}
-              className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-md bg-gray-50 dark:bg-slate-800/80 text-gray-600 dark:text-gray-400 font-mono text-sm cursor-not-allowed"
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-[#2B2B30] rounded-md bg-gray-50 dark:bg-[#111113]/80 text-gray-600 dark:text-gray-400 font-mono text-sm cursor-not-allowed"
             />
             <button
               onClick={copyToClipboard}
-              className="p-2 border border-gray-300 dark:border-slate-700 rounded-md hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-gray-600 dark:text-gray-300"
+              className="p-2 border border-gray-300 dark:border-[#2B2B30] rounded-md hover:bg-gray-50 dark:hover:bg-[#2B2B30] transition-colors text-gray-600 dark:text-gray-300"
               title="Copy User ID"
             >
               {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
@@ -217,7 +218,7 @@ const SettingsPage: React.FC = () => {
       </div>
 
       {/* Delete Account Card */}
-      <div className="bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/30 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-[#1E1E21] border border-red-200 dark:border-red-900/30 rounded-xl overflow-hidden shadow-sm">
         <div className="p-6">
           <h3 className="text-lg font-medium text-red-600 dark:text-red-400 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5" />
@@ -237,9 +238,10 @@ const SettingsPage: React.FC = () => {
         </div>
       </div>
 
+      <AnimatePresence>
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 max-w-md w-full rounded-xl p-6 shadow-2xl relative">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#1E1E21] max-w-md w-full rounded-xl p-6 shadow-2xl relative">
             <button 
               onClick={() => setIsDeleteModalOpen(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
@@ -255,8 +257,8 @@ const SettingsPage: React.FC = () => {
               Warning: This will permanently delete your account, along with all your links, analytics, and folders. This action cannot be undone.
             </p>
 
-            <div className="bg-gray-50 dark:bg-slate-800/50 p-4 rounded-lg flex items-center gap-3 mb-6 border border-gray-100 dark:border-slate-800">
-               <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 flex items-center justify-center font-bold uppercase shadow-sm shrink-0">
+            <div className="bg-gray-50 dark:bg-[#2B2B30]/50 p-4 rounded-lg flex items-center gap-3 mb-6 border border-gray-100 dark:border-[#2B2B30]">
+               <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-[#2B2B30] text-gray-700 dark:text-gray-200 flex items-center justify-center font-bold uppercase shadow-sm shrink-0">
                  {user?.name ? user.name.charAt(0) : user?.email ? user.email.charAt(0) : 'U'}
                </div>
                <div className="min-w-0">
@@ -273,7 +275,7 @@ const SettingsPage: React.FC = () => {
                  type="text"
                  value={confirmationText}
                  onChange={(e) => setConfirmationText(e.target.value)}
-                 className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                 className="w-full px-3 py-2 border border-gray-300 dark:border-[#2B2B30] rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-[#2B2B30] text-gray-900 dark:text-white"
                  placeholder="confirm delete account"
                />
             </div>
@@ -292,9 +294,10 @@ const SettingsPage: React.FC = () => {
                {isDeleting ? 'Deleting...' : 'Delete Account'}
             </button>
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

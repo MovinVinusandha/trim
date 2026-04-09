@@ -62,12 +62,42 @@ describe('SettingsPage', () => {
     });
   });
 
-  it('opens Delete Account confirmation modal', () => {
+  it('opens Delete Account confirmation modal and requires typing confirmation string', async () => {
+    (axiosInstance.delete as any).mockResolvedValue({ data: {} });
+    const logoutMock = vi.fn();
+    (useAuth as any).mockReturnValue({
+      user: { id: 1, name: 'John Doe', email: 'john@example.com', publicId: 'USR-123' },
+      logout: logoutMock,
+    });
+
     render(<MemoryRouter><SettingsPage /></MemoryRouter>);
     
-    const deleteButton = screen.getByRole('button', { name: 'Delete Account' });
-    fireEvent.click(deleteButton);
+    // Open modal
+    const openModalButton = screen.getByRole('button', { name: 'Delete Account' });
+    fireEvent.click(openModalButton);
     
     expect(screen.getByText(/Warning: This will permanently delete your account/i)).toBeInTheDocument();
+    
+    // Find confirm button in modal, should be disabled initially
+    const deleteButtons = screen.getAllByRole('button', { name: 'Delete Account' });
+    const confirmDeleteBtn = deleteButtons[1];
+    expect(confirmDeleteBtn).toBeDisabled();
+
+    // Find input and type the wrong string
+    const input = screen.getByPlaceholderText('confirm delete account');
+    fireEvent.change(input, { target: { value: 'wrong string' } });
+    expect(confirmDeleteBtn).toBeDisabled();
+
+    // Type the correct string
+    fireEvent.change(input, { target: { value: 'confirm delete account' } });
+    expect(confirmDeleteBtn).toBeEnabled();
+
+    // Click confirm
+    fireEvent.click(confirmDeleteBtn);
+
+    await waitFor(() => {
+      expect(axiosInstance.delete).toHaveBeenCalledWith('/users/me');
+      expect(logoutMock).toHaveBeenCalled();
+    });
   });
 });

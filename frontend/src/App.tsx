@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -15,14 +15,13 @@ import SettingsPage from './pages/SettingsPage';
 import SecurityPage from './pages/SecurityPage';
 import DashboardLayout from './layouts/DashboardLayout';
 import { Toaster } from 'react-hot-toast';
+import { AnimatePresence } from 'framer-motion';
 
-function App() {
+function AnimatedRoutes() {
+  const location = useLocation();
   return (
-    <ThemeProvider>
-      <Toaster position="bottom-center" toastOptions={{ duration: 3000 }} />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
             {/* ── Public Routes ─────────────────────────────────── */}
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
@@ -45,7 +44,18 @@ function App() {
 
             {/* ── Catch-all ─────────────────────────────────────── */}
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+      </Routes>
+    </AnimatePresence>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <Toaster position="bottom-center" toastOptions={{ duration: 3000 }} />
+      <BrowserRouter>
+        <AuthProvider>
+          <AnimatedRoutes />
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>

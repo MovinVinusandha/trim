@@ -91,4 +91,17 @@ describe('AnalyticsPage', () => {
       expect(axiosInstance.get).toHaveBeenCalledWith('/analytics', { params: { period: '7d' } });
     });
   });
+
+  it('renders empty state when no data is available', async () => {
+    vi.spyOn(routerDom, 'useParams').mockReturnValue({});
+    (axiosInstance.get as any).mockResolvedValue({
+      data: { totalClicks: 0, clicksByDate: [], clicksByCountry: [], clicksByDevice: [], clicksByBrowser: [] },
+    });
+
+    render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
+    
+    await waitFor(() => {
+      expect(screen.getByText('No data available for the selected period')).toBeInTheDocument();
+    });
+  });
 });

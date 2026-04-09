@@ -113,7 +113,7 @@ const UrlTable: React.FC<Props> = ({ urls, onDeleted,  onOpenQr,
   if (!urls || urls.length === 0) {
     return (
       <div className="card p-12 flex flex-col items-center justify-center animate-slide-up">
-        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+        <div className="w-16 h-16 bg-slate-100 dark:bg-[#2B2B30] rounded-full flex items-center justify-center mb-4">
           <Link2 className="w-8 h-8 text-slate-400 dark:text-slate-500" />
         </div>
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No links yet</h3>
@@ -134,11 +134,11 @@ const UrlTable: React.FC<Props> = ({ urls, onDeleted,  onOpenQr,
         </div>
       )}
 
-      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-sm overflow-hidden flex flex-col gap-0 divide-y divide-gray-200 dark:divide-slate-800">
+      <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm overflow-hidden flex flex-col gap-0 divide-y divide-gray-200 dark:divide-slate-800">
         {sortedWithIndex.map(({ entry, originalIndex }) => (
-          <div key={`${entry.shortUrl}-${originalIndex}`} className="px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group flex items-center justify-between">
+          <div key={`${entry.shortUrl}-${originalIndex}`} className="px-3 py-2 hover:bg-gray-50 dark:hover:bg-[#2B2B30]/50 transition-colors group flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-6 h-6 rounded-full border border-gray-200 dark:border-slate-700 flex items-center justify-center bg-white shrink-0 overflow-hidden shadow-sm">
+              <div className="w-6 h-6 rounded-full border border-gray-200 dark:border-[#2B2B30] flex items-center justify-center bg-white shrink-0 overflow-hidden shadow-sm">
                 {/* Fallback globe icon for generic URLs */}
                 <Globe className="w-3.5 h-3.5 text-slate-400" />
               </div>
@@ -179,7 +179,7 @@ const UrlTable: React.FC<Props> = ({ urls, onDeleted,  onOpenQr,
             </div>
             
             <div className="flex items-center gap-2 shrink-0 ml-3">
-              <Link to={`/analytics/${extractHash(entry.shortUrl)}`} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors shadow-sm">
+              <Link to={`/analytics/${extractHash(entry.shortUrl)}`} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-50 dark:bg-[#2B2B30] border border-gray-200 dark:border-[#2B2B30] text-xs font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors shadow-sm">
                 <BarChart2 className="w-3 h-3 text-violet-500" />
                 {entry.accessed_times ?? 0} clicks
               </Link>
@@ -194,13 +194,13 @@ const UrlTable: React.FC<Props> = ({ urls, onDeleted,  onOpenQr,
                   </div>
                 ) : (
                   <>
-                    <button onClick={() => onOpenQr && onOpenQr(extractHash(entry.shortUrl))} className="p-1 text-gray-400 hover:text-gray-900 dark:hover:text-slate-300 rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors" title="QR Code">
+                    <button onClick={() => onOpenQr && onOpenQr(extractHash(entry.shortUrl))} className="p-1 text-gray-400 hover:text-gray-900 dark:hover:text-slate-300 rounded hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors" title="QR Code">
                       <QrCode className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => { if (onEdit) onEdit(originalIndex); }} className="p-1 text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors" title="Edit">
+                    <button onClick={() => { if (onEdit) onEdit(originalIndex); }} className="p-1 text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 rounded hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors" title="Edit">
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => setDeleteConfirm(originalIndex)} className="p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors" title="Delete">
+                    <button onClick={() => setDeleteConfirm(originalIndex)} className="p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors" title="Delete">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </>
