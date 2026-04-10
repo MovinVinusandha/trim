@@ -43,13 +43,26 @@ class FolderControllerTest {
 
     @Test
     void getUserFolders_Success() throws Exception {
-        FolderDto folder = new FolderDto(1L, "Work", null, 5);
+        FolderDto folder = new FolderDto(1L, "Work", "work", null, 5);
         when(folderService.getUserFolders(1L)).thenReturn(List.of(folder));
 
         mockMvc.perform(get("/folders")
                 .principal(new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Work"));
+                .andExpect(jsonPath("$[0].name").value("Work"))
+                .andExpect(jsonPath("$[0].slug").value("work"));
+    }
+
+    @Test
+    void getFolderBySlug_Success() throws Exception {
+        FolderDto folder = new FolderDto(1L, "Work", "work", null, 5);
+        when(folderService.getFolderBySlug("work", 1L)).thenReturn(folder);
+
+        mockMvc.perform(get("/folders/slug/work")
+                .principal(new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Work"))
+                .andExpect(jsonPath("$.slug").value("work"));
     }
 
     @Test
@@ -60,7 +73,7 @@ class FolderControllerTest {
         FolderRequestDto request = new FolderRequestDto();
         request.setName("Personal");
         
-        FolderDto folder = new FolderDto(2L, "Personal", null, 0);
+        FolderDto folder = new FolderDto(2L, "Personal", "personal", null, 0);
         when(folderService.createFolder(eq("Personal"), eq(user))).thenReturn(folder);
 
         mockMvc.perform(post("/folders")
@@ -68,7 +81,8 @@ class FolderControllerTest {
                 .content(objectMapper.writeValueAsString(request))
                 .principal(new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("Personal"));
+                .andExpect(jsonPath("$.name").value("Personal"))
+                .andExpect(jsonPath("$.slug").value("personal"));
     }
 
     @Test

@@ -37,6 +37,7 @@ public class UserService {
         // Auto-create default "Links" folder for the user
         Folder defaultFolder = Folder.builder()
                 .name("Links")
+                .slug("links")
                 .user(user)
                 .build();
         folderRepository.save(defaultFolder);

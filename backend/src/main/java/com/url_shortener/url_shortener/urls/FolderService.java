@@ -30,6 +30,7 @@ public class FolderService {
             if (user != null) {
                 Folder defaultFolder = Folder.builder()
                         .name("Links")
+                        .slug("links")
                         .user(user)
                         .build();
                 linksFolder = folderRepository.save(defaultFolder);
@@ -63,8 +64,11 @@ public class FolderService {
             throw new FolderAlreadyExistsException();
         }
 
+        String slug = generateSlug(name, user.getId());
+
         Folder folder = Folder.builder()
                 .name(name)
+                .slug(slug)
                 .user(user)
                 .build();
 
@@ -106,6 +110,7 @@ public class FolderService {
                 throw new FolderAlreadyExistsException();
             }
             folder.setName(newName);
+            folder.setSlug(generateSlug(newName, user.getId()));
             folder = folderRepository.save(folder);
         }
 
@@ -116,8 +121,23 @@ public class FolderService {
         return new FolderDto(
                 folder.getId(),
                 folder.getName(),
+                folder.getSlug(),
                 folder.getCreatedAt(),
                 urlRepository.countByFolderId(folder.getId())
         );
+    }
+
+    public FolderDto getFolderBySlug(String slug, Long userId) {
+        Folder folder = folderRepository.findByUserIdAndSlug(userId, slug)
+                .orElseThrow(FolderNotFoundException::new);
+        return toDto(folder);
+    }
+
+    private String generateSlug(String name, Long userId) {
+        String baseSlug = name.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
+        if (folderRepository.existsByUserIdAndSlug(userId, baseSlug)) {
+             throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.CONFLICT, "A folder with a similar name already exists");
+        }
+        return baseSlug;
     }
 }

@@ -101,9 +101,13 @@ public class UrlController {
 
     @GetMapping("url/all")
     public Iterable<UrlDto> getAllUsers(
-            @RequestParam(required = false, defaultValue = "", name = "sort") String sortBy
+            @RequestParam(required = false, defaultValue = "", name = "sort") String sortBy,
+            @RequestParam(required = false) Long tagId,
+            @RequestParam(required = false) Long folderId,
+            @RequestParam(required = false) String folderSlug,
+            @RequestParam(required = false) String search
     ) {
-        return urlService.getAllUrls(sortBy);
+        return urlService.getAllUrls(sortBy, tagId, folderId, folderSlug, search);
     }
 
     @PutMapping("/url/{hash}")

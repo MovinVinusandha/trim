@@ -9,10 +9,14 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import com.url_shortener.url_shortener.urls.Folder;
+import com.url_shortener.url_shortener.urls.FolderRepository;
+
 @Component
 @RequiredArgsConstructor
 public class CommandLineAppStartupRunner implements CommandLineRunner {
     private final UserRepository userRepository;
+    private final FolderRepository folderRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${root.user.email}")
@@ -23,18 +27,31 @@ public class CommandLineAppStartupRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        User rootAdmin;
         if (rootUserAlreadyExists()) {
-            return;
+            rootAdmin = userRepository.findByEmail(rootUserEmail).orElse(null);
+        } else {
+            rootAdmin = new User();
+            rootAdmin.setName("Root");
+            rootAdmin.setEmail(rootUserEmail);
+            rootAdmin.setPublicId("root_" + org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric(16));
+            rootAdmin.setPassword(passwordEncoder.encode(rootUserPassword));
+            rootAdmin.setRole(Role.ROOT);
+            rootAdmin = userRepository.save(rootAdmin);
         }
 
-        User rootAdmin = new User();
-        rootAdmin.setName("Root");
-        rootAdmin.setEmail(rootUserEmail);
-        rootAdmin.setPublicId("root_" + org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric(16));
-        rootAdmin.setPassword(passwordEncoder.encode(rootUserPassword));
-        rootAdmin.setRole(Role.ROOT);
-
-        userRepository.save(rootAdmin);
+        if (rootAdmin != null) {
+            final User targetRoot = rootAdmin;
+            if (!folderRepository.existsByUserIdAndSlug(targetRoot.getId(), "links") 
+                    && !folderRepository.existsByNameIgnoreCaseAndUserId("Links", targetRoot.getId())) {
+                Folder defaultFolder = Folder.builder()
+                        .name("Links")
+                        .slug("links")
+                        .user(targetRoot)
+                        .build();
+                folderRepository.save(defaultFolder);
+            }
+        }
     }
 
     private boolean rootUserAlreadyExists() {

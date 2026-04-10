@@ -95,46 +95,66 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
 
     @Query("""
             SELECT CAST(c.timestamp AS date) as date, COUNT(c) as cnt
-            FROM ClickEvent c
-            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.user.id = :userId)
-              AND c.timestamp >= :startDate
+            FROM ClickEvent c JOIN c.url u
+            WHERE u.user.id = :userId
+              AND (:startDate IS NULL OR c.timestamp >= :startDate)
+              AND (:hash IS NULL OR u.shortUrl = :hash OR u.shortUrl LIKE CONCAT('%/', :hash))
+              AND (:tagIds IS NULL OR EXISTS (SELECT 1 FROM u.tags t WHERE t.id IN :tagIds))
+              AND (:folderId IS NULL OR u.folder.id = :folderId)
             GROUP BY CAST(c.timestamp AS date)
             ORDER BY date ASC
             """)
-    List<Object[]> countOverallClicksByDate(@Param("userId") Long userId, @Param("startDate") LocalDateTime startDate);
+    List<Object[]> countOverallClicksByDate(@Param("userId") Long userId, @Param("startDate") LocalDateTime startDate, @Param("hash") String hash, @Param("tagIds") java.util.List<Long> tagIds, @Param("folderId") Long folderId);
 
     @Query("""
             SELECT c.country, COUNT(c) AS cnt
-            FROM ClickEvent c
-            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.user.id = :userId)
-              AND c.timestamp >= :startDate
+            FROM ClickEvent c JOIN c.url u
+            WHERE u.user.id = :userId
+              AND (:startDate IS NULL OR c.timestamp >= :startDate)
+              AND (:hash IS NULL OR u.shortUrl = :hash OR u.shortUrl LIKE CONCAT('%/', :hash))
+              AND (:tagIds IS NULL OR EXISTS (SELECT 1 FROM u.tags t WHERE t.id IN :tagIds))
+              AND (:folderId IS NULL OR u.folder.id = :folderId)
             GROUP BY c.country
             ORDER BY cnt DESC
             """)
-    List<Object[]> countOverallClicksByCountry(@Param("userId") Long userId, @Param("startDate") LocalDateTime startDate);
+    List<Object[]> countOverallClicksByCountry(@Param("userId") Long userId, @Param("startDate") LocalDateTime startDate, @Param("hash") String hash, @Param("tagIds") java.util.List<Long> tagIds, @Param("folderId") Long folderId);
 
     @Query("""
             SELECT c.device, COUNT(c) AS cnt
-            FROM ClickEvent c
-            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.user.id = :userId)
-              AND c.timestamp >= :startDate
+            FROM ClickEvent c JOIN c.url u
+            WHERE u.user.id = :userId
+              AND (:startDate IS NULL OR c.timestamp >= :startDate)
+              AND (:hash IS NULL OR u.shortUrl = :hash OR u.shortUrl LIKE CONCAT('%/', :hash))
+              AND (:tagIds IS NULL OR EXISTS (SELECT 1 FROM u.tags t WHERE t.id IN :tagIds))
+              AND (:folderId IS NULL OR u.folder.id = :folderId)
             GROUP BY c.device
             ORDER BY cnt DESC
             """)
-    List<Object[]> countOverallClicksByDevice(@Param("userId") Long userId, @Param("startDate") LocalDateTime startDate);
+    List<Object[]> countOverallClicksByDevice(@Param("userId") Long userId, @Param("startDate") LocalDateTime startDate, @Param("hash") String hash, @Param("tagIds") java.util.List<Long> tagIds, @Param("folderId") Long folderId);
 
     @Query("""
             SELECT c.browser, COUNT(c) AS cnt
-            FROM ClickEvent c
-            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.user.id = :userId)
-              AND c.timestamp >= :startDate
+            FROM ClickEvent c JOIN c.url u
+            WHERE u.user.id = :userId
+              AND (:startDate IS NULL OR c.timestamp >= :startDate)
+              AND (:hash IS NULL OR u.shortUrl = :hash OR u.shortUrl LIKE CONCAT('%/', :hash))
+              AND (:tagIds IS NULL OR EXISTS (SELECT 1 FROM u.tags t WHERE t.id IN :tagIds))
+              AND (:folderId IS NULL OR u.folder.id = :folderId)
             GROUP BY c.browser
             ORDER BY cnt DESC
             """)
-    List<Object[]> countOverallClicksByBrowser(@Param("userId") Long userId, @Param("startDate") LocalDateTime startDate);
+    List<Object[]> countOverallClicksByBrowser(@Param("userId") Long userId, @Param("startDate") LocalDateTime startDate, @Param("hash") String hash, @Param("tagIds") java.util.List<Long> tagIds, @Param("folderId") Long folderId);
 
-    @Query("SELECT COUNT(c) FROM ClickEvent c WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.user.id = :userId) AND c.timestamp >= :startDate")
-    Long countTotalOverallClicks(@Param("userId") Long userId, @Param("startDate") LocalDateTime startDate);
+    @Query("""
+            SELECT COUNT(c)
+            FROM ClickEvent c JOIN c.url u
+            WHERE u.user.id = :userId
+              AND (:startDate IS NULL OR c.timestamp >= :startDate)
+              AND (:hash IS NULL OR u.shortUrl = :hash OR u.shortUrl LIKE CONCAT('%/', :hash))
+              AND (:tagIds IS NULL OR EXISTS (SELECT 1 FROM u.tags t WHERE t.id IN :tagIds))
+              AND (:folderId IS NULL OR u.folder.id = :folderId)
+            """)
+    Long countTotalOverallClicks(@Param("userId") Long userId, @Param("startDate") LocalDateTime startDate, @Param("hash") String hash, @Param("tagIds") java.util.List<Long> tagIds, @Param("folderId") Long folderId);
 
     // ── FOLDER ANALYTICS QUERIES (User specific) ───────────────────────────
 

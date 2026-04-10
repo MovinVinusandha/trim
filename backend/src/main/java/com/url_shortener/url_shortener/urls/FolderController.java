@@ -27,6 +27,12 @@ public class FolderController {
         return folderService.getUserFolders(userId);
     }
 
+    @GetMapping("/slug/{slug}")
+    public FolderDto getFolderBySlug(@PathVariable String slug, Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        return folderService.getFolderBySlug(slug, userId);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public FolderDto createFolder(@Valid @RequestBody FolderRequestDto request, Authentication authentication) {

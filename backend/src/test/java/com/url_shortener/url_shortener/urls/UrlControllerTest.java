@@ -12,6 +12,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -42,7 +44,7 @@ class UrlControllerTest {
     void generateShortUrl_Success() throws Exception {
         UrlRequest request = new UrlRequest("https://example.com", null, null, null, null, null);
 
-        com.url_shortener.url_shortener.urls.UrlSend urlSend = new com.url_shortener.url_shortener.urls.UrlSend("https://example.com", "hash123", null, null, true, false, null);
+        com.url_shortener.url_shortener.urls.UrlSend urlSend = new com.url_shortener.url_shortener.urls.UrlSend("https://example.com", "hash123", null, null, true, false, null, null, null);
         when(urlService.generateShortUrl(any(UrlRequest.class))).thenReturn(urlSend);
 
         mockMvc.perform(post("/shorten")
@@ -51,6 +53,17 @@ class UrlControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.shortUrl").value("hash123"))
                 .andExpect(jsonPath("$.longUrl").value("https://example.com"));
+    }
+
+    @Test
+    void getAllUsers_WithFilters() throws Exception {
+        mockMvc.perform(get("/url/all")
+                .param("folderSlug", "marketing-2026")
+                .param("tagId", "2")
+                .param("search", "example"))
+                .andExpect(status().isOk());
+
+        verify(urlService).getAllUrls(eq(""), eq(2L), isNull(), eq("marketing-2026"), eq("example"));
     }
 
     @Test

@@ -118,7 +118,18 @@ public class UrlService {
                 }
                 url.setFolder(folder);
             } else {
-                folderRepository.findByNameIgnoreCaseAndUserId("Links", userId).ifPresent(url::setFolder);
+                Folder defaultFolder = folderRepository.findByUserIdAndSlug(userId, "links")
+                        .orElseGet(() -> folderRepository.findByNameIgnoreCaseAndUserId("Links", userId)
+                                .orElseGet(() -> {
+                                    User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+                                    Folder newDefault = Folder.builder()
+                                            .name("Links")
+                                            .slug("links")
+                                            .user(user)
+                                            .build();
+                                    return folderRepository.save(newDefault);
+                                }));
+                url.setFolder(defaultFolder);
             }
         }
 
@@ -223,7 +234,7 @@ public class UrlService {
         return toDtoWithClickCount(url);
     }
 
-    public List<UrlDto> getAllUrls(String sortBy) {
+    public List<UrlDto> getAllUrls(String sortBy, Long tagId, Long folderId, String folderSlug, String search) {
         var sortByClickCount = sortBy.equals("accessed_times");
 
         if (sortByClickCount) {
@@ -250,7 +261,7 @@ public class UrlService {
                     urlRepository.saveAll(unassignedUrls);
                 });
             }
-            urls = urlRepository.findAllByUserIdWithDetails(userId);
+            urls = urlRepository.findAllByUserIdWithFilters(userId, tagId, folderId, folderSlug, search);
             urls.sort(Comparator.comparing(Url::getId).reversed());
         }
 
