@@ -55,12 +55,44 @@ class AnalyticsControllerTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(currentUser));
 
         AnalyticsResponseDto responseDto = new AnalyticsResponseDto(500L, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
-        when(analyticsService.getOverallAnalytics(eq(currentUser), eq("7d"))).thenReturn(responseDto);
+        when(analyticsService.getOverallAnalytics(eq(currentUser), eq("7d"), eq(null), eq(null), eq(null))).thenReturn(responseDto);
 
         mockMvc.perform(get("/analytics")
                 .param("period", "7d")
                 .principal(new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalClicks").value(500));
+    }
+
+    @Test
+    void getOverallAnalytics_WithMultipleTagsAndSlug() throws Exception {
+        User currentUser = User.builder().id(1L).build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(currentUser));
+
+        AnalyticsResponseDto responseDto = new AnalyticsResponseDto(250L, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        when(analyticsService.getOverallAnalytics(eq(currentUser), eq("30d"), eq("hash123"), eq(java.util.List.of(1L, 3L)), eq(10L))).thenReturn(responseDto);
+
+        mockMvc.perform(get("/analytics")
+                .param("period", "30d")
+                .param("hash", "hash123")
+                .param("tagId", "1,3")
+                .param("folderId", "10")
+                .principal(new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalClicks").value(250));
+    }
+
+    @Test
+    void getFolderAnalyticsBySlug_Success() throws Exception {
+        User currentUser = User.builder().id(1L).build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(currentUser));
+
+        AnalyticsResponseDto responseDto = new AnalyticsResponseDto(120L, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        when(analyticsService.getFolderAnalyticsBySlug(eq("marketing-2026"), eq(currentUser), eq("all"))).thenReturn(responseDto);
+
+        mockMvc.perform(get("/analytics/folder/slug/marketing-2026")
+                .principal(new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalClicks").value(120));
     }
 }

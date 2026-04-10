@@ -62,6 +62,8 @@ public class UrlServiceTest {
                 null,
                 true,
                 false,
+                null,
+                null,
                 null
         );
         when(urlMapper.toSendDto(any(Url.class))).thenReturn(expectedSend);

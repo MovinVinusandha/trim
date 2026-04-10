@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class FolderDto {
     private Long id;
     private String name;
+    private String slug;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;

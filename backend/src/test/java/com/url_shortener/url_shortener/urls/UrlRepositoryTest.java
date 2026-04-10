@@ -34,7 +34,7 @@ class UrlRepositoryTest {
         testUser = User.builder().email("urltest@example.com").password("pass").build();
         userRepository.save(testUser);
 
-        Folder folder = Folder.builder().name("Test Folder").user(testUser).build();
+        Folder folder = Folder.builder().name("Test Folder").slug("test-folder").user(testUser).build();
         folderRepository.save(folder);
 
         Tag tag = Tag.builder().name("Test Tag").color("#FFF").user(testUser).build();
@@ -46,8 +46,8 @@ class UrlRepositoryTest {
     }
 
     @Test
-    void findAllByUserIdWithDetails_Success() {
-        List<Url> urls = urlRepository.findAllByUserIdWithDetails(testUser.getId());
+    void findAllByUserIdWithFilters_Success() {
+        List<Url> urls = urlRepository.findAllByUserIdWithFilters(testUser.getId(), null, null, null, null);
         
         assertThat(urls).hasSize(1);
         Url retrieved = urls.get(0);
@@ -56,5 +56,14 @@ class UrlRepositoryTest {
         assertThat(retrieved.getFolder().getName()).isEqualTo("Test Folder");
         assertThat(retrieved.getTags()).hasSize(1);
         assertThat(retrieved.getTags().iterator().next().getName()).isEqualTo("Test Tag");
+    }
+
+    @Test
+    void findAllByUserIdWithFilters_FilterByFolderSlug() {
+        List<Url> urlsMatch = urlRepository.findAllByUserIdWithFilters(testUser.getId(), null, null, "test-folder", null);
+        assertThat(urlsMatch).hasSize(1);
+
+        List<Url> urlsNoMatch = urlRepository.findAllByUserIdWithFilters(testUser.getId(), null, null, "non-existent-slug", null);
+        assertThat(urlsNoMatch).isEmpty();
     }
 }

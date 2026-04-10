@@ -28,25 +28,50 @@ class FolderServiceTest {
     @Test
     void createFolder_Success() {
         User user = User.builder().id(1L).build();
-        Folder folder = Folder.builder().id(10L).name("My Folder").user(user).build();
+        Folder folder = Folder.builder().id(10L).name("My Folder").slug("my-folder").user(user).build();
 
         when(folderRepository.existsByNameIgnoreCaseAndUserId("My Folder", 1L)).thenReturn(false);
+        when(folderRepository.existsByUserIdAndSlug(1L, "my-folder")).thenReturn(false);
         when(folderRepository.save(any(Folder.class))).thenReturn(folder);
         when(urlRepository.countByFolderId(10L)).thenReturn(0);
 
         FolderDto dto = folderService.createFolder("My Folder", user);
 
         assertThat(dto.getName()).isEqualTo("My Folder");
+        assertThat(dto.getSlug()).isEqualTo("my-folder");
         verify(folderRepository).save(any(Folder.class));
     }
 
     @Test
-    void createFolder_Conflict() {
+    void createFolder_ConflictName() {
         User user = User.builder().id(1L).build();
         when(folderRepository.existsByNameIgnoreCaseAndUserId("Duplicate", 1L)).thenReturn(true);
 
         assertThatThrownBy(() -> folderService.createFolder("Duplicate", user))
                 .isInstanceOf(FolderAlreadyExistsException.class);
+    }
+
+    @Test
+    void createFolder_ConflictSlug() {
+        User user = User.builder().id(1L).build();
+        when(folderRepository.existsByNameIgnoreCaseAndUserId("My-Folder!", 1L)).thenReturn(false);
+        when(folderRepository.existsByUserIdAndSlug(1L, "my-folder")).thenReturn(true);
+
+        assertThatThrownBy(() -> folderService.createFolder("My-Folder!", user))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
+    }
+
+    @Test
+    void getFolderBySlug_Success() {
+        Folder folder = Folder.builder().id(10L).name("My Folder").slug("my-folder").build();
+        when(folderRepository.findByUserIdAndSlug(1L, "my-folder")).thenReturn(Optional.of(folder));
+        when(urlRepository.countByFolderId(10L)).thenReturn(3);
+
+        FolderDto dto = folderService.getFolderBySlug("my-folder", 1L);
+
+        assertThat(dto.getName()).isEqualTo("My Folder");
+        assertThat(dto.getSlug()).isEqualTo("my-folder");
+        assertThat(dto.getLinkCount()).isEqualTo(3);
     }
 
     @Test

@@ -101,29 +101,34 @@ public class AnalyticsService {
         );
     }
 
-    public AnalyticsResponseDto getOverallAnalytics(User currentUser, String period) {
+    public AnalyticsResponseDto getOverallAnalytics(User currentUser, String period, String hash, List<Long> tagIds, Long folderId) {
+        tagIds = tagIds == null ? null : tagIds.stream().filter(id -> id != null && id > 0).collect(Collectors.toList());
+        if (tagIds != null && tagIds.isEmpty()) {
+            tagIds = null;
+        }
+
         Long userId = currentUser.getId();
         LocalDateTime startDate = getStartDateFromPeriod(period);
 
-        Long totalClicksRaw = clickEventRepository.countTotalOverallClicks(userId, startDate);
+        Long totalClicksRaw = clickEventRepository.countTotalOverallClicks(userId, startDate, hash, tagIds, folderId);
         Long totalClicks = totalClicksRaw != null ? totalClicksRaw : 0L;
 
-        List<ClickDataPoint> clicksByDate = clickEventRepository.countOverallClicksByDate(userId, startDate)
+        List<ClickDataPoint> clicksByDate = clickEventRepository.countOverallClicksByDate(userId, startDate, hash, tagIds, folderId)
                 .stream()
                 .map(row -> new ClickDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
                 .collect(Collectors.toList());
 
-        List<CountryDataPoint> clicksByCountry = clickEventRepository.countOverallClicksByCountry(userId, startDate)
+        List<CountryDataPoint> clicksByCountry = clickEventRepository.countOverallClicksByCountry(userId, startDate, hash, tagIds, folderId)
                 .stream()
                 .map(row -> new CountryDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
                 .collect(Collectors.toList());
 
-        List<DeviceDataPoint> clicksByDevice = clickEventRepository.countOverallClicksByDevice(userId, startDate)
+        List<DeviceDataPoint> clicksByDevice = clickEventRepository.countOverallClicksByDevice(userId, startDate, hash, tagIds, folderId)
                 .stream()
                 .map(row -> new DeviceDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
                 .collect(Collectors.toList());
 
-        List<BrowserDataPoint> clicksByBrowser = clickEventRepository.countOverallClicksByBrowser(userId, startDate)
+        List<BrowserDataPoint> clicksByBrowser = clickEventRepository.countOverallClicksByBrowser(userId, startDate, hash, tagIds, folderId)
                 .stream()
                 .map(row -> new BrowserDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
                 .collect(Collectors.toList());
@@ -135,6 +140,12 @@ public class AnalyticsService {
                 clicksByDevice,
                 clicksByBrowser
         );
+    }
+
+    public AnalyticsResponseDto getFolderAnalyticsBySlug(String slug, User currentUser, String period) {
+        var folder = folderRepository.findByUserIdAndSlug(currentUser.getId(), slug)
+                .orElseThrow(() -> new RuntimeException("Folder not found"));
+        return getFolderAnalytics(folder.getId(), currentUser, period);
     }
 
     public AnalyticsResponseDto getFolderAnalytics(Long folderId, User currentUser, String period) {

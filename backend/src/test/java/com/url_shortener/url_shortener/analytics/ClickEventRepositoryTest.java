@@ -47,7 +47,7 @@ class ClickEventRepositoryTest {
 
     @Test
     void countOverallClicksByCountry_Success() {
-        List<Object[]> results = clickEventRepository.countOverallClicksByCountry(testUser.getId(), LocalDateTime.now().minusDays(2));
+        List<Object[]> results = clickEventRepository.countOverallClicksByCountry(testUser.getId(), LocalDateTime.now().minusDays(2), null, null, null);
         
         assertThat(results).hasSize(1);
         assertThat(results.get(0)[0]).isEqualTo("US");
@@ -56,7 +56,7 @@ class ClickEventRepositoryTest {
     
     @Test
     void countOverallClicksByDate_Success() {
-        List<Object[]> results = clickEventRepository.countOverallClicksByDate(testUser.getId(), LocalDateTime.now().minusDays(2));
+        List<Object[]> results = clickEventRepository.countOverallClicksByDate(testUser.getId(), LocalDateTime.now().minusDays(2), null, null, null);
         assertThat(results).isNotEmpty();
     }
     

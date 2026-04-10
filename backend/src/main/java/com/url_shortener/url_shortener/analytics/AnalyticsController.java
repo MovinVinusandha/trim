@@ -47,11 +47,14 @@ public class AnalyticsController {
     @Operation(summary = "Get overall analytics for all URLs owned by the current user")
     public ResponseEntity<AnalyticsResponseDto> getOverallAnalytics(
             Authentication authentication,
-            @RequestParam(name = "period", defaultValue = "all") String period) {
+            @RequestParam(name = "period", defaultValue = "all") String period,
+            @RequestParam(required = false) String hash,
+            @RequestParam(required = false) List<Long> tagId,
+            @RequestParam(required = false) Long folderId) {
         Long userId = (Long) authentication.getPrincipal();
         User currentUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return ResponseEntity.ok(analyticsService.getOverallAnalytics(currentUser, period));
+        return ResponseEntity.ok(analyticsService.getOverallAnalytics(currentUser, period, hash, tagId, folderId));
     }
 
     @GetMapping("/analytics/folder/{folderId}")
@@ -63,6 +66,17 @@ public class AnalyticsController {
         User currentUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return ResponseEntity.ok(analyticsService.getFolderAnalytics(folderId, currentUser, period));
+    }
+
+    @GetMapping("/analytics/folder/slug/{slug}")
+    public ResponseEntity<AnalyticsResponseDto> getFolderAnalyticsBySlug(
+            @PathVariable String slug, 
+            Authentication authentication,
+            @RequestParam(name = "period", defaultValue = "all") String period) {
+        Long userId = (Long) authentication.getPrincipal();
+        User currentUser = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(analyticsService.getFolderAnalyticsBySlug(slug, currentUser, period));
     }
     @GetMapping("/analytics/usage")
     @Operation(summary = "Get global usage stats for the current user")

@@ -24,6 +24,9 @@ public class Folder {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
+    private String slug;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -38,5 +41,10 @@ public class Folder {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+        if (this.slug == null || this.slug.isBlank()) {
+            if (this.name != null) {
+                this.slug = this.name.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
+            }
+        }
     }
 }
