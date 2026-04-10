@@ -69,7 +69,7 @@ const DashboardPage: React.FC = () => {
   const [isQrLoading, setIsQrLoading] = useState(false);
   const [activeQrHash, setActiveQrHash] = useState<string | null>(null);
 
-  const { triggerRefresh, tags, folders, activeFolderId } = useOutletContext<DashboardLayoutContext>();
+  const { triggerRefresh, tags, folders, activeFolderId, setActiveFolderId } = useOutletContext<DashboardLayoutContext>();
 
   const [activeFilterTagId] = useState<number | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -91,6 +91,22 @@ const DashboardPage: React.FC = () => {
   const filterRef = useRef<HTMLDivElement>(null);
 
   const [searchParams] = useSearchParams();
+
+  const currentActiveFolderId = (() => {
+    const param = searchParams.get('folderId');
+    if (param && !isNaN(Number(param))) return Number(param);
+    return activeFolderId;
+  })();
+
+  useEffect(() => {
+    const folderParam = searchParams.get('folderId');
+    if (folderParam) {
+      const parsed = Number(folderParam);
+      if (!isNaN(parsed) && parsed !== activeFolderId && setActiveFolderId) {
+        setActiveFolderId(parsed);
+      }
+    }
+  }, [searchParams, activeFolderId, setActiveFolderId]);
 
   useEffect(() => {
     const tagFromUrl = searchParams.get('tag');
@@ -338,10 +354,15 @@ const DashboardPage: React.FC = () => {
     });
   }, [urls, sortBy, sortOrder]);
 
-  const displayedUrls = sortedUrls.filter(u => 
-    (activeFolderId === null || u.folderId === activeFolderId) &&
-    (activeFilterTagId === null || u.tags?.some(t => t.id === activeFilterTagId))
-  ).filter(u => {
+  const displayedUrls = sortedUrls.filter(u => {
+    const activeFolder = folders.find(f => f.id === currentActiveFolderId);
+    const isLinksFolderActive = activeFolder?.name.toLowerCase() === 'links' || currentActiveFolderId === null;
+    const matchesFolder = isLinksFolderActive 
+      ? (u.folderId === currentActiveFolderId || !u.folderId)
+      : u.folderId === currentActiveFolderId;
+
+    return matchesFolder && (activeFilterTagId === null || u.tags?.some(t => t.id === activeFilterTagId));
+  }).filter(u => {
     if (searchQuery.trim() === '') return true;
     const query = searchQuery.toLowerCase();
     return (

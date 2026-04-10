@@ -28,6 +28,7 @@ export type DashboardLayoutContext = {
   setTagToEdit: React.Dispatch<React.SetStateAction<any | null>>;
   isTagsLoading: boolean;
   isFoldersLoading: boolean;
+  navStats: { totalClicks: number; linkCount: number };
 };
 
 const DashboardLayout: React.FC = () => {
@@ -44,8 +45,26 @@ const DashboardLayout: React.FC = () => {
 
   const [tags, setTags] = useState<Tag[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
-  const [activeFolderId, setActiveFolderId] = useState<number | null>(null);
-  
+  const [activeFolderId, setActiveFolderId] = useState<number | null>(() => {
+    try {
+      const saved = sessionStorage.getItem('activeFolderId');
+      if (saved && !isNaN(Number(saved))) {
+        return Number(saved);
+      }
+    } catch (e) {}
+    return null;
+  });
+
+  useEffect(() => {
+    try {
+      if (activeFolderId !== null && activeFolderId !== undefined) {
+        sessionStorage.setItem('activeFolderId', String(activeFolderId));
+      } else {
+        sessionStorage.removeItem('activeFolderId');
+      }
+    } catch (e) {}
+  }, [activeFolderId]);
+
   const [isTagsLoading, setIsTagsLoading] = useState(true);
   const [isFoldersLoading, setIsFoldersLoading] = useState(true);
   
@@ -101,7 +120,21 @@ const DashboardLayout: React.FC = () => {
     const loadFolders = async () => {
       try {
         const { data } = await axiosInstance.get<Folder[]>('/folders');
-        if (isMounted) setFolders(data);
+        if (isMounted) {
+          setFolders(data);
+          setActiveFolderId(prev => {
+            if (prev !== null && data.some(f => f.id === prev)) return prev;
+            try {
+              const saved = sessionStorage.getItem('activeFolderId');
+              if (saved && !isNaN(Number(saved))) {
+                const savedId = Number(saved);
+                if (data.some(f => f.id === savedId)) return savedId;
+              }
+            } catch (e) {}
+            const linksFolder = data.find(f => f.name.toLowerCase() === 'links');
+            return linksFolder ? linksFolder.id : (data.length > 0 ? data[0].id : null);
+          });
+        }
       } catch (err) {} finally {
         if (isMounted) setIsFoldersLoading(false);
       }
@@ -380,34 +413,36 @@ const DashboardLayout: React.FC = () => {
                       </button>
                     </div>
                     
-                    <button
-                      onClick={() => {
-                        setActiveFolderId(null);
-                        navigate('/dashboard');
-                        setIsFolderSwitcherOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center gap-2 ${activeFolderId === null ? 'bg-gray-100 dark:bg-[#222222] text-gray-900 dark:text-[#EDEDED] font-medium' : 'text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
-                    >
-                      <FolderIcon className="w-4 h-4 text-gray-400" />
-                      All Links
-                    </button>
-                    
-                    <div className="max-h-48 overflow-y-auto flex flex-col gap-1 border-y border-gray-100 dark:border-[#2B2B30] py-1">
-                      {folders.filter(f => f.name.toLowerCase().includes(folderSearch.toLowerCase())).map(folder => (
-                        <motion.button
-                          layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
-                          key={folder.id}
-                          onClick={() => {
-                            setActiveFolderId(folder.id);
-                            navigate('/dashboard');
-                            setIsFolderSwitcherOpen(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center gap-2 ${activeFolderId === folder.id ? 'bg-gray-100 dark:bg-[#222222] text-gray-900 dark:text-[#EDEDED] font-medium' : 'text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
-                        >
-                          <FolderIcon className="w-4 h-4 text-emerald-500" />
-                          {folder.name}
-                        </motion.button>
-                      ))}
+                    <div className="max-h-56 overflow-y-auto flex flex-col gap-1 border-y border-gray-100 dark:border-[#2B2B30] py-1">
+                      {folders.filter(f => f.name.toLowerCase().includes(folderSearch.toLowerCase())).map(folder => {
+                        const isDefault = folder.name.toLowerCase() === 'links';
+                        return (
+                          <motion.button
+                            layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
+                            key={folder.id}
+                            onClick={() => {
+                              setActiveFolderId(folder.id);
+                              if (location.pathname.startsWith('/analytics')) {
+                                navigate(`/analytics?folderId=${folder.id}`);
+                              } else {
+                                navigate('/dashboard');
+                              }
+                              setIsFolderSwitcherOpen(false);
+                            }}
+                            className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between ${activeFolderId === folder.id ? 'bg-gray-100 dark:bg-[#222222] text-gray-900 dark:text-[#EDEDED] font-medium' : 'text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <FolderIcon className={`w-4 h-4 ${isDefault ? 'text-blue-500' : 'text-emerald-500'}`} />
+                              <span>{folder.name}</span>
+                            </div>
+                            {isDefault && (
+                              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold">
+                                Default
+                              </span>
+                            )}
+                          </motion.button>
+                        );
+                      })}
                       {folders.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No folders found</div>}
                     </div>
                     
@@ -457,7 +492,7 @@ const DashboardLayout: React.FC = () => {
             ) : (
               <>
                 <Link 
-                  to="/dashboard" 
+                  to={activeFolderId ? `/dashboard?folderId=${activeFolderId}` : "/dashboard"} 
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium transition-colors ${location.pathname === '/dashboard' ? 'bg-[#E7EFF9] text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-600 hover:bg-[#EAEAEA] hover:text-gray-900 dark:text-[#A1A1AA] dark:hover:bg-[#2B2B30] dark:hover:text-gray-100'}`}
                 >
                   <LinkIcon className="w-4 h-4" />
@@ -529,7 +564,8 @@ const DashboardLayout: React.FC = () => {
                 setFolderToEdit,
                 setTagToEdit,
                 isTagsLoading,
-                isFoldersLoading
+                isFoldersLoading,
+                navStats
               } satisfies DashboardLayoutContext} />
             </AnimatePresence>
           </div>
@@ -546,6 +582,7 @@ const DashboardLayout: React.FC = () => {
         }}
         folders={folders}
         tags={tags}
+        defaultFolderId={activeFolderId || undefined}
         onOpenFolderModal={() => setIsFolderModalOpen(true)}
       />
 

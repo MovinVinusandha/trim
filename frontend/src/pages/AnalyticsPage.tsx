@@ -10,7 +10,7 @@ import type { DashboardLayoutContext } from '../layouts/DashboardLayout';
 import { 
   ArrowLeft, MousePointerClick, Globe, Monitor, 
   Link as LinkIcon, Activity,
-  Users, Percent, Share2
+  Users, Percent, Share2, Folder as FolderIcon
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import { motion } from 'framer-motion';
@@ -28,9 +28,11 @@ const COLORS = ['#7c3aed', '#c4b5fd', '#8b5cf6', '#a78bfa', '#ddd6fe'];
 const AnalyticsPage: React.FC = () => {
   const { hash } = useParams<{ hash: string }>();
   const navigate = useNavigate();
-  const {} = useOutletContext<DashboardLayoutContext>();
+  const { folders = [], activeFolderId, setActiveFolderId } = useOutletContext<DashboardLayoutContext>() || {};
   const [searchParams] = useSearchParams();
-  const folderId = searchParams.get('folderId');
+  const folderIdParam = searchParams.get('folderId');
+  const targetFolderId = folderIdParam !== null ? folderIdParam : (activeFolderId !== null && activeFolderId !== undefined ? String(activeFolderId) : null);
+  const currentFolder = targetFolderId ? folders?.find(f => f.id === Number(targetFolderId)) : null;
   
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,8 +46,8 @@ const AnalyticsPage: React.FC = () => {
         let endpoint = '/analytics';
         if (hash) {
           endpoint = `/analytics/${hash}`;
-        } else if (folderId) {
-          endpoint = `/analytics/folder/${folderId}`;
+        } else if (targetFolderId) {
+          endpoint = `/analytics/folder/${targetFolderId}`;
         }
         const response = await axiosInstance.get<AnalyticsData>(endpoint, { params: { period } });
         setData(response.data);
@@ -58,7 +60,7 @@ const AnalyticsPage: React.FC = () => {
     };
 
     fetchAnalytics();
-  }, [hash, period, folderId]);
+  }, [hash, period, targetFolderId]);
 
   if (loading) {
     return (
@@ -152,16 +154,40 @@ const AnalyticsPage: React.FC = () => {
     <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
         
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-[#EDEDED]">
-              {hash ? (
-                <>Analytics for <span className="text-[#7c3aed]">/{hash}</span></>
-              ) : folderId ? (
-                'Folder Analytics'
-              ) : (
-                'Overall Analytics'
+          <div className="flex items-center gap-3">
+            {hash && (
+              <button 
+                onClick={() => {
+                  navigate(targetFolderId ? `/analytics?folderId=${targetFolderId}` : '/analytics');
+                }}
+                className="p-1.5 rounded-lg border border-gray-200 dark:border-[#2B2B30] hover:bg-gray-100 dark:hover:bg-[#2B2B30] text-gray-500 dark:text-[#A1A1AA] transition-colors"
+                title="Back to folder analytics"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+            )}
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-[#EDEDED] flex items-center gap-2">
+                {hash ? (
+                  <>Analytics for <span className="text-[#7c3aed]">/{hash}</span></>
+                ) : currentFolder ? (
+                  <>
+                    <FolderIcon className={`w-5 h-5 ${currentFolder.name.toLowerCase() === 'links' ? 'text-blue-500' : 'text-emerald-500'} shrink-0`} />
+                    <span>Analytics for</span>
+                    <span className={currentFolder.name.toLowerCase() === 'links' ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}>{currentFolder.name}</span>
+                  </>
+                ) : targetFolderId ? (
+                  'Folder Analytics'
+                ) : (
+                  'Overall Analytics'
+                )}
+              </h1>
+              {currentFolder && (
+                <p className="text-xs text-gray-500 dark:text-[#A1A1AA] mt-0.5">
+                  Filtered by folder • {currentFolder.linkCount ?? 0} {(currentFolder.linkCount === 1) ? 'link' : 'links'}
+                </p>
               )}
-            </h1>
+            </div>
           </div>
         </div>
 

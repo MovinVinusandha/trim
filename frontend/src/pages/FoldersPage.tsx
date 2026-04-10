@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext, useSearchParams, useNavigate } from 'react-router-dom';
-import { Search, MoreVertical, Trash2, Link as LinkIcon, Folder as FolderIcon, Pen } from 'lucide-react';
+import { Search, MoreVertical, Trash2, Link as LinkIcon, Folder as FolderIcon, Pen, BarChart2 } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import type { DashboardLayoutContext } from '../layouts/DashboardLayout';
 import Skeleton from 'react-loading-skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const FoldersPage: React.FC = () => {
-  const { folders, setFolders, setActiveFolderId, setFolderToEdit, setIsFolderModalOpen, isFoldersLoading } = useOutletContext<DashboardLayoutContext>();
+  const { folders, setFolders, setActiveFolderId, setFolderToEdit, setIsFolderModalOpen, isFoldersLoading, navStats } = useOutletContext<DashboardLayoutContext>();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [folderToDelete, setFolderToDelete] = useState<any | null>(null);
   const [searchParams] = useSearchParams();
 
-  const handleFolderClick = (folderId: number) => {
+  const handleFolderClick = (folderId: number | null) => {
     setActiveFolderId(folderId);
-    navigate('/dashboard');
+    navigate(folderId ? `/dashboard?folderId=${folderId}` : '/dashboard');
   };
 
   useEffect(() => {
@@ -71,77 +71,111 @@ const FoldersPage: React.FC = () => {
               </div>
             ))
           ) : (
-            filteredFolders.map(folder => (
-              <motion.div layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2 }} key={folder.id} onClick={() => handleFolderClick(folder.id)} className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow group relative cursor-pointer">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg text-emerald-600 dark:text-emerald-400">
-                      <FolderIcon className="w-5 h-5" />
+            filteredFolders.map(folder => {
+              const isDefault = folder.name.toLowerCase() === 'links';
+              return (
+                <motion.div 
+                  layout 
+                  initial={{ opacity: 0, scale: 0.95 }} 
+                  animate={{ opacity: 1, scale: 1 }} 
+                  transition={{ duration: 0.2 }} 
+                  key={folder.id} 
+                  onClick={() => handleFolderClick(folder.id)} 
+                  className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow group relative cursor-pointer"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${isDefault ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'}`}>
+                        <FolderIcon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium text-gray-900 dark:text-[#EDEDED] line-clamp-1">{folder.name}</h3>
+                          {isDefault && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-medium text-gray-900 dark:text-[#EDEDED] line-clamp-1">{folder.name}</h3>
-                    </div>
-                  </div>
 
-                  <div className="relative">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpenMenuId(openMenuId === folder.id ? null : folder.id);
-                      }}
-                      className="p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded-md transition-colors"
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
-                    
-                    <AnimatePresence>
-                    {openMenuId === folder.id && (
-                      <motion.div 
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.15, ease: "easeOut" }}
-                        className="absolute right-0 mt-1 w-32 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg z-[60] overflow-hidden"
+                    <div className="relative">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenMenuId(openMenuId === folder.id ? null : folder.id);
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded-md transition-colors"
                       >
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenMenuId(null);
-                            setFolderToEdit(folder);
-                            setIsFolderModalOpen(true);
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] flex items-center gap-2"
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                      
+                      <AnimatePresence>
+                      {openMenuId === folder.id && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ duration: 0.15, ease: "easeOut" }}
+                          className="absolute right-0 mt-1 w-36 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg z-[60] overflow-hidden"
                         >
-                          <Pen className="w-4 h-4" />
-                          Edit
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenMenuId(null);
-                            setFolderToDelete(folder);
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Delete
-                        </button>
-                      </motion.div>
-                    )}
-                    </AnimatePresence>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuId(null);
+                              setActiveFolderId(folder.id);
+                              navigate(`/analytics?folderId=${folder.id}`);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] flex items-center gap-2"
+                          >
+                            <BarChart2 className="w-4 h-4 text-blue-500" />
+                            Analytics
+                          </button>
+                          {!isDefault && (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenMenuId(null);
+                                  setFolderToEdit(folder);
+                                  setIsFolderModalOpen(true);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] flex items-center gap-2"
+                              >
+                                <Pen className="w-4 h-4" />
+                                Edit
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenMenuId(null);
+                                  setFolderToDelete(folder);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                Delete
+                              </button>
+                            </>
+                          )}
+                        </motion.div>
+                      )}
+                      </AnimatePresence>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div 
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-[#A1A1AA] bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#2B2B30] rounded-md hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors"
-                  >
-                    <LinkIcon className="w-3.5 h-3.5" />
-                    {folder.linkCount || 0} {(folder.linkCount || 0) === 1 ? 'link' : 'links'}
+                  
+                  <div className="flex items-center justify-between">
+                    <div 
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-[#A1A1AA] bg-gray-50 dark:bg-[#222222] border border-gray-200 dark:border-[#2B2B30] rounded-md hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors"
+                    >
+                      <LinkIcon className="w-3.5 h-3.5" />
+                      {folder.linkCount || 0} {(folder.linkCount || 0) === 1 ? 'link' : 'links'}
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))
+                </motion.div>
+              );
+            })
           )}
           
           {!isFoldersLoading && filteredFolders.length === 0 && (

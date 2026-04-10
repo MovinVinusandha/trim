@@ -92,6 +92,25 @@ describe('AnalyticsPage', () => {
     });
   });
 
+  it('handles folderId specific analytics', async () => {
+    vi.spyOn(routerDom, 'useSearchParams').mockReturnValue([new URLSearchParams('folderId=5')]);
+    vi.spyOn(routerDom, 'useOutletContext').mockReturnValue({
+      folders: [{ id: 5, name: 'Campaign 2026', linkCount: 12 }],
+      setActiveFolderId: vi.fn(),
+    });
+    (axiosInstance.get as any).mockResolvedValue({
+      data: { totalClicks: 99, clicksByDate: [], clicksByCountry: [], clicksByDevice: [], clicksByBrowser: [] },
+    });
+
+    render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Campaign 2026')).toBeInTheDocument();
+      expect(screen.getByText('99')).toBeInTheDocument();
+      expect(axiosInstance.get).toHaveBeenCalledWith('/analytics/folder/5', expect.any(Object));
+    });
+  });
+
   it('renders empty state when no data is available', async () => {
     vi.spyOn(routerDom, 'useParams').mockReturnValue({});
     (axiosInstance.get as any).mockResolvedValue({

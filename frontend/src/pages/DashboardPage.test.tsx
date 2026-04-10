@@ -174,4 +174,46 @@ describe('DashboardPage', () => {
       expect(screen.getByText('No links found.')).toBeInTheDocument();
     });
   });
+
+  it('filters links based on activeFolderId workspace isolation', async () => {
+    (useAuth as any).mockReturnValue({ user: { id: 1 } });
+    (axiosInstance.get as any).mockResolvedValue({
+      data: [
+        { longUrl: 'https://example.com/default-link', shortUrl: 'http://trim.sh/def001', folderId: null },
+        { longUrl: 'https://example.com/marketing-link', shortUrl: 'http://trim.sh/mkt002', folderId: 5, folderName: 'Marketing' }
+      ]
+    });
+
+    // When activeFolderId is null (default "Links" workspace)
+    vi.spyOn(routerDom, 'useOutletContext').mockReturnValue({
+      triggerRefresh: null,
+      tags: [],
+      folders: [{ id: 5, name: 'Marketing', linkCount: 1 }],
+      activeFolderId: null,
+    } as any);
+
+    const { unmount } = render(<MemoryRouter><DashboardPage /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByText(/def001/)).toBeInTheDocument();
+      expect(screen.queryByText(/mkt002/)).not.toBeInTheDocument();
+    });
+
+    unmount();
+
+    // When activeFolderId is 5 (Marketing folder workspace)
+    vi.spyOn(routerDom, 'useOutletContext').mockReturnValue({
+      triggerRefresh: null,
+      tags: [],
+      folders: [{ id: 5, name: 'Marketing', linkCount: 1 }],
+      activeFolderId: 5,
+    } as any);
+
+    render(<MemoryRouter><DashboardPage /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByText(/mkt002/)).toBeInTheDocument();
+      expect(screen.queryByText(/def001/)).not.toBeInTheDocument();
+    });
+  });
 });
