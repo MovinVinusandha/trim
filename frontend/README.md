@@ -1,4 +1,4 @@
-# Frontend Application - URL Shortener
+# Frontend Application - trim
 
 Modern single-page application (SPA) built with React 18, TypeScript, Vite, and Tailwind CSS, featuring link management, interactive analytics, and multi-subdomain routing support.
 

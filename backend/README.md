@@ -1,4 +1,4 @@
-# Backend API - URL Shortener
+# Backend API - trim
 
 Enterprise-grade Spring Boot 3 REST API powering URL redirection, analytics processing, user management, and organization hierarchies.
 
