@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useOutletContext, Link, useSearchParams, useParams, useNavigate } from 'react-router-dom';
-import { X, BarChart2, Search, Copy, QrCode, Edit2, Trash2, CornerDownRight, MoreVertical, Filter, SlidersHorizontal, ChevronDown, ArrowUpDown, Check, ArrowDownWideNarrow, Tag, ChevronLeft, CheckCircle2, XCircle, Lock, Folder as FolderIcon } from 'lucide-react';
+import { X, BarChart2, Search, Copy, QrCode, Edit2, Trash2, CornerDownRight, MoreVertical, Filter, SlidersHorizontal, ChevronDown, ArrowUpDown, Check, ArrowDownWideNarrow, Tag, ChevronLeft, CheckCircle2, XCircle, Lock, Folder as FolderIcon, Link as LinkIcon } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -83,6 +83,16 @@ const DashboardPage: React.FC = () => {
   const [tagPillSearch, setTagPillSearch] = useState('');
   const tagPillPopoverRef = useRef<HTMLDivElement>(null);
 
+  const [isFolderPillPopoverOpen, setIsFolderPillPopoverOpen] = useState(false);
+  const [folderPillSearch, setFolderPillSearch] = useState('');
+  const folderPillPopoverRef = useRef<HTMLDivElement>(null);
+
+  const [isLinkPillPopoverOpen, setIsLinkPillPopoverOpen] = useState(false);
+  const [linkPillSearch, setLinkPillSearch] = useState('');
+  const linkPillPopoverRef = useRef<HTMLDivElement>(null);
+
+  const [filterSearch, setFilterSearch] = useState('');
+
   const displayRef = useRef<HTMLDivElement>(null);
   const sortMenuRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
@@ -95,12 +105,12 @@ const DashboardPage: React.FC = () => {
     const tagIdParam = searchParams.get('tagId');
     let nextTags: number[] = [];
     if (tagIdParam) {
-      nextTags = tagIdParam.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
+      nextTags = tagIdParam.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0);
     } else {
       const tagFromUrl = searchParams.get('tag');
       if (tagFromUrl && tags.length > 0) {
         const tagToFilter = tags.find(t => t.name.toLowerCase() === tagFromUrl.toLowerCase());
-        if (tagToFilter) {
+        if (tagToFilter && tagToFilter.id > 0) {
           nextTags = [tagToFilter.id];
         }
       }
@@ -125,6 +135,18 @@ const DashboardPage: React.FC = () => {
       if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
         setIsFilterOpen(false);
         setActiveFilter('none');
+      }
+
+      if (tagPillPopoverRef.current && !tagPillPopoverRef.current.contains(event.target as Node)) {
+        setIsTagPillPopoverOpen(false);
+      }
+
+      if (folderPillPopoverRef.current && !folderPillPopoverRef.current.contains(event.target as Node)) {
+        setIsFolderPillPopoverOpen(false);
+      }
+
+      if (linkPillPopoverRef.current && !linkPillPopoverRef.current.contains(event.target as Node)) {
+        setIsLinkPillPopoverOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -355,12 +377,19 @@ const DashboardPage: React.FC = () => {
     });
   }, [urls, sortBy, sortOrder]);
 
+  const hashParam = searchParams.get('hash');
+
   const displayedUrls = sortedUrls.filter(u => {
     if (currentFolder) {
       const isDefault = currentFolder.name.toLowerCase() === 'links';
       if (!isDefault) {
         return u.folderId === currentFolder.id;
       }
+    }
+    return true;
+  }).filter(u => {
+    if (hashParam) {
+      return extractHash(u.shortUrl).toLowerCase() === hashParam.toLowerCase();
     }
     return true;
   }).filter(u => {
@@ -375,9 +404,40 @@ const DashboardPage: React.FC = () => {
     return u.tags?.some(tag => selectedFilterTags.includes(tag.id));
   });
 
+  const availableUrls = useMemo(() => {
+    let list = urls;
+    if (currentFolder && currentFolder.name.toLowerCase() !== 'links') {
+      list = list.filter(u => u.folderId === currentFolder.id);
+    }
+    if (selectedFilterTags.length > 0) {
+      list = list.filter(u => u.tags?.some(t => selectedFilterTags.includes(t.id)));
+    }
+    return list;
+  }, [urls, currentFolder, selectedFilterTags]);
+
+  const availableTags = useMemo(() => {
+    let list = tags;
+    if (currentFolder && currentFolder.name.toLowerCase() !== 'links') {
+      const folderLinks = urls.filter(u => u.folderId === currentFolder.id);
+      const tagIdsInFolder = new Set(folderLinks.flatMap(u => u.tags?.map(t => t.id) || []));
+      list = list.filter(t => tagIdsInFolder.has(t.id));
+    }
+    return list;
+  }, [tags, urls, currentFolder]);
+
+  const availableFolders = useMemo(() => {
+    let list = folders;
+    if (selectedFilterTags.length > 0) {
+      const matchingLinks = urls.filter(u => u.tags?.some(t => selectedFilterTags.includes(t.id)));
+      const folderIdsWithTags = new Set(matchingLinks.map(u => u.folderId).filter(Boolean));
+      list = list.filter(f => f.name.toLowerCase() === 'links' || folderIdsWithTags.has(f.id));
+    }
+    return list;
+  }, [folders, urls, selectedFilterTags]);
 
 
 
+  const validFilterTags = selectedFilterTags.filter(id => Boolean(id) && Number(id) > 0);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col h-full w-full">
@@ -412,24 +472,88 @@ const DashboardPage: React.FC = () => {
                             <input 
                               type="text"
                               placeholder="Filter..." 
-                              className="block w-full pl-3 pr-8 py-2 border-none bg-white dark:bg-[#111113] text-sm text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:ring-0"
+                              className="block w-full px-3 py-2 border-none bg-white dark:bg-[#111113] text-sm text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:ring-0"
                             />
-                            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                              <kbd className="inline-flex items-center border border-gray-200 dark:border-[#2B2B30] rounded px-1.5 text-xs font-medium text-gray-400 bg-gray-50 dark:bg-[#222222]">F</kbd>
-                            </div>
                           </div>
                         </div>
                         <div className="py-1 p-1">
                           <button 
-                            onClick={() => setActiveFilter('tag')}
+                            onClick={() => { setActiveFilter('link'); setFilterSearch(''); }}
+                            className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-md transition-colors group"
+                          >
+                            <div className="flex items-center">
+                              <LinkIcon className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                              Link
+                            </div>
+                          </button>
+                          <button 
+                            onClick={() => { setActiveFilter('tag'); setTagSearch(''); }}
                             className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-md transition-colors group"
                           >
                             <div className="flex items-center">
                               <Tag className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
                               Tag
                             </div>
-                            <span className="text-xs text-gray-400 group-hover:text-gray-500">T</span>
                           </button>
+                        </div>
+                      </>
+                    ) : activeFilter === 'link' ? (
+                      <>
+                        <div className="p-2 border-b border-gray-100 dark:border-[#2B2B30] flex items-center gap-2">
+                          <button 
+                            onClick={() => { setActiveFilter('none'); setFilterSearch(''); }} 
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded text-gray-500"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <div className="relative flex-1">
+                            <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input 
+                              type="text"
+                              value={filterSearch}
+                              onChange={e => setFilterSearch(e.target.value)}
+                              placeholder="Search links..." 
+                              className="block w-full pl-9 pr-3 py-1.5 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm bg-white dark:bg-[#1E1E21] text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+                        </div>
+                        <div className="py-1 p-1 max-h-56 overflow-y-auto">
+                          {availableUrls.filter(u => {
+                            const h = extractHash(u.shortUrl).toLowerCase();
+                            const l = (u.longUrl || '').toLowerCase();
+                            const q = filterSearch.toLowerCase();
+                            return h.includes(q) || l.includes(q);
+                          }).map(u => {
+                            const cleanHash = extractHash(u.shortUrl);
+                            const isSelected = hashParam === cleanHash;
+                            return (
+                              <button
+                                key={u.shortUrl}
+                                onClick={() => {
+                                  setSearchParams(prev => {
+                                    const updated = new URLSearchParams(prev);
+                                    updated.set('hash', cleanHash);
+                                    return updated;
+                                  });
+                                  setIsFilterOpen(false);
+                                  setActiveFilter('none');
+                                }}
+                                className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between ${isSelected ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <LinkIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="truncate font-mono text-xs font-medium">/{cleanHash}</span>
+                                    <span className="truncate text-xs text-gray-400 dark:text-gray-500">{u.longUrl}</span>
+                                  </div>
+                                </div>
+                                <span className="text-xs text-gray-400 dark:text-gray-500 font-mono ml-2 shrink-0">
+                                  {u.accessed_times ?? 0} clicks
+                                </span>
+                              </button>
+                            );
+                          })}
+                          {availableUrls.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No links found</div>}
                         </div>
                       </>
                     ) : activeFilter === 'tag' ? (
@@ -453,15 +577,26 @@ const DashboardPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="py-1 p-1 max-h-48 overflow-y-auto">
-                          {tags.filter(t => t.name.toLowerCase().includes(tagSearch.toLowerCase())).map(t => (
+                          {availableTags.filter(t => t.name.toLowerCase().includes(tagSearch.toLowerCase())).map(t => (
                             <label key={t.id} className="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-md cursor-pointer group">
                               <input 
                                 type="checkbox" 
                                 checked={selectedFilterTags.includes(t.id)}
                                 onChange={() => {
-                                  setSelectedFilterTags(prev => 
-                                    prev.includes(t.id) ? prev.filter(id => id !== t.id) : [...prev, t.id]
-                                  )
+                                  const isChecked = selectedFilterTags.includes(t.id);
+                                  const updated = isChecked 
+                                    ? selectedFilterTags.filter(id => id !== t.id)
+                                    : [...selectedFilterTags, t.id];
+                                  setSelectedFilterTags(updated);
+                                  setSearchParams(prev => {
+                                    const next = new URLSearchParams(prev);
+                                    if (updated.length > 0) {
+                                      next.set('tagId', updated.join(','));
+                                    } else {
+                                      next.delete('tagId');
+                                    }
+                                    return next;
+                                  });
                                 }}
                                 className="rounded border-gray-300 dark:border-slate-600 text-black dark:text-[#EDEDED] focus:ring-black dark:focus:ring-white mr-3 bg-white dark:bg-[#1E1E21]"
                               />
@@ -474,7 +609,7 @@ const DashboardPage: React.FC = () => {
                               </span>
                             </label>
                           ))}
-                          {tags.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No tags found</div>}
+                          {availableTags.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No tags found</div>}
                         </div>
                       </>
                     ) : null}
@@ -629,156 +764,320 @@ const DashboardPage: React.FC = () => {
           </div>
 
           {/* Active Compound Filter Pills */}
-          {(folderSlug || selectedFilterTags.length > 0) && (
+          {(hashParam || folderSlug || selectedFilterTags.filter(id => Boolean(id) && Number(id) > 0).length > 0) && (
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              {folderSlug && (
-                <div className="flex items-center shadow-sm rounded-md">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-l-md text-xs font-medium text-gray-700 dark:text-gray-300">
-                    <FolderIcon className="w-3.5 h-3.5 text-blue-500" />
-                    Folder
-                  </div>
-                  <div className="px-2 py-1 bg-gray-50 dark:bg-slate-800/50 border-y border-gray-200 dark:border-slate-800 text-xs text-gray-400 font-medium">
-                    is
-                  </div>
-                  <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-xs font-medium text-gray-900 dark:text-white">
-                    {currentFolder?.name || folderSlug}
-                  </div>
-                  <button 
-                    type="button"
-                    className="px-2 py-1 bg-white dark:bg-slate-900 border border-l-0 border-gray-200 dark:border-slate-800 rounded-r-md text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer transition-colors flex items-center justify-center"
-                    onClick={() => {
-                      navigate('/dashboard');
-                    }}
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
-              {selectedFilterTags.length > 0 && (
-                <div className="relative flex items-center shadow-sm rounded-md" ref={tagPillPopoverRef}>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-l-md text-xs font-medium text-gray-700 dark:text-gray-300">
-                    <Tag className="w-3.5 h-3.5" />
-                    Tag
-                  </div>
-                  <div className="px-2 py-1 bg-gray-50 dark:bg-slate-800/50 border-y border-gray-200 dark:border-slate-800 text-xs text-gray-400 font-medium">
-                    is
-                  </div>
-                  <button 
-                    type="button"
-                    onClick={() => setIsTagPillPopoverOpen(prev => !prev)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-xs font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-[#2B2B30] cursor-pointer transition-colors"
-                  >
-                    {selectedFilterTags.length === 1 ? (
-                      (() => {
-                        const tag = tags.find(t => t.id === selectedFilterTags[0]);
-                        return (
-                          <span className="inline-flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: tag?.color || '#374151' }} />
-                            <span>{tag?.name || selectedFilterTags[0]}</span>
-                          </span>
-                        );
-                      })()
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5">
-                        <div className="flex items-center -space-x-1">
-                          {selectedFilterTags.slice(0, 4).map(id => {
-                            const tag = tags.find(t => t.id === id);
-                            return (
-                              <span 
-                                key={id} 
-                                className="inline-block w-2.5 h-2.5 rounded-full ring-1 ring-white dark:ring-slate-900" 
-                                style={{ backgroundColor: tag?.color || '#374151' }} 
-                              />
-                            );
-                          })}
-                        </div>
-                        <span>{selectedFilterTags.length} Tags</span>
-                      </span>
-                    )}
-                  </button>
-                  <button 
-                    type="button"
-                    className="px-2 py-1 bg-white dark:bg-slate-900 border border-l-0 border-gray-200 dark:border-slate-800 rounded-r-md text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer transition-colors flex items-center justify-center"
-                    onClick={() => {
-                      setSelectedFilterTags([]);
-                      setSearchParams(prev => {
-                        prev.delete('tagId');
-                        return prev;
-                      });
-                      setIsTagPillPopoverOpen(false);
-                    }}
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-
-                  {/* Popover Dropdown */}
-                  <AnimatePresence>
-                    {isTagPillPopoverOpen && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                        transition={{ duration: 0.15, ease: "easeOut" }}
-                        className="absolute left-0 top-full mt-2 w-64 rounded-lg shadow-xl bg-white dark:bg-[#1E1E21] ring-1 ring-black/5 dark:ring-white/10 border border-gray-200 dark:border-[#2B2B30] divide-y divide-gray-100 dark:divide-slate-800 focus:outline-none z-[70] overflow-hidden"
+                {hashParam && (
+                  <div className="relative inline-flex items-center" ref={linkPillPopoverRef}>
+                    <div className="inline-flex items-center h-7 rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs shadow-sm overflow-hidden divide-x divide-gray-200 dark:divide-slate-700">
+                      <div className="flex items-center gap-1.5 px-2.5 h-full font-medium text-gray-700 dark:text-gray-300">
+                        <LinkIcon className="w-3.5 h-3.5" />
+                        Link
+                      </div>
+                      <div className="flex items-center px-2 h-full bg-gray-50 dark:bg-slate-800 text-gray-400 font-medium">
+                        is
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => setIsLinkPillPopoverOpen(prev => !prev)}
+                        className="flex items-center gap-1 px-2.5 h-full font-medium text-gray-900 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
                       >
-                        <div className="p-2 border-b border-gray-100 dark:border-[#2B2B30]">
-                          <div className="relative">
-                            <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input 
-                              type="text"
-                              value={tagPillSearch}
-                              onChange={e => setTagPillSearch(e.target.value)}
-                              placeholder="Tag..." 
-                              className="block w-full pl-9 pr-3 py-1.5 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm bg-white dark:bg-[#1E1E21] text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            />
+                        /{hashParam}
+                      </button>
+                      <button 
+                        type="button"
+                        className="flex items-center justify-center px-2 h-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                        onClick={() => {
+                          setSearchParams(prev => {
+                            const updated = new URLSearchParams(prev);
+                            updated.delete('hash');
+                            return updated;
+                          });
+                          setIsLinkPillPopoverOpen(false);
+                        }}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Link Popover Dropdown */}
+                    <AnimatePresence>
+                      {isLinkPillPopoverOpen && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          transition={{ duration: 0.15, ease: "easeOut" }}
+                          className="absolute left-0 top-full mt-2 w-72 rounded-lg shadow-xl bg-white dark:bg-[#1E1E21] ring-1 ring-black/5 dark:ring-white/10 border border-gray-200 dark:border-[#2B2B30] divide-y divide-gray-100 dark:divide-slate-800 focus:outline-none z-[70] overflow-hidden"
+                        >
+                          <div className="p-2 border-b border-gray-100 dark:border-[#2B2B30]">
+                            <div className="relative">
+                              <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                              <input 
+                                type="text"
+                                value={linkPillSearch}
+                                onChange={e => setLinkPillSearch(e.target.value)}
+                                placeholder="Search links..." 
+                                className="block w-full pl-9 pr-3 py-1.5 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm bg-white dark:bg-[#1E1E21] text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                            </div>
                           </div>
-                        </div>
-                        <div className="py-1 p-1 max-h-48 overflow-y-auto">
-                          {tags.filter(t => t.name.toLowerCase().includes(tagPillSearch.toLowerCase())).map(t => {
-                            const isChecked = selectedFilterTags.includes(t.id);
+                          <div className="py-1 p-1 max-h-56 overflow-y-auto">
+                            {availableUrls.filter(u => {
+                              const h = extractHash(u.shortUrl).toLowerCase();
+                              const l = (u.longUrl || '').toLowerCase();
+                              const q = linkPillSearch.toLowerCase();
+                              return h.includes(q) || l.includes(q);
+                            }).map(u => {
+                              const cleanHash = extractHash(u.shortUrl);
+                              const isSelected = hashParam === cleanHash;
+                              return (
+                                <button
+                                  key={u.shortUrl}
+                                  onClick={() => {
+                                    setSearchParams(prev => {
+                                      const updated = new URLSearchParams(prev);
+                                      updated.set('hash', cleanHash);
+                                      return updated;
+                                    });
+                                    setIsLinkPillPopoverOpen(false);
+                                  }}
+                                  className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between ${isSelected ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <LinkIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="truncate font-mono text-xs font-medium">/{cleanHash}</span>
+                                      <span className="truncate text-xs text-gray-400 dark:text-gray-500">{u.longUrl}</span>
+                                    </div>
+                                  </div>
+                                  <span className="text-xs text-gray-400 dark:text-gray-500 font-mono ml-2 shrink-0">
+                                    {u.accessed_times ?? 0} clicks
+                                  </span>
+                                </button>
+                              );
+                            })}
+                            {availableUrls.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No links found</div>}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+                {folderSlug && (
+                  <div className="relative inline-flex items-center" ref={folderPillPopoverRef}>
+                    <div className="inline-flex items-center h-7 rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs shadow-sm overflow-hidden divide-x divide-gray-200 dark:divide-slate-700">
+                      <div className="flex items-center gap-1.5 px-2.5 h-full font-medium text-gray-700 dark:text-gray-300">
+                        <FolderIcon className="w-3.5 h-3.5 text-blue-500" />
+                        Folder
+                      </div>
+                      <div className="flex items-center px-2 h-full bg-gray-50 dark:bg-slate-800 text-gray-400 font-medium">
+                        is
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => setIsFolderPillPopoverOpen(prev => !prev)}
+                        className="flex items-center gap-1 px-2.5 h-full font-medium text-gray-900 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        {currentFolder?.name || folderSlug}
+                      </button>
+                      <button 
+                        type="button"
+                        className="flex items-center justify-center px-2 h-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                        onClick={() => {
+                          const query = searchParams.toString();
+                          navigate(`/dashboard${query ? `?${query}` : ''}`);
+                          setIsFolderPillPopoverOpen(false);
+                        }}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Folder Popover Dropdown */}
+                    <AnimatePresence>
+                      {isFolderPillPopoverOpen && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          transition={{ duration: 0.15, ease: "easeOut" }}
+                          className="absolute left-0 top-full mt-2 w-64 rounded-lg shadow-xl bg-white dark:bg-[#1E1E21] ring-1 ring-black/5 dark:ring-white/10 border border-gray-200 dark:border-[#2B2B30] divide-y divide-gray-100 dark:divide-slate-800 focus:outline-none z-[70] overflow-hidden"
+                        >
+                          <div className="p-2 border-b border-gray-100 dark:border-[#2B2B30]">
+                            <div className="relative">
+                              <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                              <input 
+                                type="text"
+                                value={folderPillSearch}
+                                onChange={e => setFolderPillSearch(e.target.value)}
+                                placeholder="Search folders..." 
+                                className="block w-full pl-9 pr-3 py-1.5 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm bg-white dark:bg-[#1E1E21] text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                            </div>
+                          </div>
+                          <div className="py-1 p-1 max-h-56 overflow-y-auto">
+                            {availableFolders.filter(f => f.name.toLowerCase().includes(folderPillSearch.toLowerCase())).map(folder => {
+                              const isDefault = folder.name.toLowerCase() === 'links';
+                              const slug = folder.slug || encodeURIComponent(folder.name.toLowerCase().replace(/\s+/g, '-'));
+                              const isSelected = folderSlug === slug;
+                              return (
+                                <button
+                                  key={folder.id}
+                                  onClick={() => {
+                                    const query = searchParams.toString();
+                                    navigate(`/dashboard/f/${slug}${query ? `?${query}` : ''}`);
+                                    setIsFolderPillPopoverOpen(false);
+                                  }}
+                                  className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between ${isSelected ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <FolderIcon className={`w-4 h-4 ${isDefault ? 'text-blue-500' : 'text-emerald-500'} shrink-0`} />
+                                    <span className="truncate">{folder.name}</span>
+                                  </div>
+                                  {folder.linkCount !== undefined && (
+                                    <span className="text-xs text-gray-400 dark:text-gray-500 font-mono ml-2 shrink-0">
+                                      {folder.linkCount}
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                            {availableFolders.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No folders found</div>}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+                {validFilterTags.length > 0 && (
+                  <div className="relative inline-flex items-center" ref={tagPillPopoverRef}>
+                    <div className="inline-flex items-center h-7 rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs shadow-sm overflow-hidden divide-x divide-gray-200 dark:divide-slate-700">
+                      <div className="flex items-center gap-1.5 px-2.5 h-full font-medium text-gray-700 dark:text-gray-300">
+                        <Tag className="w-3.5 h-3.5" />
+                        Tag
+                      </div>
+                      <div className="flex items-center px-2 h-full bg-gray-50 dark:bg-slate-800 text-gray-400 font-medium">
+                        is
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => setIsTagPillPopoverOpen(prev => !prev)}
+                        className="flex items-center gap-1 px-2.5 h-full font-medium text-gray-900 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        {selectedFilterTags.length === 1 ? (
+                          (() => {
+                            const tag = tags.find(t => t.id === selectedFilterTags[0]);
                             return (
-                              <label key={t.id} className="flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-md cursor-pointer group">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <input 
-                                    type="checkbox" 
-                                    checked={isChecked}
-                                    onChange={() => {
-                                      const updated = isChecked 
-                                        ? selectedFilterTags.filter(id => id !== t.id)
-                                        : [...selectedFilterTags, t.id];
-                                      setSelectedFilterTags(updated);
-                                      setSearchParams(prev => {
-                                        if (updated.length > 0) {
-                                          prev.set('tagId', updated.join(','));
-                                        } else {
-                                          prev.delete('tagId');
-                                        }
-                                        return prev;
-                                      });
-                                    }}
-                                    className="rounded border-gray-300 dark:border-slate-600 text-black dark:text-[#EDEDED] focus:ring-black dark:focus:ring-white bg-white dark:bg-[#1E1E21]"
-                                  />
-                                  <span 
-                                    className="w-2.5 h-2.5 rounded-full shrink-0" 
-                                    style={{ backgroundColor: t.color || '#374151' }}
-                                  />
-                                  <span className="truncate">{t.name}</span>
-                                </div>
-                                <span className="text-xs text-gray-400 dark:text-gray-500 font-mono ml-2 shrink-0">
-                                  {t.linkCount ?? 0}
-                                </span>
-                              </label>
+                              <span className="inline-flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: tag?.color || '#374151' }} />
+                                <span>{tag?.name || selectedFilterTags[0]}</span>
+                              </span>
                             );
-                          })}
-                          {tags.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No tags found</div>}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              )}
-            </div>
-          )}
+                          })()
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5">
+                            <div className="flex items-center -space-x-1">
+                              {selectedFilterTags.slice(0, 4).map(id => {
+                                const tag = tags.find(t => t.id === id);
+                                return (
+                                  <span 
+                                    key={id} 
+                                    className="inline-block w-2.5 h-2.5 rounded-full ring-1 ring-white dark:ring-slate-900" 
+                                    style={{ backgroundColor: tag?.color || '#374151' }} 
+                                  />
+                                );
+                              })}
+                            </div>
+                            <span>{selectedFilterTags.length} Tags</span>
+                          </span>
+                        )}
+                      </button>
+                      <button 
+                        type="button"
+                        className="flex items-center justify-center px-2 h-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                        onClick={() => {
+                          setSelectedFilterTags([]);
+                          setSearchParams(prev => {
+                            const next = new URLSearchParams(prev);
+                            next.delete('tagId');
+                            return next;
+                          });
+                          setIsTagPillPopoverOpen(false);
+                        }}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Popover Dropdown */}
+                    <AnimatePresence>
+                      {isTagPillPopoverOpen && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          transition={{ duration: 0.15, ease: "easeOut" }}
+                          className="absolute left-0 top-full mt-2 w-64 rounded-lg shadow-xl bg-white dark:bg-[#1E1E21] ring-1 ring-black/5 dark:ring-white/10 border border-gray-200 dark:border-[#2B2B30] divide-y divide-gray-100 dark:divide-slate-800 focus:outline-none z-[70] overflow-hidden"
+                        >
+                          <div className="p-2 border-b border-gray-100 dark:border-[#2B2B30]">
+                            <div className="relative">
+                              <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                              <input 
+                                type="text"
+                                value={tagPillSearch}
+                                onChange={e => setTagPillSearch(e.target.value)}
+                                placeholder="Tag..." 
+                                className="block w-full pl-9 pr-3 py-1.5 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm bg-white dark:bg-[#1E1E21] text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                            </div>
+                          </div>
+                          <div className="py-1 p-1 max-h-48 overflow-y-auto">
+                            {availableTags.filter(t => t.name.toLowerCase().includes(tagPillSearch.toLowerCase())).map(t => {
+                              const isChecked = selectedFilterTags.includes(t.id);
+                              return (
+                                <label key={t.id} className="flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-md cursor-pointer group">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <input 
+                                      type="checkbox" 
+                                      checked={isChecked}
+                                      onChange={() => {
+                                        const updated = isChecked 
+                                          ? selectedFilterTags.filter(id => id !== t.id)
+                                          : [...selectedFilterTags, t.id];
+                                        setSelectedFilterTags(updated);
+                                        setSearchParams(prev => {
+                                          const next = new URLSearchParams(prev);
+                                          if (updated.length > 0) {
+                                            next.set('tagId', updated.join(','));
+                                          } else {
+                                            next.delete('tagId');
+                                          }
+                                          return next;
+                                        });
+                                      }}
+                                      className="rounded border-gray-300 dark:border-slate-600 text-black dark:text-[#EDEDED] focus:ring-black dark:focus:ring-white bg-white dark:bg-[#1E1E21]"
+                                    />
+                                    <span 
+                                      className="w-2.5 h-2.5 rounded-full shrink-0" 
+                                      style={{ backgroundColor: t.color || '#374151' }}
+                                    />
+                                    <span className="truncate">{t.name}</span>
+                                  </div>
+                                  <span className="text-xs text-gray-400 dark:text-gray-500 font-mono ml-2 shrink-0">
+                                    {t.linkCount ?? 0}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                            {availableTags.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No tags found</div>}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            )}
 
           {loadingAll ? (
             <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl overflow-hidden shadow-sm flex flex-col gap-0 divide-y divide-gray-100 dark:divide-slate-800">

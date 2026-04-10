@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import {
@@ -56,6 +56,14 @@ const AnalyticsPage: React.FC = () => {
   const [isTagPillPopoverOpen, setIsTagPillPopoverOpen] = useState(false);
   const [tagPillSearch, setTagPillSearch] = useState('');
 
+  const folderPillPopoverRef = useRef<HTMLDivElement>(null);
+  const [isFolderPillPopoverOpen, setIsFolderPillPopoverOpen] = useState(false);
+  const [folderPillSearch, setFolderPillSearch] = useState('');
+
+  const linkPillPopoverRef = useRef<HTMLDivElement>(null);
+  const [isLinkPillPopoverOpen, setIsLinkPillPopoverOpen] = useState(false);
+  const [linkPillSearch, setLinkPillSearch] = useState('');
+
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +91,12 @@ const AnalyticsPage: React.FC = () => {
       }
       if (tagPillPopoverRef.current && !tagPillPopoverRef.current.contains(event.target as Node)) {
         setIsTagPillPopoverOpen(false);
+      }
+      if (folderPillPopoverRef.current && !folderPillPopoverRef.current.contains(event.target as Node)) {
+        setIsFolderPillPopoverOpen(false);
+      }
+      if (linkPillPopoverRef.current && !linkPillPopoverRef.current.contains(event.target as Node)) {
+        setIsLinkPillPopoverOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -121,6 +135,60 @@ const AnalyticsPage: React.FC = () => {
 
     fetchAnalytics();
   }, [hashParam, folderSlug, folderIdParam, tagIdParam, period]);
+
+  const activeTagIds = useMemo(() => {
+    return tagIdParam ? tagIdParam.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0) : [];
+  }, [tagIdParam]);
+
+  const activeFilterCount = (hashParam ? 1 : 0) + (activeTagIds.length > 0 ? activeTagIds.length : 0) + (folderSlug || folderIdParam ? 1 : 0);
+
+  const availableUrls = useMemo(() => {
+    let list = urls;
+    if (currentFolder && currentFolder.name.toLowerCase() !== 'links') {
+      list = list.filter(u => u.folderId === currentFolder.id);
+    } else if (folderIdParam) {
+      list = list.filter(u => u.folderId === Number(folderIdParam));
+    }
+    if (activeTagIds.length > 0) {
+      list = list.filter(u => u.tags?.some(t => activeTagIds.includes(t.id)));
+    }
+    return list;
+  }, [urls, currentFolder, folderIdParam, activeTagIds]);
+
+  const availableTags = useMemo(() => {
+    let list = tags;
+    if (currentFolder && currentFolder.name.toLowerCase() !== 'links') {
+      const folderLinks = urls.filter(u => u.folderId === currentFolder.id);
+      const tagIdsInFolder = new Set(folderLinks.flatMap(u => u.tags?.map(t => t.id) || []));
+      list = list.filter(t => tagIdsInFolder.has(t.id));
+    }
+    if (hashParam) {
+      const activeUrl = urls.find(u => extractHash(u.shortUrl).toLowerCase() === hashParam.toLowerCase());
+      if (activeUrl) {
+        const linkTagIds = new Set(activeUrl.tags?.map(t => t.id) || []);
+        list = list.filter(t => linkTagIds.has(t.id));
+      }
+    }
+    return list;
+  }, [tags, urls, currentFolder, hashParam]);
+
+  const availableFolders = useMemo(() => {
+    let list = folders;
+    if (activeTagIds.length > 0) {
+      const matchingLinks = urls.filter(u => u.tags?.some(t => activeTagIds.includes(t.id)));
+      const folderIdsWithTags = new Set(matchingLinks.map(u => u.folderId).filter(Boolean));
+      list = list.filter(f => f.name.toLowerCase() === 'links' || folderIdsWithTags.has(f.id));
+    }
+    if (hashParam) {
+      const activeUrl = urls.find(u => extractHash(u.shortUrl).toLowerCase() === hashParam.toLowerCase());
+      if (activeUrl && activeUrl.folderId) {
+        list = list.filter(f => f.name.toLowerCase() === 'links' || f.id === activeUrl.folderId);
+      }
+    }
+    return list;
+  }, [folders, urls, activeTagIds, hashParam]);
+
+
 
   if (loading) {
     return (
@@ -210,9 +278,6 @@ const AnalyticsPage: React.FC = () => {
   const clicksByDevice = data?.clicksByDevice || [];
   const clicksByBrowser = data?.clicksByBrowser || [];
 
-  const activeTagIds = tagIdParam ? tagIdParam.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n)) : [];
-  const activeFilterCount = (hashParam ? 1 : 0) + (activeTagIds.length > 0 ? activeTagIds.length : 0) + (folderSlug || folderIdParam ? 1 : 0);
-
   return (
     <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
         
@@ -248,11 +313,8 @@ const AnalyticsPage: React.FC = () => {
                               value={filterSearch}
                               onChange={e => setFilterSearch(e.target.value)}
                               placeholder="Filter..." 
-                              className="block w-full pl-3 pr-8 py-2 border-none bg-white dark:bg-[#111113] text-sm text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:ring-0"
+                              className="block w-full px-3 py-2 border-none bg-white dark:bg-[#111113] text-sm text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:ring-0"
                             />
-                            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                              <kbd className="inline-flex items-center border border-gray-200 dark:border-[#2B2B30] rounded px-1.5 text-xs font-medium text-gray-400 bg-gray-50 dark:bg-[#222222]">F</kbd>
-                            </div>
                           </div>
                         </div>
                         <div className="py-1 p-1">
@@ -264,7 +326,6 @@ const AnalyticsPage: React.FC = () => {
                               <LinkIcon className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
                               Link
                             </div>
-                            <span className="text-xs text-gray-400 group-hover:text-gray-500">L</span>
                           </button>
                           <button 
                             onClick={() => { setActiveFilter('tag'); setFilterSearch(''); }}
@@ -274,7 +335,6 @@ const AnalyticsPage: React.FC = () => {
                               <Tag className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
                               Tag
                             </div>
-                            <span className="text-xs text-gray-400 group-hover:text-gray-500">T</span>
                           </button>
                           <button 
                             onClick={() => { setActiveFilter('folder'); setFilterSearch(''); }}
@@ -284,7 +344,6 @@ const AnalyticsPage: React.FC = () => {
                               <FolderIcon className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
                               Folder
                             </div>
-                            <span className="text-xs text-gray-400 group-hover:text-gray-500">F</span>
                           </button>
                         </div>
                       </>
@@ -309,7 +368,7 @@ const AnalyticsPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="py-1 p-1 max-h-56 overflow-y-auto">
-                          {urls.filter(u => {
+                          {availableUrls.filter(u => {
                             const h = extractHash(u.shortUrl).toLowerCase();
                             const l = (u.longUrl || '').toLowerCase();
                             const q = filterSearch.toLowerCase();
@@ -321,7 +380,11 @@ const AnalyticsPage: React.FC = () => {
                               <button
                                 key={u.id || u.shortUrl}
                                 onClick={() => {
-                                  navigate(`/analytics/${linkHash}`);
+                                  setSearchParams(prev => {
+                                    const updated = new URLSearchParams(prev);
+                                    updated.set('hash', linkHash);
+                                    return updated;
+                                  });
                                   setIsFilterOpen(false);
                                   setActiveFilter('none');
                                 }}
@@ -329,7 +392,10 @@ const AnalyticsPage: React.FC = () => {
                               >
                                 <div className="flex items-center gap-2 min-w-0">
                                   <LinkIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                  <span className="truncate font-mono text-xs">/{linkHash}</span>
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="truncate font-mono text-xs font-medium">/{linkHash}</span>
+                                    <span className="truncate text-xs text-gray-400 dark:text-gray-500">{u.longUrl}</span>
+                                  </div>
                                 </div>
                                 <span className="text-xs text-gray-400 dark:text-gray-500 font-mono ml-2 shrink-0">
                                   {u.accessed_times ?? 0} clicks
@@ -337,7 +403,7 @@ const AnalyticsPage: React.FC = () => {
                               </button>
                             );
                           })}
-                          {urls.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">{isUrlsLoading ? 'Loading links...' : 'No links found'}</div>}
+                          {availableUrls.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">{isUrlsLoading ? 'Loading links...' : 'No links found'}</div>}
                         </div>
                       </>
                     ) : activeFilter === 'tag' ? (
@@ -361,7 +427,7 @@ const AnalyticsPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="py-1 p-1 max-h-48 overflow-y-auto">
-                          {tags.filter(t => t.name.toLowerCase().includes(filterSearch.toLowerCase())).map(t => {
+                          {availableTags.filter(t => t.name.toLowerCase().includes(filterSearch.toLowerCase())).map(t => {
                             const activeIds = (tagIdParam || '').split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
                             const isChecked = activeIds.includes(t.id);
                             return (
@@ -375,13 +441,15 @@ const AnalyticsPage: React.FC = () => {
                                         ? activeIds.filter(id => id !== t.id)
                                         : [...activeIds, t.id];
                                       
-                                      const newParams = new URLSearchParams(searchParams);
-                                      if (updatedTagIds.length > 0) {
-                                        newParams.set('tagId', updatedTagIds.join(','));
-                                      } else {
-                                        newParams.delete('tagId');
-                                      }
-                                      setSearchParams(newParams);
+                                      setSearchParams(prev => {
+                                        const next = new URLSearchParams(prev);
+                                        if (updatedTagIds.length > 0) {
+                                          next.set('tagId', updatedTagIds.join(','));
+                                        } else {
+                                          next.delete('tagId');
+                                        }
+                                        return next;
+                                      });
                                     }}
                                     className="rounded border-gray-300 dark:border-slate-600 text-black dark:text-[#EDEDED] focus:ring-black dark:focus:ring-white bg-white dark:bg-[#1E1E21]"
                                   />
@@ -397,7 +465,7 @@ const AnalyticsPage: React.FC = () => {
                               </label>
                             );
                           })}
-                          {tags.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No tags found</div>}
+                          {availableTags.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No tags found</div>}
                         </div>
                       </>
                     ) : activeFilter === 'folder' ? (
@@ -421,7 +489,7 @@ const AnalyticsPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="py-1 p-1 max-h-56 overflow-y-auto">
-                          {folders.filter(f => f.name.toLowerCase().includes(filterSearch.toLowerCase())).map(folder => {
+                          {availableFolders.filter(f => f.name.toLowerCase().includes(filterSearch.toLowerCase())).map(folder => {
                             const isDefault = folder.name.toLowerCase() === 'links';
                             const slug = folder.slug || encodeURIComponent(folder.name.toLowerCase().replace(/\s+/g, '-'));
                             const isSelected = folderSlug === slug || folderIdParam === String(folder.id);
@@ -429,7 +497,8 @@ const AnalyticsPage: React.FC = () => {
                               <button
                                 key={folder.id}
                                 onClick={() => {
-                                  navigate(`/analytics/f/${slug}`);
+                                  const query = searchParams.toString();
+                                  navigate(`/analytics/f/${slug}${query ? `?${query}` : ''}`);
                                   setIsFilterOpen(false);
                                   setActiveFilter('none');
                                 }}
@@ -447,7 +516,7 @@ const AnalyticsPage: React.FC = () => {
                               </button>
                             );
                           })}
-                          {folders.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No folders found</div>}
+                          {availableFolders.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No folders found</div>}
                         </div>
                       </>
                     ) : null}
@@ -458,122 +527,264 @@ const AnalyticsPage: React.FC = () => {
           </div>
 
           {/* Active Compound Filter Pills */}
-          {(hashParam || folderSlug || folderIdParam || tagIdParam) && (
+          {(hashParam || folderSlug || folderIdParam || activeTagIds.length > 0) && (
             <div className="flex flex-wrap items-center gap-2 mb-2">
               {hashParam && (
-                <div className="flex items-center shadow-sm rounded-md">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-l-md text-xs font-medium text-gray-700 dark:text-gray-300">
-                    <LinkIcon className="w-3.5 h-3.5" />
-                    Link
+                <div className="relative inline-flex items-center" ref={linkPillPopoverRef}>
+                  <div className="inline-flex items-center h-7 rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs shadow-sm overflow-hidden divide-x divide-gray-200 dark:divide-slate-700">
+                    <div className="flex items-center gap-1.5 px-2.5 h-full font-medium text-gray-700 dark:text-gray-300">
+                      <LinkIcon className="w-3.5 h-3.5" />
+                      Link
+                    </div>
+                    <div className="flex items-center px-2 h-full bg-gray-50 dark:bg-slate-800 text-gray-400 font-medium">
+                      is
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => setIsLinkPillPopoverOpen(prev => !prev)}
+                      className="flex items-center gap-1 px-2.5 h-full font-medium text-gray-900 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      /{hashParam}
+                    </button>
+                    <button 
+                      type="button"
+                      className="flex items-center justify-center px-2 h-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                      onClick={() => {
+                        setSearchParams(prev => {
+                          const updated = new URLSearchParams(prev);
+                          updated.delete('hash');
+                          return updated;
+                        });
+                        if (hash) {
+                          navigate(folderSlug ? `/analytics/f/${folderSlug}` : '/analytics');
+                        }
+                        setIsLinkPillPopoverOpen(false);
+                      }}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                  <div className="px-2 py-1 bg-gray-50 dark:bg-slate-800/50 border-y border-gray-200 dark:border-slate-800 text-xs text-gray-400 font-medium">
-                    is
-                  </div>
-                  <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-xs font-medium text-gray-900 dark:text-white">
-                    /{hashParam}
-                  </div>
-                  <button 
-                    type="button"
-                    className="px-2 py-1 bg-white dark:bg-slate-900 border border-l-0 border-gray-200 dark:border-slate-800 rounded-r-md text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer transition-colors flex items-center justify-center"
-                    onClick={() => {
-                      if (hash) {
-                        navigate(folderSlug ? `/analytics/f/${folderSlug}` : '/analytics');
-                      } else {
-                        const newParams = new URLSearchParams(searchParams);
-                        newParams.delete('hash');
-                        setSearchParams(newParams);
-                      }
-                    }}
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+
+                  {/* Link Popover Dropdown */}
+                  <AnimatePresence>
+                    {isLinkPillPopoverOpen && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        className="absolute left-0 top-full mt-2 w-72 rounded-lg shadow-xl bg-white dark:bg-[#1E1E21] ring-1 ring-black/5 dark:ring-white/10 border border-gray-200 dark:border-[#2B2B30] divide-y divide-gray-100 dark:divide-slate-800 focus:outline-none z-[70] overflow-hidden"
+                      >
+                        <div className="p-2 border-b border-gray-100 dark:border-[#2B2B30]">
+                          <div className="relative">
+                            <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input 
+                              type="text"
+                              value={linkPillSearch}
+                              onChange={e => setLinkPillSearch(e.target.value)}
+                              placeholder="Search links..." 
+                              className="block w-full pl-9 pr-3 py-1.5 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm bg-white dark:bg-[#1E1E21] text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+                        </div>
+                        <div className="py-1 p-1 max-h-56 overflow-y-auto">
+                          {availableUrls.filter(u => {
+                            const h = extractHash(u.shortUrl).toLowerCase();
+                            const l = (u.longUrl || '').toLowerCase();
+                            const q = linkPillSearch.toLowerCase();
+                            return h.includes(q) || l.includes(q);
+                          }).map(u => {
+                            const linkHash = extractHash(u.shortUrl);
+                            const isSelected = hashParam === linkHash;
+                            return (
+                              <button
+                                key={u.id || u.shortUrl}
+                                onClick={() => {
+                                  setSearchParams(prev => {
+                                    const updated = new URLSearchParams(prev);
+                                    updated.set('hash', linkHash);
+                                    return updated;
+                                  });
+                                  setIsLinkPillPopoverOpen(false);
+                                }}
+                                className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between ${isSelected ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <LinkIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="truncate font-mono text-xs font-medium">/{linkHash}</span>
+                                    <span className="truncate text-xs text-gray-400 dark:text-gray-500">{u.longUrl}</span>
+                                  </div>
+                                </div>
+                                <span className="text-xs text-gray-400 dark:text-gray-500 font-mono ml-2 shrink-0">
+                                  {u.accessed_times ?? 0} clicks
+                                </span>
+                              </button>
+                            );
+                          })}
+                          {availableUrls.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">{isUrlsLoading ? 'Loading links...' : 'No links found'}</div>}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
               {(folderSlug || folderIdParam) && (
-                <div className="flex items-center shadow-sm rounded-md">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-l-md text-xs font-medium text-gray-700 dark:text-gray-300">
-                    <FolderIcon className="w-3.5 h-3.5" />
-                    Folder
+                <div className="relative inline-flex items-center" ref={folderPillPopoverRef}>
+                  <div className="inline-flex items-center h-7 rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs shadow-sm overflow-hidden divide-x divide-gray-200 dark:divide-slate-700">
+                    <div className="flex items-center gap-1.5 px-2.5 h-full font-medium text-gray-700 dark:text-gray-300">
+                      <FolderIcon className="w-3.5 h-3.5" />
+                      Folder
+                    </div>
+                    <div className="flex items-center px-2 h-full bg-gray-50 dark:bg-slate-800 text-gray-400 font-medium">
+                      is
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => setIsFolderPillPopoverOpen(prev => !prev)}
+                      className="flex items-center gap-1 px-2.5 h-full font-medium text-gray-900 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      {currentFolder?.name || folderSlug || folderIdParam}
+                    </button>
+                    <button 
+                      type="button"
+                      className="flex items-center justify-center px-2 h-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                      onClick={() => {
+                        const next = new URLSearchParams(searchParams);
+                        next.delete('folderId');
+                        const query = next.toString();
+                        if (folderSlug) {
+                          if (hashParam) {
+                            navigate(`/analytics/${hashParam}${query ? `?${query}` : ''}`);
+                          } else {
+                            navigate(`/analytics${query ? `?${query}` : ''}`);
+                          }
+                        } else {
+                          setSearchParams(next);
+                        }
+                        setIsFolderPillPopoverOpen(false);
+                      }}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                  <div className="px-2 py-1 bg-gray-50 dark:bg-slate-800/50 border-y border-gray-200 dark:border-slate-800 text-xs text-gray-400 font-medium">
-                    is
-                  </div>
-                  <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-xs font-medium text-gray-900 dark:text-white">
-                    {currentFolder?.name || folderSlug || folderIdParam}
-                  </div>
-                  <button 
-                    type="button"
-                    className="px-2 py-1 bg-white dark:bg-slate-900 border border-l-0 border-gray-200 dark:border-slate-800 rounded-r-md text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer transition-colors flex items-center justify-center"
-                    onClick={() => {
-                      if (folderSlug) {
-                        navigate('/analytics');
-                      } else {
-                        const newParams = new URLSearchParams(searchParams);
-                        newParams.delete('folderId');
-                        setSearchParams(newParams);
-                      }
-                    }}
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+
+                  {/* Folder Popover Dropdown */}
+                  <AnimatePresence>
+                    {isFolderPillPopoverOpen && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        className="absolute left-0 top-full mt-2 w-64 rounded-lg shadow-xl bg-white dark:bg-[#1E1E21] ring-1 ring-black/5 dark:ring-white/10 border border-gray-200 dark:border-[#2B2B30] divide-y divide-gray-100 dark:divide-slate-800 focus:outline-none z-[70] overflow-hidden"
+                      >
+                        <div className="p-2 border-b border-gray-100 dark:border-[#2B2B30]">
+                          <div className="relative">
+                            <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input 
+                              type="text"
+                              value={folderPillSearch}
+                              onChange={e => setFolderPillSearch(e.target.value)}
+                              placeholder="Search folders..." 
+                              className="block w-full pl-9 pr-3 py-1.5 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm bg-white dark:bg-[#1E1E21] text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+                        </div>
+                        <div className="py-1 p-1 max-h-56 overflow-y-auto">
+                          {availableFolders.filter(f => f.name.toLowerCase().includes(folderPillSearch.toLowerCase())).map(folder => {
+                            const isDefault = folder.name.toLowerCase() === 'links';
+                            const slug = folder.slug || encodeURIComponent(folder.name.toLowerCase().replace(/\s+/g, '-'));
+                            const isSelected = folderSlug === slug || folderIdParam === String(folder.id);
+                            return (
+                              <button
+                                key={folder.id}
+                                onClick={() => {
+                                  const query = searchParams.toString();
+                                  navigate(`/analytics/f/${slug}${query ? `?${query}` : ''}`);
+                                  setIsFolderPillPopoverOpen(false);
+                                }}
+                                className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between ${isSelected ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <FolderIcon className={`w-4 h-4 ${isDefault ? 'text-blue-500' : 'text-emerald-500'} shrink-0`} />
+                                  <span className="truncate">{folder.name}</span>
+                                </div>
+                                {folder.linkCount !== undefined && (
+                                  <span className="text-xs text-gray-400 dark:text-gray-500 font-mono ml-2 shrink-0">
+                                    {folder.linkCount}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                          {availableFolders.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No folders found</div>}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
-              {tagIdParam && (
-                <div className="relative flex items-center shadow-sm rounded-md" ref={tagPillPopoverRef}>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-l-md text-xs font-medium text-gray-700 dark:text-gray-300">
-                    <Tag className="w-3.5 h-3.5" />
-                    Tag
-                  </div>
-                  <div className="px-2 py-1 bg-gray-50 dark:bg-slate-800/50 border-y border-gray-200 dark:border-slate-800 text-xs text-gray-400 font-medium">
-                    is
-                  </div>
-                  <button 
-                    type="button"
-                    onClick={() => setIsTagPillPopoverOpen(prev => !prev)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-xs font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-[#2B2B30] cursor-pointer transition-colors"
-                  >
-                    {(() => {
-                      const tagIds = tagIdParam.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
-                      if (tagIds.length === 1) {
-                        const tag = tags.find(t => t.id === tagIds[0]);
+              {activeTagIds.length > 0 && (
+                <div className="relative inline-flex items-center" ref={tagPillPopoverRef}>
+                  <div className="inline-flex items-center h-7 rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs shadow-sm overflow-hidden divide-x divide-gray-200 dark:divide-slate-700">
+                    <div className="flex items-center gap-1.5 px-2.5 h-full font-medium text-gray-700 dark:text-gray-300">
+                      <Tag className="w-3.5 h-3.5" />
+                      Tag
+                    </div>
+                    <div className="flex items-center px-2 h-full bg-gray-50 dark:bg-slate-800 text-gray-400 font-medium">
+                      is
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => setIsTagPillPopoverOpen(prev => !prev)}
+                      className="flex items-center gap-1 px-2.5 h-full font-medium text-gray-900 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      {(() => {
+                        const tagIds = activeTagIds;
+                        if (tagIds.length === 1) {
+                          const tag = tags.find(t => t.id === tagIds[0]);
+                          return (
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: tag?.color || '#374151' }} />
+                              <span>{tag?.name || tagIds[0]}</span>
+                            </span>
+                          );
+                        }
                         return (
                           <span className="inline-flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: tag?.color || '#374151' }} />
-                            <span>{tag?.name || tagIds[0]}</span>
+                            <div className="flex items-center -space-x-1">
+                              {tagIds.slice(0, 4).map(id => {
+                                const tag = tags.find(t => t.id === id);
+                                return (
+                                  <span 
+                                    key={id} 
+                                    className="inline-block w-2.5 h-2.5 rounded-full ring-1 ring-white dark:ring-slate-900" 
+                                    style={{ backgroundColor: tag?.color || '#374151' }} 
+                                  />
+                                );
+                              })}
+                            </div>
+                            <span>{tagIds.length} Tags</span>
                           </span>
                         );
-                      }
-                      return (
-                        <span className="inline-flex items-center gap-1.5">
-                          <div className="flex items-center -space-x-1">
-                            {tagIds.slice(0, 4).map(id => {
-                              const tag = tags.find(t => t.id === id);
-                              return (
-                                <span 
-                                  key={id} 
-                                  className="inline-block w-2.5 h-2.5 rounded-full ring-1 ring-white dark:ring-slate-900" 
-                                  style={{ backgroundColor: tag?.color || '#374151' }} 
-                                />
-                              );
-                            })}
-                          </div>
-                          <span>{tagIds.length} Tags</span>
-                        </span>
-                      );
-                    })()}
-                  </button>
-                  <button 
-                    type="button"
-                    className="px-2 py-1 bg-white dark:bg-slate-900 border border-l-0 border-gray-200 dark:border-slate-800 rounded-r-md text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer transition-colors flex items-center justify-center"
-                    onClick={() => {
-                      const newParams = new URLSearchParams(searchParams);
-                      newParams.delete('tagId');
-                      setSearchParams(newParams);
-                      setIsTagPillPopoverOpen(false);
-                    }}
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+                      })()}
+                    </button>
+                    <button 
+                      type="button"
+                      className="flex items-center justify-center px-2 h-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                      onClick={() => {
+                        setSearchParams(prev => {
+                          const next = new URLSearchParams(prev);
+                          next.delete('tagId');
+                          return next;
+                        });
+                        setIsTagPillPopoverOpen(false);
+                      }}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
 
                   {/* Popover Dropdown */}
                   <AnimatePresence>
@@ -598,7 +809,7 @@ const AnalyticsPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="py-1 p-1 max-h-48 overflow-y-auto">
-                          {tags.filter(t => t.name.toLowerCase().includes(tagPillSearch.toLowerCase())).map(t => {
+                          {availableTags.filter(t => t.name.toLowerCase().includes(tagPillSearch.toLowerCase())).map(t => {
                             const activeIds = (tagIdParam || '').split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
                             const isChecked = activeIds.includes(t.id);
                             return (
@@ -612,13 +823,15 @@ const AnalyticsPage: React.FC = () => {
                                         ? activeIds.filter(id => id !== t.id)
                                         : [...activeIds, t.id];
                                       
-                                      const newParams = new URLSearchParams(searchParams);
-                                      if (updatedTagIds.length > 0) {
-                                        newParams.set('tagId', updatedTagIds.join(','));
-                                      } else {
-                                        newParams.delete('tagId');
-                                      }
-                                      setSearchParams(newParams);
+                                      setSearchParams(prev => {
+                                        const next = new URLSearchParams(prev);
+                                        if (updatedTagIds.length > 0) {
+                                          next.set('tagId', updatedTagIds.join(','));
+                                        } else {
+                                          next.delete('tagId');
+                                        }
+                                        return next;
+                                      });
                                     }}
                                     className="rounded border-gray-300 dark:border-slate-600 text-black dark:text-[#EDEDED] focus:ring-black dark:focus:ring-white bg-white dark:bg-[#1E1E21]"
                                   />
@@ -634,7 +847,7 @@ const AnalyticsPage: React.FC = () => {
                               </label>
                             );
                           })}
-                          {tags.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No tags found</div>}
+                          {availableTags.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No tags found</div>}
                         </div>
                       </motion.div>
                     )}
