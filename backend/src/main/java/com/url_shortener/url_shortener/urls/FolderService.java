@@ -1,10 +1,12 @@
 package com.url_shortener.url_shortener.urls;
 
 import com.url_shortener.url_shortener.users.User;
+import com.url_shortener.url_shortener.users.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,10 +16,44 @@ public class FolderService {
 
     private final FolderRepository folderRepository;
     private final UrlRepository urlRepository;
+    private final UserRepository userRepository;
 
     public List<FolderDto> getUserFolders(Long userId) {
-        return folderRepository.findByUserId(userId)
-                .stream()
+        List<Folder> folders = new ArrayList<>(folderRepository.findByUserId(userId));
+        Folder linksFolder = folders.stream()
+                .filter(f -> f.getName().equalsIgnoreCase("Links"))
+                .findFirst()
+                .orElse(null);
+
+        if (linksFolder == null) {
+            var user = userRepository.findById(userId).orElse(null);
+            if (user != null) {
+                Folder defaultFolder = Folder.builder()
+                        .name("Links")
+                        .user(user)
+                        .build();
+                linksFolder = folderRepository.save(defaultFolder);
+                folders.add(0, linksFolder);
+            }
+        }
+
+        if (linksFolder != null) {
+            List<Url> unassignedUrls = urlRepository.findByUserIdAndFolderIsNull(userId);
+            if (!unassignedUrls.isEmpty()) {
+                final Folder targetFolder = linksFolder;
+                unassignedUrls.forEach(url -> url.setFolder(targetFolder));
+                urlRepository.saveAll(unassignedUrls);
+            }
+        }
+
+        // Ensure "Links" folder is always sorted first
+        folders.sort((a, b) -> {
+            if (a.getName().equalsIgnoreCase("Links")) return -1;
+            if (b.getName().equalsIgnoreCase("Links")) return 1;
+            return a.getName().compareToIgnoreCase(b.getName());
+        });
+
+        return folders.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
@@ -44,6 +80,10 @@ public class FolderService {
             throw new AccessDeniedException("You do not have permission to delete this folder.");
         }
 
+        if (folder.getName().equalsIgnoreCase("Links")) {
+            throw new AccessDeniedException("The default Links folder cannot be deleted.");
+        }
+
         // Deleting the folder will trigger the DB ON DELETE SET NULL cascade for the urls table
         folderRepository.delete(folder);
     }
@@ -54,6 +94,10 @@ public class FolderService {
 
         if (!folder.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("You do not have permission to edit this folder.");
+        }
+
+        if (folder.getName().equalsIgnoreCase("Links")) {
+            throw new AccessDeniedException("The default Links folder cannot be renamed.");
         }
 
         String newName = request.getName().trim();

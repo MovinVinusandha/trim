@@ -107,18 +107,19 @@ public class UrlService {
             url.setTags(new HashSet<>(requestedTags));
         }
 
-        if (urlRequest.getFolderId() != null) {
-            if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
-                throw new AccessDeniedException("You must be logged in to assign folders.");
-            }
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
             Long userId = (Long) authentication.getPrincipal();
-            Folder folder = folderRepository.findById(urlRequest.getFolderId())
-                    .orElseThrow(FolderNotFoundException::new);
-            
-            if (!folder.getUser().getId().equals(userId)) {
-                throw new AccessDeniedException("You cannot assign a folder you do not own.");
+            if (urlRequest.getFolderId() != null) {
+                Folder folder = folderRepository.findById(urlRequest.getFolderId())
+                        .orElseThrow(FolderNotFoundException::new);
+                
+                if (!folder.getUser().getId().equals(userId)) {
+                    throw new AccessDeniedException("You cannot assign a folder you do not own.");
+                }
+                url.setFolder(folder);
+            } else {
+                folderRepository.findByNameIgnoreCaseAndUserId("Links", userId).ifPresent(url::setFolder);
             }
-            url.setFolder(folder);
         }
 
         var savedUrl = urlRepository.save(url);
@@ -241,7 +242,15 @@ public class UrlService {
         if (isAdmin) {
             urls = urlRepository.findAll(Sort.by(sortBy).descending());
         } else {
-            urls = urlRepository.findAllByUserIdWithDetails(getUserId());
+            Long userId = getUserId();
+            List<Url> unassignedUrls = urlRepository.findByUserIdAndFolderIsNull(userId);
+            if (!unassignedUrls.isEmpty()) {
+                folderRepository.findByNameIgnoreCaseAndUserId("Links", userId).ifPresent(linksFolder -> {
+                    unassignedUrls.forEach(url -> url.setFolder(linksFolder));
+                    urlRepository.saveAll(unassignedUrls);
+                });
+            }
+            urls = urlRepository.findAllByUserIdWithDetails(userId);
             urls.sort(Comparator.comparing(Url::getId).reversed());
         }
 

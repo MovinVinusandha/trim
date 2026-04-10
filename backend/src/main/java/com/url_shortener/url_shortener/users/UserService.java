@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Set;
 import org.springframework.transaction.annotation.Transactional;
+import com.url_shortener.url_shortener.urls.Folder;
 import com.url_shortener.url_shortener.urls.FolderRepository;
 import com.url_shortener.url_shortener.urls.TagRepository;
 import com.url_shortener.url_shortener.urls.UrlRepository;
@@ -32,6 +33,14 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(userRegister.getPassword()));
         user.setRole(Role.USER);
         userRepository.save(user);
+
+        // Auto-create default "Links" folder for the user
+        Folder defaultFolder = Folder.builder()
+                .name("Links")
+                .user(user)
+                .build();
+        folderRepository.save(defaultFolder);
+
         return userMapper.toDto(user);
     }
 

@@ -9,8 +9,12 @@ import org.springframework.beans.factory.annotation.Value;
 public abstract class UrlMapper {
 
     @Mapping(target = "accessed_times", source = "statistic.accessedTimes")
+    @Mapping(target = "folderId", source = "folder.id")
+    @Mapping(target = "folderName", source = "folder.name")
     public abstract UrlDto toDto(Url url);
 
+    @Mapping(target = "folderId", source = "folder.id")
+    @Mapping(target = "folderName", source = "folder.name")
     public abstract UrlSend toSendDto(Url url);
 
     public abstract UrlUpdateDto toUpdateDto(Url url);

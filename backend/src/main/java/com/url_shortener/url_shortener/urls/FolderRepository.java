@@ -4,9 +4,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface FolderRepository extends JpaRepository<Folder, Long> {
     List<Folder> findByUserId(Long userId);
     boolean existsByNameIgnoreCaseAndUserId(String name, Long userId);
+    Optional<Folder> findByNameIgnoreCaseAndUserId(String name, Long userId);
 }

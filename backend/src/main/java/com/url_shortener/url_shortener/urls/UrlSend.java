@@ -3,13 +3,16 @@ package com.url_shortener.url_shortener.urls;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @AllArgsConstructor
+@NoArgsConstructor
 @Getter
-@lombok.Setter
+@Setter
 public class UrlSend {
     private String longUrl;
     private String shortUrl;
@@ -23,4 +26,6 @@ public class UrlSend {
     private boolean isActive;
     private boolean hasPassword;
     private List<TagDto> tags;
+    private Long folderId;
+    private String folderName;
 }
