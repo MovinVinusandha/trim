@@ -33,8 +33,10 @@ function AnimatedRoutes() {
             <Route element={<ProtectedRoute />}>
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/dashboard/f/:folderSlug" element={<DashboardPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />
                 <Route path="/analytics/:hash" element={<AnalyticsPage />} />
+                <Route path="/analytics/f/:folderSlug" element={<AnalyticsPage />} />
                 <Route path="/folders" element={<FoldersPage />} />
                 <Route path="/tags" element={<TagsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />

@@ -160,4 +160,46 @@ describe('CreateLinkModal', () => {
       }));
     });
   });
+
+  describe('Default Folder Selection', () => {
+    const mockFolders = [
+      { id: 10, name: 'Marketing', slug: 'marketing' },
+      { id: 20, name: 'Links', slug: 'links' },
+      { id: 30, name: 'Social', slug: 'social' }
+    ];
+
+    it('defaults folder selection to the system "Links" folder when creating a new link', () => {
+      render(
+        <CreateLinkModal 
+          isOpen={true} 
+          onClose={vi.fn()} 
+          onSuccess={vi.fn()} 
+          folders={mockFolders} 
+          tags={[]} 
+        />
+      );
+      
+      // Combobox trigger should render "Links"
+      expect(screen.getAllByText('Links').length).toBeGreaterThan(0);
+    });
+
+    it('falls back to the first folder if no "Links" folder exists', () => {
+      const customFolders = [
+        { id: 100, name: 'Work', slug: 'work' },
+        { id: 200, name: 'Personal', slug: 'personal' }
+      ];
+
+      render(
+        <CreateLinkModal 
+          isOpen={true} 
+          onClose={vi.fn()} 
+          onSuccess={vi.fn()} 
+          folders={customFolders} 
+          tags={[]} 
+        />
+      );
+      
+      expect(screen.getByText('Work')).toBeInTheDocument();
+    });
+  });
 });

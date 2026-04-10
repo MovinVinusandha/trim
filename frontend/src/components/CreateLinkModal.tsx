@@ -15,9 +15,9 @@ interface CreateLinkModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (newUrl?: any) => void;
-  folders: { id: number; name: string }[]; // Explicitly type the array!
+  folders: { id: number; name: string; slug?: string }[];
   tags: { id: number; name: string; color?: string }[];
-  urlToEdit?: any | null; // Use 'any' temporarily to bypass the error, or import the exact UrlEntry type
+  urlToEdit?: any | null;
   defaultFolderId?: number;
   onOpenFolderModal?: () => void;
 }
@@ -67,7 +67,7 @@ function useClickOutside(ref: React.RefObject<any>, handler: () => void) {
 const CreateLinkModal: React.FC<CreateLinkModalProps> = ({ 
   isOpen, 
   onClose, 
-  onSuccess,
+  onSuccess, 
   folders, 
   tags,
   urlToEdit,
@@ -80,7 +80,16 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || `${protocol}//api.${rootDomain}`;
   const [longUrl, setLongUrl] = useState(urlToEdit?.longUrl || '');
   const [customAlias, setCustomAlias] = useState(urlToEdit ? urlToEdit.shortUrl.split('/').pop() || '' : '');
-  const [selectedFolderId, setSelectedFolderId] = useState(urlToEdit?.folderId || '');
+
+  const resolveDefaultFolderId = () => {
+    if (defaultFolderId !== undefined && defaultFolderId !== null) return defaultFolderId;
+    const defaultFolder = (folders || []).find(f => (f as any).slug === 'links' || f.name.toLowerCase() === 'links');
+    return defaultFolder ? defaultFolder.id : (folders && folders.length > 0 ? folders[0].id : '');
+  };
+
+  const [selectedFolderId, setSelectedFolderId] = useState<number | string>(
+    urlToEdit ? (urlToEdit.folderId || '') : resolveDefaultFolderId()
+  );
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>(urlToEdit?.tags?.map((t: { id: number; name: string }) => t.id) || []);
   const [password, setPassword] = useState(''); // Always start blank for security
   const [expiresAt, setExpiresAt] = useState(urlToEdit?.expiresAt || '');
@@ -143,7 +152,11 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
         setExpiresAt('');
         setExpirationPreset('none');
         setSelectedTagIds([]);
-        setSelectedFolderId(defaultFolderId !== undefined && defaultFolderId !== null ? defaultFolderId : '');
+        const defaultFolder = (folders || []).find(f => (f as any).slug === 'links' || f.name.toLowerCase() === 'links');
+        const initialFolderId = defaultFolderId !== undefined && defaultFolderId !== null 
+          ? defaultFolderId 
+          : (defaultFolder ? defaultFolder.id : (folders && folders.length > 0 ? folders[0].id : ''));
+        setSelectedFolderId(initialFolderId);
       }
       setError('');
       setTagSearchQuery('');
@@ -161,7 +174,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
       setSelectedFolderId('');
       setError('');
     }
-  }, [isOpen, urlToEdit]);
+  }, [isOpen, urlToEdit, folders, defaultFolderId]);
 
   useEffect(() => {
     const fetchQrCode = async () => {

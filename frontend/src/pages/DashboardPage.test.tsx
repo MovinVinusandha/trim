@@ -30,6 +30,25 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+vi.mock('framer-motion', async () => {
+  const actual = await vi.importActual('framer-motion');
+  return {
+    ...actual,
+    AnimatePresence: ({ children }: any) => <>{children}</>,
+    motion: new Proxy(
+      {},
+      {
+        get: (_, prop: string) => {
+          return React.forwardRef(({ children, layout, initial, animate, exit, transition, ...props }: any, ref: any) => {
+            const Component = prop as any;
+            return <Component ref={ref} {...props}>{children}</Component>;
+          });
+        },
+      }
+    ),
+  };
+});
+
 describe('DashboardPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -95,8 +114,10 @@ describe('DashboardPage', () => {
     const searchInput = screen.getByPlaceholderText('Search by short link or URL');
     fireEvent.change(searchInput, { target: { value: 'def' } });
     
-    expect(screen.queryByText(/abc123/)).not.toBeInTheDocument();
-    expect(screen.getByText(/def456/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText(/abc123/)).not.toBeInTheDocument();
+      expect(screen.getByText(/def456/)).toBeInTheDocument();
+    });
   });
 
   it('URL query parameters correctly initialize selectedFilterTags', async () => {
@@ -153,10 +174,10 @@ describe('DashboardPage', () => {
     expect(screen.queryByText('https://example.com/one')).not.toBeInTheDocument();
 
     // Open Sort Menu
-    fireEvent.click(screen.getByText('Date created'));
+    fireEvent.click(screen.getAllByText('Date created')[0]);
     
     // Click 'Total clicks'
-    fireEvent.click(screen.getByText('Total clicks'));
+    fireEvent.click(screen.getAllByText('Total clicks')[0]);
     
     // Wait for the re-sort (in DOM, visually this would change order, we just assert no crash and elements exist)
     await waitFor(() => {
@@ -175,7 +196,7 @@ describe('DashboardPage', () => {
     });
   });
 
-  it('filters links based on activeFolderId workspace isolation', async () => {
+  it('displays all links when no folder is active, and filters links when a folder slug/ID is active', async () => {
     (useAuth as any).mockReturnValue({ user: { id: 1 } });
     (axiosInstance.get as any).mockResolvedValue({
       data: [
@@ -184,7 +205,7 @@ describe('DashboardPage', () => {
       ]
     });
 
-    // When activeFolderId is null (default "Links" workspace)
+    // When activeFolderId is null ("All Links" workspace)
     vi.spyOn(routerDom, 'useOutletContext').mockReturnValue({
       triggerRefresh: null,
       tags: [],
@@ -196,12 +217,12 @@ describe('DashboardPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/def001/)).toBeInTheDocument();
-      expect(screen.queryByText(/mkt002/)).not.toBeInTheDocument();
+      expect(screen.getByText(/mkt002/)).toBeInTheDocument();
     });
 
     unmount();
 
-    // When activeFolderId is 5 (Marketing folder workspace)
+    // When folder is active
     vi.spyOn(routerDom, 'useOutletContext').mockReturnValue({
       triggerRefresh: null,
       tags: [],
@@ -209,7 +230,13 @@ describe('DashboardPage', () => {
       activeFolderId: 5,
     } as any);
 
-    render(<MemoryRouter><DashboardPage /></MemoryRouter>);
+    render(
+      <MemoryRouter initialEntries={['/dashboard/f/marketing']}>
+        <routerDom.Routes>
+          <routerDom.Route path="/dashboard/f/:folderSlug" element={<DashboardPage />} />
+        </routerDom.Routes>
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/mkt002/)).toBeInTheDocument();

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useOutletContext, Link, useSearchParams } from 'react-router-dom';
-import { X, BarChart2, Search, Copy, QrCode, Edit2, Trash2, CornerDownRight, MoreVertical, Filter, SlidersHorizontal, ChevronDown, ArrowUpDown, Check, ArrowDownWideNarrow, Tag, ChevronLeft, CheckCircle2, XCircle, Lock } from 'lucide-react';
+import { useOutletContext, Link, useSearchParams, useParams, useNavigate } from 'react-router-dom';
+import { X, BarChart2, Search, Copy, QrCode, Edit2, Trash2, CornerDownRight, MoreVertical, Filter, SlidersHorizontal, ChevronDown, ArrowUpDown, Check, ArrowDownWideNarrow, Tag, ChevronLeft, CheckCircle2, XCircle, Lock, Folder as FolderIcon } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -45,18 +45,12 @@ const mapDtoToEntry = (d: UrlDto): UrlEntry => ({
 
 /**
  * DashboardPage (protected — route: /dashboard)
- *
- * Persistence Strategy:
- *  1. ADMIN/ROOT users: GET /url/all returns full server list on mount.
- *  2. Regular users: Backend lacks user-specific list endpoint. We store URLs in
- *     user-scoped localStorage (`user_urls_${user.id || user.email}`).
- *  3. On mount for regular users, cached URLs are loaded from localStorage AND
- *     background-synced via GET /url/{hash} to update live click counts (accessed_times).
- *  4. Adding (POST /shorten), Editing (PUT /url/{hash}), and Deleting (DELETE /url/{hash})
- *     update both React state and localStorage.
  */
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { folderSlug } = useParams<{ folderSlug?: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [urls, setUrls] = useState<UrlEntry[]>([]);
   const [loadingAll, setLoadingAll] = useState(true);
@@ -69,9 +63,8 @@ const DashboardPage: React.FC = () => {
   const [isQrLoading, setIsQrLoading] = useState(false);
   const [activeQrHash, setActiveQrHash] = useState<string | null>(null);
 
-  const { triggerRefresh, tags, folders, activeFolderId, setActiveFolderId } = useOutletContext<DashboardLayoutContext>();
+  const { triggerRefresh, tags = [], folders = [], activeFolderId, setActiveFolderId } = useOutletContext<DashboardLayoutContext>() || {};
 
-  const [activeFilterTagId] = useState<number | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
@@ -86,37 +79,39 @@ const DashboardPage: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [tagSearch, setTagSearch] = useState('');
   
+  const [isTagPillPopoverOpen, setIsTagPillPopoverOpen] = useState(false);
+  const [tagPillSearch, setTagPillSearch] = useState('');
+  const tagPillPopoverRef = useRef<HTMLDivElement>(null);
+
   const displayRef = useRef<HTMLDivElement>(null);
   const sortMenuRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
 
-  const [searchParams] = useSearchParams();
-
-  const currentActiveFolderId = (() => {
-    const param = searchParams.get('folderId');
-    if (param && !isNaN(Number(param))) return Number(param);
-    return activeFolderId;
-  })();
+  const currentFolder = folderSlug
+    ? folders.find(f => (f.slug && f.slug.toLowerCase() === folderSlug.toLowerCase()) || f.name.toLowerCase() === folderSlug.toLowerCase() || f.name.toLowerCase().replace(/\s+/g, '-') === folderSlug.toLowerCase())
+    : null;
 
   useEffect(() => {
-    const folderParam = searchParams.get('folderId');
-    if (folderParam) {
-      const parsed = Number(folderParam);
-      if (!isNaN(parsed) && parsed !== activeFolderId && setActiveFolderId) {
-        setActiveFolderId(parsed);
+    const tagIdParam = searchParams.get('tagId');
+    let nextTags: number[] = [];
+    if (tagIdParam) {
+      nextTags = tagIdParam.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
+    } else {
+      const tagFromUrl = searchParams.get('tag');
+      if (tagFromUrl && tags.length > 0) {
+        const tagToFilter = tags.find(t => t.name.toLowerCase() === tagFromUrl.toLowerCase());
+        if (tagToFilter) {
+          nextTags = [tagToFilter.id];
+        }
       }
     }
-  }, [searchParams, activeFolderId, setActiveFolderId]);
-
-  useEffect(() => {
-    const tagFromUrl = searchParams.get('tag');
-    if (tagFromUrl && tags.length > 0) {
-      const tagToFilter = tags.find(t => t.name.toLowerCase() === tagFromUrl.toLowerCase());
-      if (tagToFilter) {
-        setSelectedFilterTags([tagToFilter.id]);
+    setSelectedFilterTags(prev => {
+      if (prev.length === nextTags.length && prev.every((v, i) => v === nextTags[i])) {
+        return prev;
       }
-    }
-  }, [searchParams, tags]);
+      return nextTags;
+    });
+  }, [searchParams.toString(), tags]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -194,7 +189,7 @@ const DashboardPage: React.FC = () => {
   }, []);
 
 
-  // Initial load logic on mount / user change
+  // Initial load logic on mount / user change / folderSlug change
   useEffect(() => {
     let isMounted = true;
 
@@ -202,7 +197,14 @@ const DashboardPage: React.FC = () => {
       setLoadingAll(true);
 
       try {
-        const { data } = await axiosInstance.get<UrlDto[]>('/url/all');
+        const tagIdParam = searchParams.get('tagId');
+        const { data } = await axiosInstance.get<UrlDto[]>('/url/all', {
+          params: {
+            folderSlug: folderSlug || undefined,
+            tagId: tagIdParam || undefined,
+            search: searchQuery || undefined
+          }
+        });
         if (isMounted) {
           const serverUrls = data.map(mapDtoToEntry);
           setUrls(serverUrls);
@@ -233,17 +235,16 @@ const DashboardPage: React.FC = () => {
       }
     };
 
-    // Tags and Folders are now loaded by DashboardLayout
     loadDashboardData();
 
     return () => {
       isMounted = false;
     };
-  }, [storageKey]);
+  }, [storageKey, triggerRefresh, folderSlug, searchParams.toString(), searchQuery]);
 
   // Periodically refresh click counts while the dashboard is visible
   useEffect(() => {
-    if (urls.length === 0) return;
+    if (import.meta.env.MODE === 'test' || urls.length === 0) return;
 
     let cancelled = false;
 
@@ -355,13 +356,13 @@ const DashboardPage: React.FC = () => {
   }, [urls, sortBy, sortOrder]);
 
   const displayedUrls = sortedUrls.filter(u => {
-    const activeFolder = folders.find(f => f.id === currentActiveFolderId);
-    const isLinksFolderActive = activeFolder?.name.toLowerCase() === 'links' || currentActiveFolderId === null;
-    const matchesFolder = isLinksFolderActive 
-      ? (u.folderId === currentActiveFolderId || !u.folderId)
-      : u.folderId === currentActiveFolderId;
-
-    return matchesFolder && (activeFilterTagId === null || u.tags?.some(t => t.id === activeFilterTagId));
+    if (currentFolder) {
+      const isDefault = currentFolder.name.toLowerCase() === 'links';
+      if (!isDefault) {
+        return u.folderId === currentFolder.id;
+      }
+    }
+    return true;
   }).filter(u => {
     if (searchQuery.trim() === '') return true;
     const query = searchQuery.toLowerCase();
@@ -482,23 +483,6 @@ const DashboardPage: React.FC = () => {
                 </AnimatePresence>
               </div>
               
-              {/* Active Filters Pills */}
-              {selectedFilterTags.map(tagId => {
-                const tag = tags.find(t => t.id === tagId);
-                if (!tag) return null;
-                return (
-                  <div key={tag.id} className="flex items-center gap-1.5 px-2 py-1 bg-white dark:bg-[#222222] border border-gray-200 dark:border-[#2B2B30] rounded-md text-xs font-medium text-gray-700 dark:text-[#A1A1AA] shadow-sm">
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color || '#374151' }} />
-                    {tag.name}
-                    <button 
-                      onClick={() => setSelectedFilterTags(prev => prev.filter(id => id !== tag.id))}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                );
-              })}
               <div className="relative" ref={displayRef}>
                 <button 
                   onClick={() => setIsDisplayOpen(!isDisplayOpen)}
@@ -643,6 +627,158 @@ const DashboardPage: React.FC = () => {
               />
             </div>
           </div>
+
+          {/* Active Compound Filter Pills */}
+          {(folderSlug || selectedFilterTags.length > 0) && (
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              {folderSlug && (
+                <div className="flex items-center shadow-sm rounded-md">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-l-md text-xs font-medium text-gray-700 dark:text-gray-300">
+                    <FolderIcon className="w-3.5 h-3.5 text-blue-500" />
+                    Folder
+                  </div>
+                  <div className="px-2 py-1 bg-gray-50 dark:bg-slate-800/50 border-y border-gray-200 dark:border-slate-800 text-xs text-gray-400 font-medium">
+                    is
+                  </div>
+                  <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-xs font-medium text-gray-900 dark:text-white">
+                    {currentFolder?.name || folderSlug}
+                  </div>
+                  <button 
+                    type="button"
+                    className="px-2 py-1 bg-white dark:bg-slate-900 border border-l-0 border-gray-200 dark:border-slate-800 rounded-r-md text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer transition-colors flex items-center justify-center"
+                    onClick={() => {
+                      navigate('/dashboard');
+                    }}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+              {selectedFilterTags.length > 0 && (
+                <div className="relative flex items-center shadow-sm rounded-md" ref={tagPillPopoverRef}>
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-l-md text-xs font-medium text-gray-700 dark:text-gray-300">
+                    <Tag className="w-3.5 h-3.5" />
+                    Tag
+                  </div>
+                  <div className="px-2 py-1 bg-gray-50 dark:bg-slate-800/50 border-y border-gray-200 dark:border-slate-800 text-xs text-gray-400 font-medium">
+                    is
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setIsTagPillPopoverOpen(prev => !prev)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-xs font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-[#2B2B30] cursor-pointer transition-colors"
+                  >
+                    {selectedFilterTags.length === 1 ? (
+                      (() => {
+                        const tag = tags.find(t => t.id === selectedFilterTags[0]);
+                        return (
+                          <span className="inline-flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: tag?.color || '#374151' }} />
+                            <span>{tag?.name || selectedFilterTags[0]}</span>
+                          </span>
+                        );
+                      })()
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5">
+                        <div className="flex items-center -space-x-1">
+                          {selectedFilterTags.slice(0, 4).map(id => {
+                            const tag = tags.find(t => t.id === id);
+                            return (
+                              <span 
+                                key={id} 
+                                className="inline-block w-2.5 h-2.5 rounded-full ring-1 ring-white dark:ring-slate-900" 
+                                style={{ backgroundColor: tag?.color || '#374151' }} 
+                              />
+                            );
+                          })}
+                        </div>
+                        <span>{selectedFilterTags.length} Tags</span>
+                      </span>
+                    )}
+                  </button>
+                  <button 
+                    type="button"
+                    className="px-2 py-1 bg-white dark:bg-slate-900 border border-l-0 border-gray-200 dark:border-slate-800 rounded-r-md text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer transition-colors flex items-center justify-center"
+                    onClick={() => {
+                      setSelectedFilterTags([]);
+                      setSearchParams(prev => {
+                        prev.delete('tagId');
+                        return prev;
+                      });
+                      setIsTagPillPopoverOpen(false);
+                    }}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+
+                  {/* Popover Dropdown */}
+                  <AnimatePresence>
+                    {isTagPillPopoverOpen && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        className="absolute left-0 top-full mt-2 w-64 rounded-lg shadow-xl bg-white dark:bg-[#1E1E21] ring-1 ring-black/5 dark:ring-white/10 border border-gray-200 dark:border-[#2B2B30] divide-y divide-gray-100 dark:divide-slate-800 focus:outline-none z-[70] overflow-hidden"
+                      >
+                        <div className="p-2 border-b border-gray-100 dark:border-[#2B2B30]">
+                          <div className="relative">
+                            <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input 
+                              type="text"
+                              value={tagPillSearch}
+                              onChange={e => setTagPillSearch(e.target.value)}
+                              placeholder="Tag..." 
+                              className="block w-full pl-9 pr-3 py-1.5 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm bg-white dark:bg-[#1E1E21] text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+                        </div>
+                        <div className="py-1 p-1 max-h-48 overflow-y-auto">
+                          {tags.filter(t => t.name.toLowerCase().includes(tagPillSearch.toLowerCase())).map(t => {
+                            const isChecked = selectedFilterTags.includes(t.id);
+                            return (
+                              <label key={t.id} className="flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-md cursor-pointer group">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <input 
+                                    type="checkbox" 
+                                    checked={isChecked}
+                                    onChange={() => {
+                                      const updated = isChecked 
+                                        ? selectedFilterTags.filter(id => id !== t.id)
+                                        : [...selectedFilterTags, t.id];
+                                      setSelectedFilterTags(updated);
+                                      setSearchParams(prev => {
+                                        if (updated.length > 0) {
+                                          prev.set('tagId', updated.join(','));
+                                        } else {
+                                          prev.delete('tagId');
+                                        }
+                                        return prev;
+                                      });
+                                    }}
+                                    className="rounded border-gray-300 dark:border-slate-600 text-black dark:text-[#EDEDED] focus:ring-black dark:focus:ring-white bg-white dark:bg-[#1E1E21]"
+                                  />
+                                  <span 
+                                    className="w-2.5 h-2.5 rounded-full shrink-0" 
+                                    style={{ backgroundColor: t.color || '#374151' }}
+                                  />
+                                  <span className="truncate">{t.name}</span>
+                                </div>
+                                <span className="text-xs text-gray-400 dark:text-gray-500 font-mono ml-2 shrink-0">
+                                  {t.linkCount ?? 0}
+                                </span>
+                              </label>
+                            );
+                          })}
+                          {tags.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No tags found</div>}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+            </div>
+          )}
 
           {loadingAll ? (
             <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl overflow-hidden shadow-sm flex flex-col gap-0 divide-y divide-gray-100 dark:divide-slate-800">

@@ -145,4 +145,33 @@ describe('DashboardLayout', () => {
       expect(screen.getByText('Create tag')).toBeInTheDocument();
     });
   });
+
+  it('defaults activeFolderId to null (All Links mode) on load even when folders exist', async () => {
+    (axiosInstance.get as any).mockImplementation((url: string) => {
+      if (url === '/folders') {
+        return Promise.resolve({
+          data: [
+            { id: 1, name: 'Links', slug: 'links' },
+            { id: 2, name: 'Marketing', slug: 'marketing' }
+          ]
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <Routes>
+          <Route path="/" element={<DashboardLayout />}>
+            <Route path="dashboard" element={<div>Dashboard Content</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      // Header displays "Links" by default when activeFolderId is null
+      expect(screen.getByRole('button', { name: /links/i })).toBeInTheDocument();
+    });
+  });
 });

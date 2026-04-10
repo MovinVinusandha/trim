@@ -35,17 +35,30 @@ vi.mock('recharts', async () => {
 describe('AnalyticsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(routerDom, 'useParams').mockReturnValue({});
+    vi.spyOn(routerDom, 'useSearchParams').mockReturnValue([new URLSearchParams()]);
+    (axiosInstance.get as any).mockImplementation((url: string) => {
+      if (url === '/url/all') {
+        return Promise.resolve({ data: [] });
+      }
+      return Promise.resolve({
+        data: { totalClicks: 1234, clicksByDate: [], clicksByCountry: [], clicksByDevice: [], clicksByBrowser: [] },
+      });
+    });
   });
 
   it('renders metric cards with overall analytics data', async () => {
-    (axiosInstance.get as any).mockResolvedValue({
-      data: {
-        totalClicks: 1234,
-        clicksByDate: [],
-        clicksByCountry: [{ country: 'US', count: 100 }],
-        clicksByDevice: [],
-        clicksByBrowser: [{ browser: 'Chrome', count: 50 }],
-      },
+    (axiosInstance.get as any).mockImplementation((url: string) => {
+      if (url === '/url/all') return Promise.resolve({ data: [] });
+      return Promise.resolve({
+        data: {
+          totalClicks: 1234,
+          clicksByDate: [],
+          clicksByCountry: [{ country: 'US', count: 100 }],
+          clicksByDevice: [],
+          clicksByBrowser: [{ browser: 'Chrome', count: 50 }],
+        },
+      });
     });
 
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
@@ -59,14 +72,17 @@ describe('AnalyticsPage', () => {
 
   it('handles /analytics/:hash specific analytics', async () => {
     vi.spyOn(routerDom, 'useParams').mockReturnValue({ hash: 'abc123' });
-    (axiosInstance.get as any).mockResolvedValue({
-      data: { totalClicks: 42, clicksByDate: [], clicksByCountry: [], clicksByDevice: [], clicksByBrowser: [] },
+    (axiosInstance.get as any).mockImplementation((url: string) => {
+      if (url === '/url/all') return Promise.resolve({ data: [] });
+      return Promise.resolve({
+        data: { totalClicks: 42, clicksByDate: [], clicksByCountry: [], clicksByDevice: [], clicksByBrowser: [] },
+      });
     });
 
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
     
     await waitFor(() => {
-      expect(screen.getByText('/abc123')).toBeInTheDocument();
+      expect(screen.getAllByText('/abc123').length).toBeGreaterThan(0);
       expect(screen.getByText('42')).toBeInTheDocument();
       expect(axiosInstance.get).toHaveBeenCalledWith('/analytics/abc123', expect.any(Object));
     });
@@ -74,8 +90,11 @@ describe('AnalyticsPage', () => {
 
   it('toggles period buttons', async () => {
     vi.spyOn(routerDom, 'useParams').mockReturnValue({});
-    (axiosInstance.get as any).mockResolvedValue({
-      data: { totalClicks: 100, clicksByDate: [], clicksByCountry: [], clicksByDevice: [], clicksByBrowser: [] },
+    (axiosInstance.get as any).mockImplementation((url: string) => {
+      if (url === '/url/all') return Promise.resolve({ data: [] });
+      return Promise.resolve({
+        data: { totalClicks: 100, clicksByDate: [], clicksByCountry: [], clicksByDevice: [], clicksByBrowser: [] },
+      });
     });
 
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
@@ -98,14 +117,17 @@ describe('AnalyticsPage', () => {
       folders: [{ id: 5, name: 'Campaign 2026', linkCount: 12 }],
       setActiveFolderId: vi.fn(),
     });
-    (axiosInstance.get as any).mockResolvedValue({
-      data: { totalClicks: 99, clicksByDate: [], clicksByCountry: [], clicksByDevice: [], clicksByBrowser: [] },
+    (axiosInstance.get as any).mockImplementation((url: string) => {
+      if (url === '/url/all') return Promise.resolve({ data: [] });
+      return Promise.resolve({
+        data: { totalClicks: 99, clicksByDate: [], clicksByCountry: [], clicksByDevice: [], clicksByBrowser: [] },
+      });
     });
 
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
     
     await waitFor(() => {
-      expect(screen.getByText('Campaign 2026')).toBeInTheDocument();
+      expect(screen.getAllByText('Campaign 2026').length).toBeGreaterThan(0);
       expect(screen.getByText('99')).toBeInTheDocument();
       expect(axiosInstance.get).toHaveBeenCalledWith('/analytics/folder/5', expect.any(Object));
     });
