@@ -54,7 +54,7 @@ public class AnalyticsService {
                 .build();
     }
 
-    public AnalyticsResponseDto getAnalytics(String hash, User currentUser, String period) {
+    public AnalyticsResponseDto getAnalytics(String hash, User currentUser, String period, String startDateStr, String endDateStr) {
         var url = urlRepository.findByShortUrl(hash);
         if (url == null) {
             throw new com.url_shortener.url_shortener.urls.UrlNotFoundException();
@@ -67,27 +67,39 @@ public class AnalyticsService {
         }
 
         Long urlId = url.getId();
-        LocalDateTime startDate = getStartDateFromPeriod(period);
+        DateRange dates = parseDates(startDateStr, endDateStr, period);
+        LocalDateTime startDate = dates.start();
+        LocalDateTime endDate = dates.end();
 
-        Long totalClicksRaw = clickEventRepository.countByUrl_Id(urlId, startDate);
+        Long totalClicksRaw = clickEventRepository.countByUrl_Id(urlId, startDate, endDate);
         Long totalClicks = totalClicksRaw != null ? totalClicksRaw : 0L;
 
-        List<ClickDataPoint> clicksByDate = clickEventRepository.countByDateForUrl(urlId, startDate)
-                .stream()
-                .map(row -> new ClickDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
-                .collect(Collectors.toList());
+        List<ClickDataPoint> clicksByDate;
+        if (isHourlyGranularity(period, startDate, endDate)) {
+            List<ClickDataPoint> rawClicksByDate = clickEventRepository.countByHourForUrl(urlId, startDate, endDate)
+                    .stream()
+                    .map(row -> new ClickDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
+                    .collect(Collectors.toList());
+            clicksByDate = fillMissingHours(rawClicksByDate, startDate, endDate);
+        } else {
+            List<ClickDataPoint> rawClicksByDate = clickEventRepository.countByDateForUrl(urlId, startDate, endDate)
+                    .stream()
+                    .map(row -> new ClickDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
+                    .collect(Collectors.toList());
+            clicksByDate = fillMissingDates(rawClicksByDate, startDate, endDate);
+        }
 
-        List<CountryDataPoint> clicksByCountry = clickEventRepository.countByCountryForUrl(urlId, startDate)
+        List<CountryDataPoint> clicksByCountry = clickEventRepository.countByCountryForUrl(urlId, startDate, endDate)
                 .stream()
                 .map(row -> new CountryDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
                 .collect(Collectors.toList());
 
-        List<DeviceDataPoint> clicksByDevice = clickEventRepository.countByDeviceForUrl(urlId, startDate)
+        List<DeviceDataPoint> clicksByDevice = clickEventRepository.countByDeviceForUrl(urlId, startDate, endDate)
                 .stream()
                 .map(row -> new DeviceDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
                 .collect(Collectors.toList());
 
-        List<BrowserDataPoint> clicksByBrowser = clickEventRepository.countByBrowserForUrl(urlId, startDate)
+        List<BrowserDataPoint> clicksByBrowser = clickEventRepository.countByBrowserForUrl(urlId, startDate, endDate)
                 .stream()
                 .map(row -> new BrowserDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
                 .collect(Collectors.toList());
@@ -101,34 +113,46 @@ public class AnalyticsService {
         );
     }
 
-    public AnalyticsResponseDto getOverallAnalytics(User currentUser, String period, String hash, List<Long> tagIds, Long folderId) {
+    public AnalyticsResponseDto getOverallAnalytics(User currentUser, String period, String startDateStr, String endDateStr, String hash, List<Long> tagIds, Long folderId) {
         tagIds = tagIds == null ? null : tagIds.stream().filter(id -> id != null && id > 0).collect(Collectors.toList());
         if (tagIds != null && tagIds.isEmpty()) {
             tagIds = null;
         }
 
         Long userId = currentUser.getId();
-        LocalDateTime startDate = getStartDateFromPeriod(period);
+        DateRange dates = parseDates(startDateStr, endDateStr, period);
+        LocalDateTime startDate = dates.start();
+        LocalDateTime endDate = dates.end();
 
-        Long totalClicksRaw = clickEventRepository.countTotalOverallClicks(userId, startDate, hash, tagIds, folderId);
+        Long totalClicksRaw = clickEventRepository.countTotalOverallClicks(userId, startDate, endDate, hash, tagIds, folderId);
         Long totalClicks = totalClicksRaw != null ? totalClicksRaw : 0L;
 
-        List<ClickDataPoint> clicksByDate = clickEventRepository.countOverallClicksByDate(userId, startDate, hash, tagIds, folderId)
-                .stream()
-                .map(row -> new ClickDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
-                .collect(Collectors.toList());
+        List<ClickDataPoint> clicksByDate;
+        if (isHourlyGranularity(period, startDate, endDate)) {
+            List<ClickDataPoint> rawClicksByDate = clickEventRepository.countOverallClicksByHour(userId, startDate, endDate, hash, tagIds, folderId)
+                    .stream()
+                    .map(row -> new ClickDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
+                    .collect(Collectors.toList());
+            clicksByDate = fillMissingHours(rawClicksByDate, startDate, endDate);
+        } else {
+            List<ClickDataPoint> rawClicksByDate = clickEventRepository.countOverallClicksByDate(userId, startDate, endDate, hash, tagIds, folderId)
+                    .stream()
+                    .map(row -> new ClickDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
+                    .collect(Collectors.toList());
+            clicksByDate = fillMissingDates(rawClicksByDate, startDate, endDate);
+        }
 
-        List<CountryDataPoint> clicksByCountry = clickEventRepository.countOverallClicksByCountry(userId, startDate, hash, tagIds, folderId)
+        List<CountryDataPoint> clicksByCountry = clickEventRepository.countOverallClicksByCountry(userId, startDate, endDate, hash, tagIds, folderId)
                 .stream()
                 .map(row -> new CountryDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
                 .collect(Collectors.toList());
 
-        List<DeviceDataPoint> clicksByDevice = clickEventRepository.countOverallClicksByDevice(userId, startDate, hash, tagIds, folderId)
+        List<DeviceDataPoint> clicksByDevice = clickEventRepository.countOverallClicksByDevice(userId, startDate, endDate, hash, tagIds, folderId)
                 .stream()
                 .map(row -> new DeviceDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
                 .collect(Collectors.toList());
 
-        List<BrowserDataPoint> clicksByBrowser = clickEventRepository.countOverallClicksByBrowser(userId, startDate, hash, tagIds, folderId)
+        List<BrowserDataPoint> clicksByBrowser = clickEventRepository.countOverallClicksByBrowser(userId, startDate, endDate, hash, tagIds, folderId)
                 .stream()
                 .map(row -> new BrowserDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
                 .collect(Collectors.toList());
@@ -142,13 +166,13 @@ public class AnalyticsService {
         );
     }
 
-    public AnalyticsResponseDto getFolderAnalyticsBySlug(String slug, User currentUser, String period) {
+    public AnalyticsResponseDto getFolderAnalyticsBySlug(String slug, User currentUser, String period, String startDateStr, String endDateStr) {
         var folder = folderRepository.findByUserIdAndSlug(currentUser.getId(), slug)
                 .orElseThrow(() -> new RuntimeException("Folder not found"));
-        return getFolderAnalytics(folder.getId(), currentUser, period);
+        return getFolderAnalytics(folder.getId(), currentUser, period, startDateStr, endDateStr);
     }
 
-    public AnalyticsResponseDto getFolderAnalytics(Long folderId, User currentUser, String period) {
+    public AnalyticsResponseDto getFolderAnalytics(Long folderId, User currentUser, String period, String startDateStr, String endDateStr) {
         var folder = folderRepository.findById(folderId)
                 .orElseThrow(() -> new RuntimeException("Folder not found"));
 
@@ -159,27 +183,39 @@ public class AnalyticsService {
         }
 
         Long userId = currentUser.getId();
-        LocalDateTime startDate = getStartDateFromPeriod(period);
+        DateRange dates = parseDates(startDateStr, endDateStr, period);
+        LocalDateTime startDate = dates.start();
+        LocalDateTime endDate = dates.end();
 
-        Long totalClicksRaw = clickEventRepository.countTotalFolderClicks(folderId, userId, startDate);
+        Long totalClicksRaw = clickEventRepository.countTotalFolderClicks(folderId, userId, startDate, endDate);
         Long totalClicks = totalClicksRaw != null ? totalClicksRaw : 0L;
 
-        List<ClickDataPoint> clicksByDate = clickEventRepository.countFolderClicksByDate(folderId, userId, startDate)
-                .stream()
-                .map(row -> new ClickDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
-                .collect(Collectors.toList());
+        List<ClickDataPoint> clicksByDate;
+        if (isHourlyGranularity(period, startDate, endDate)) {
+            List<ClickDataPoint> rawClicksByDate = clickEventRepository.countFolderClicksByHour(folderId, userId, startDate, endDate)
+                    .stream()
+                    .map(row -> new ClickDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
+                    .collect(Collectors.toList());
+            clicksByDate = fillMissingHours(rawClicksByDate, startDate, endDate);
+        } else {
+            List<ClickDataPoint> rawClicksByDate = clickEventRepository.countFolderClicksByDate(folderId, userId, startDate, endDate)
+                    .stream()
+                    .map(row -> new ClickDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
+                    .collect(Collectors.toList());
+            clicksByDate = fillMissingDates(rawClicksByDate, startDate, endDate);
+        }
 
-        List<CountryDataPoint> clicksByCountry = clickEventRepository.countFolderClicksByCountry(folderId, userId, startDate)
+        List<CountryDataPoint> clicksByCountry = clickEventRepository.countFolderClicksByCountry(folderId, userId, startDate, endDate)
                 .stream()
                 .map(row -> new CountryDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
                 .collect(Collectors.toList());
 
-        List<DeviceDataPoint> clicksByDevice = clickEventRepository.countFolderClicksByDevice(folderId, userId, startDate)
+        List<DeviceDataPoint> clicksByDevice = clickEventRepository.countFolderClicksByDevice(folderId, userId, startDate, endDate)
                 .stream()
                 .map(row -> new DeviceDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
                 .collect(Collectors.toList());
 
-        List<BrowserDataPoint> clicksByBrowser = clickEventRepository.countFolderClicksByBrowser(folderId, userId, startDate)
+        List<BrowserDataPoint> clicksByBrowser = clickEventRepository.countFolderClicksByBrowser(folderId, userId, startDate, endDate)
                 .stream()
                 .map(row -> new BrowserDataPoint(row[0].toString(), ((Number) row[1]).longValue()))
                 .collect(Collectors.toList());
@@ -259,7 +295,7 @@ public class AnalyticsService {
             // Keep legacy statistic column in sync for any code paths that still read it
             if (url.getStatistic() != null) {
                 // Total clicks count should be from all time for legacy statistic column
-                url.getStatistic().setAccessedTimes(clickEventRepository.countByUrl_Id(url.getId(), LocalDateTime.of(1970, 1, 1, 0, 0)));
+                url.getStatistic().setAccessedTimes(clickEventRepository.countByUrl_Id(url.getId(), LocalDateTime.of(1970, 1, 1, 0, 0), null));
                 urlRepository.save(url);
             }
 
@@ -274,6 +310,134 @@ public class AnalyticsService {
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
+
+    private boolean isHourlyGranularity(String period, LocalDateTime startDate, LocalDateTime endDate) {
+        if ("24h".equalsIgnoreCase(period)) {
+            return true;
+        }
+        if (startDate != null && !startDate.equals(LocalDateTime.of(1970, 1, 1, 0, 0))) {
+            LocalDateTime effectiveEnd = endDate != null ? endDate : LocalDateTime.now(java.time.ZoneOffset.UTC);
+            java.time.Duration duration = java.time.Duration.between(startDate, effectiveEnd);
+            return !duration.isNegative() && duration.toHours() <= 24;
+        }
+        return false;
+    }
+
+    private List<ClickDataPoint> fillMissingHours(List<ClickDataPoint> rawData, LocalDateTime startDate, LocalDateTime endDate) {
+        LocalDateTime effectiveStart;
+        if (startDate == null || startDate.equals(LocalDateTime.of(1970, 1, 1, 0, 0))) {
+            if (rawData.isEmpty()) {
+                effectiveStart = LocalDateTime.now(java.time.ZoneOffset.UTC).minusHours(24);
+            } else {
+                try {
+                    String d = rawData.get(0).getDate().replace(" ", "T");
+                    effectiveStart = LocalDateTime.parse(d);
+                } catch (Exception e) {
+                    effectiveStart = LocalDateTime.now(java.time.ZoneOffset.UTC).minusHours(24);
+                }
+            }
+        } else {
+            effectiveStart = startDate;
+        }
+        effectiveStart = effectiveStart.truncatedTo(java.time.temporal.ChronoUnit.HOURS);
+
+        LocalDateTime effectiveEnd;
+        if (endDate == null) {
+            effectiveEnd = LocalDateTime.now(java.time.ZoneOffset.UTC);
+        } else {
+            effectiveEnd = endDate;
+        }
+        effectiveEnd = effectiveEnd.truncatedTo(java.time.temporal.ChronoUnit.HOURS);
+
+        if (effectiveStart.isAfter(effectiveEnd)) {
+            return rawData;
+        }
+
+        java.util.Map<LocalDateTime, Long> hourMap = new java.util.TreeMap<>();
+        LocalDateTime current = effectiveStart;
+        while (!current.isAfter(effectiveEnd)) {
+            hourMap.put(current, 0L);
+            current = current.plusHours(1);
+        }
+
+        for (ClickDataPoint point : rawData) {
+            try {
+                String d = point.getDate().replace(" ", "T");
+                LocalDateTime pointTime;
+                if (d.length() == 10) {
+                    pointTime = java.time.LocalDate.parse(d).atStartOfDay();
+                } else {
+                    pointTime = LocalDateTime.parse(d);
+                }
+                pointTime = pointTime.truncatedTo(java.time.temporal.ChronoUnit.HOURS);
+                hourMap.put(pointTime, hourMap.getOrDefault(pointTime, 0L) + point.getCount());
+            } catch (Exception e) {
+                log.warn("Invalid hour format from rawData: {}", point.getDate());
+            }
+        }
+
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:00:00");
+        return hourMap.entrySet().stream()
+                .map(entry -> new ClickDataPoint(entry.getKey().format(formatter), entry.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    private List<ClickDataPoint> fillMissingDates(List<ClickDataPoint> rawData, LocalDateTime startDate, LocalDateTime endDate) {
+        java.time.LocalDate effectiveStart;
+        if (startDate == null || startDate.equals(LocalDateTime.of(1970, 1, 1, 0, 0))) {
+            if (rawData.isEmpty()) {
+                effectiveStart = java.time.LocalDate.now(java.time.ZoneOffset.UTC).minusDays(30);
+            } else {
+                effectiveStart = java.time.LocalDate.parse(rawData.get(0).getDate());
+            }
+        } else {
+            effectiveStart = startDate.toLocalDate();
+        }
+
+        java.time.LocalDate effectiveEnd;
+        if (endDate == null) {
+            effectiveEnd = java.time.LocalDate.now(java.time.ZoneOffset.UTC);
+        } else {
+            effectiveEnd = endDate.toLocalDate();
+        }
+
+        if (effectiveStart.isAfter(effectiveEnd)) {
+            return rawData;
+        }
+
+        java.util.Map<java.time.LocalDate, Long> dateMap = new java.util.TreeMap<>();
+        java.time.LocalDate current = effectiveStart;
+        while (!current.isAfter(effectiveEnd)) {
+            dateMap.put(current, 0L);
+            current = current.plusDays(1);
+        }
+
+        for (ClickDataPoint point : rawData) {
+            try {
+                java.time.LocalDate pointDate = java.time.LocalDate.parse(point.getDate());
+                dateMap.put(pointDate, dateMap.getOrDefault(pointDate, 0L) + point.getCount());
+            } catch (Exception e) {
+                log.warn("Invalid date format from rawData: {}", point.getDate());
+            }
+        }
+
+        return dateMap.entrySet().stream()
+                .map(entry -> new ClickDataPoint(entry.getKey().toString(), entry.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    private record DateRange(LocalDateTime start, LocalDateTime end) {}
+
+    private DateRange parseDates(String startDateStr, String endDateStr, String period) {
+        if (startDateStr != null && endDateStr != null) {
+            try {
+                return new DateRange(LocalDateTime.parse(startDateStr), LocalDateTime.parse(endDateStr));
+            } catch (Exception e) {
+                log.warn("Failed to parse custom dates: {} - {}", startDateStr, endDateStr);
+            }
+        }
+        return new DateRange(getStartDateFromPeriod(period), null);
+    }
 
     private LocalDateTime getStartDateFromPeriod(String period) {
         if (period == null) return LocalDateTime.of(1970, 1, 1, 0, 0);

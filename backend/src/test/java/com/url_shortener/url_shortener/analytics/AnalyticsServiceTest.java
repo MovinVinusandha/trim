@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -53,13 +54,13 @@ class AnalyticsServiceTest {
 
     @Test
     void getOverallAnalytics_With24hPeriod() {
-        when(clickEventRepository.countTotalOverallClicks(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null))).thenReturn(150L);
-        when(clickEventRepository.countOverallClicksByDate(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countOverallClicksByCountry(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countOverallClicksByDevice(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countOverallClicksByBrowser(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countTotalOverallClicks(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null), eq(null))).thenReturn(150L);
+        when(clickEventRepository.countOverallClicksByHour(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countOverallClicksByCountry(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countOverallClicksByDevice(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countOverallClicksByBrowser(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
 
-        AnalyticsResponseDto response = analyticsService.getOverallAnalytics(currentUser, "24h", null, null, null);
+        AnalyticsResponseDto response = analyticsService.getOverallAnalytics(currentUser, "24h", null, null, null, null, null);
 
         assertThat(response).isNotNull();
         assertThat(response.getTotalClicks()).isEqualTo(150L);
@@ -69,13 +70,13 @@ class AnalyticsServiceTest {
     void getLinkAnalytics_Success() {
         Url url = Url.builder().id(100L).user(currentUser).build();
         when(urlRepository.findByShortUrl("hash123")).thenReturn(url);
-        when(clickEventRepository.countByUrl_Id(eq(100L), any(LocalDateTime.class))).thenReturn(50L);
-        when(clickEventRepository.countByDateForUrl(eq(100L), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countByCountryForUrl(eq(100L), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countByDeviceForUrl(eq(100L), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countByBrowserForUrl(eq(100L), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countByUrl_Id(eq(100L), any(LocalDateTime.class), eq(null))).thenReturn(50L);
+        when(clickEventRepository.countByDateForUrl(eq(100L), any(LocalDateTime.class), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countByCountryForUrl(eq(100L), any(LocalDateTime.class), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countByDeviceForUrl(eq(100L), any(LocalDateTime.class), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countByBrowserForUrl(eq(100L), any(LocalDateTime.class), eq(null))).thenReturn(Collections.emptyList());
 
-        AnalyticsResponseDto response = analyticsService.getAnalytics("hash123", currentUser, "7d");
+        AnalyticsResponseDto response = analyticsService.getAnalytics("hash123", currentUser, "7d", null, null);
 
         assertThat(response).isNotNull();
         assertThat(response.getTotalClicks()).isEqualTo(50L);
@@ -85,13 +86,13 @@ class AnalyticsServiceTest {
     void getFolderAnalytics_Success() {
         Folder folder = Folder.builder().id(50L).user(currentUser).build();
         when(folderRepository.findById(50L)).thenReturn(Optional.of(folder));
-        when(clickEventRepository.countTotalFolderClicks(eq(50L), eq(1L), any(LocalDateTime.class))).thenReturn(75L);
-        when(clickEventRepository.countFolderClicksByDate(eq(50L), eq(1L), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countFolderClicksByCountry(eq(50L), eq(1L), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countFolderClicksByDevice(eq(50L), eq(1L), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countFolderClicksByBrowser(eq(50L), eq(1L), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countTotalFolderClicks(eq(50L), eq(1L), any(LocalDateTime.class), eq(null))).thenReturn(75L);
+        when(clickEventRepository.countFolderClicksByDate(eq(50L), eq(1L), any(LocalDateTime.class), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countFolderClicksByCountry(eq(50L), eq(1L), any(LocalDateTime.class), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countFolderClicksByDevice(eq(50L), eq(1L), any(LocalDateTime.class), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countFolderClicksByBrowser(eq(50L), eq(1L), any(LocalDateTime.class), eq(null))).thenReturn(Collections.emptyList());
 
-        AnalyticsResponseDto response = analyticsService.getFolderAnalytics(50L, currentUser, "all");
+        AnalyticsResponseDto response = analyticsService.getFolderAnalytics(50L, currentUser, "all", null, null);
 
         assertThat(response).isNotNull();
         assertThat(response.getTotalClicks()).isEqualTo(75L);
@@ -102,13 +103,13 @@ class AnalyticsServiceTest {
         Folder folder = Folder.builder().id(50L).user(currentUser).build();
         when(folderRepository.findByUserIdAndSlug(1L, "marketing-2026")).thenReturn(Optional.of(folder));
         when(folderRepository.findById(50L)).thenReturn(Optional.of(folder));
-        when(clickEventRepository.countTotalFolderClicks(eq(50L), eq(1L), any(LocalDateTime.class))).thenReturn(75L);
-        when(clickEventRepository.countFolderClicksByDate(eq(50L), eq(1L), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countFolderClicksByCountry(eq(50L), eq(1L), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countFolderClicksByDevice(eq(50L), eq(1L), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countFolderClicksByBrowser(eq(50L), eq(1L), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countTotalFolderClicks(eq(50L), eq(1L), any(LocalDateTime.class), eq(null))).thenReturn(75L);
+        when(clickEventRepository.countFolderClicksByDate(eq(50L), eq(1L), any(LocalDateTime.class), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countFolderClicksByCountry(eq(50L), eq(1L), any(LocalDateTime.class), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countFolderClicksByDevice(eq(50L), eq(1L), any(LocalDateTime.class), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countFolderClicksByBrowser(eq(50L), eq(1L), any(LocalDateTime.class), eq(null))).thenReturn(Collections.emptyList());
 
-        AnalyticsResponseDto response = analyticsService.getFolderAnalyticsBySlug("marketing-2026", currentUser, "all");
+        AnalyticsResponseDto response = analyticsService.getFolderAnalyticsBySlug("marketing-2026", currentUser, "all", null, null);
 
         assertThat(response).isNotNull();
         assertThat(response.getTotalClicks()).isEqualTo(75L);
@@ -116,13 +117,13 @@ class AnalyticsServiceTest {
 
     @Test
     void dateRangeFiltering_7d() {
-        when(clickEventRepository.countTotalOverallClicks(eq(1L), dateCaptor.capture(), eq(null), eq(null), eq(null))).thenReturn(100L);
-        when(clickEventRepository.countOverallClicksByDate(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countOverallClicksByCountry(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countOverallClicksByDevice(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countOverallClicksByBrowser(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countTotalOverallClicks(eq(1L), dateCaptor.capture(), eq(null), eq(null), eq(null), eq(null))).thenReturn(100L);
+        when(clickEventRepository.countOverallClicksByDate(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countOverallClicksByCountry(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countOverallClicksByDevice(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countOverallClicksByBrowser(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
 
-        analyticsService.getOverallAnalytics(currentUser, "7d", null, null, null);
+        analyticsService.getOverallAnalytics(currentUser, "7d", null, null, null, null, null);
 
         LocalDateTime capturedDate = dateCaptor.getValue();
         assertThat(capturedDate).isAfter(LocalDateTime.now().minusDays(8));
@@ -135,15 +136,37 @@ class AnalyticsServiceTest {
         tagIdsWithZeros.add(0L);
         tagIdsWithZeros.add(5L);
 
-        when(clickEventRepository.countTotalOverallClicks(eq(1L), any(), eq(null), eq(java.util.List.of(5L)), eq(null))).thenReturn(10L);
-        when(clickEventRepository.countOverallClicksByDate(eq(1L), any(), eq(null), eq(java.util.List.of(5L)), eq(null))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countOverallClicksByCountry(eq(1L), any(), eq(null), eq(java.util.List.of(5L)), eq(null))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countOverallClicksByDevice(eq(1L), any(), eq(null), eq(java.util.List.of(5L)), eq(null))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countOverallClicksByBrowser(eq(1L), any(), eq(null), eq(java.util.List.of(5L)), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countTotalOverallClicks(eq(1L), any(), eq(null), eq(null), eq(java.util.List.of(5L)), eq(null))).thenReturn(10L);
+        when(clickEventRepository.countOverallClicksByDate(eq(1L), any(), eq(null), eq(null), eq(java.util.List.of(5L)), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countOverallClicksByCountry(eq(1L), any(), eq(null), eq(null), eq(java.util.List.of(5L)), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countOverallClicksByDevice(eq(1L), any(), eq(null), eq(null), eq(java.util.List.of(5L)), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countOverallClicksByBrowser(eq(1L), any(), eq(null), eq(null), eq(java.util.List.of(5L)), eq(null))).thenReturn(Collections.emptyList());
 
-        AnalyticsResponseDto response = analyticsService.getOverallAnalytics(currentUser, "all", null, tagIdsWithZeros, null);
+        AnalyticsResponseDto response = analyticsService.getOverallAnalytics(currentUser, "all", null, null, null, tagIdsWithZeros, null);
 
         assertThat(response).isNotNull();
         assertThat(response.getTotalClicks()).isEqualTo(10L);
+    }
+
+    @Test
+    void getAnalytics_HourlyGranularity() {
+        Url url = Url.builder().id(100L).user(currentUser).build();
+        when(urlRepository.findByShortUrl("hash123")).thenReturn(url);
+        when(clickEventRepository.countByUrl_Id(eq(100L), any(LocalDateTime.class), any())).thenReturn(10L);
+        when(clickEventRepository.countByHourForUrl(eq(100L), any(LocalDateTime.class), any())).thenReturn(List.of(
+                new Object[]{"2026-08-14 05:00:00", 4L},
+                new Object[]{"2026-08-14 08:00:00", 6L}
+        ));
+        when(clickEventRepository.countByCountryForUrl(eq(100L), any(LocalDateTime.class), any())).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countByDeviceForUrl(eq(100L), any(LocalDateTime.class), any())).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countByBrowserForUrl(eq(100L), any(LocalDateTime.class), any())).thenReturn(Collections.emptyList());
+
+        AnalyticsResponseDto response = analyticsService.getAnalytics("hash123", currentUser, "24h", null, null);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getTotalClicks()).isEqualTo(10L);
+        assertThat(response.getClicksByDate()).isNotEmpty();
+        // Check that points are formatted in ISO format YYYY-MM-DDTHH:00:00
+        assertThat(response.getClicksByDate().get(0).getDate()).contains("T");
     }
 }
