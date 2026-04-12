@@ -10,6 +10,7 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import FoldersPage from './pages/FoldersPage';
 import TagsPage from './pages/TagsPage';
 import ExpiredPage from './pages/ExpiredPage';
+import NotFoundPage from './pages/NotFoundPage';
 import SecurePage from './pages/SecurePage';
 import SettingsPage from './pages/SettingsPage';
 import SecurityPage from './pages/SecurityPage';
@@ -27,6 +28,7 @@ function AnimatedRoutes() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/expired" element={<ExpiredPage />} />
+            <Route path="/not-found" element={<NotFoundPage />} />
             <Route path="/secure/:hash" element={<SecurePage />} />
 
             {/* ── Protected Routes ──────────────────────────────── */}
@@ -45,7 +47,7 @@ function AnimatedRoutes() {
             </Route>
 
             {/* ── Catch-all ─────────────────────────────────────── */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </AnimatePresence>
   );
