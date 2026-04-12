@@ -985,47 +985,96 @@ const DashboardPage: React.FC = () => {
                         
                         <AnimatePresence>
                         {openMenuId === url.shortUrl && (
-                          <motion.div 
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ duration: 0.15, ease: "easeOut" }}
-                            className="absolute right-0 mt-2 w-40 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg z-50 overflow-hidden"
-                          >
-                            <Link
-                              to={`/analytics/${extractHash(url.shortUrl)}`}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] flex items-center gap-2"
-                            >
-                              <BarChart2 className="w-4 h-4" />
-                              View Analytics
-                            </Link>
-                            <button
-                              onClick={() => {
-                                setEditingUrl(url);
-                                setIsCreateModalOpen(true);
+                          <>
+                            {/* Invisible click-outside backdrop */}
+                            <div 
+                              className="fixed inset-0 z-40 bg-transparent cursor-default" 
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setOpenMenuId(null);
-                              }}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] flex items-center gap-2"
+                              }} 
+                            />
+                            <motion.div 
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              transition={{ duration: 0.15, ease: "easeOut" }}
+                              className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl shadow-xl z-50 p-1 divide-y divide-gray-100 dark:divide-slate-800"
                             >
-                              <Edit2 className="w-4 h-4" />
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => {
-                                setOpenMenuId(null);
-                                if (window.confirm("Are you sure you want to delete this link?")) {
-                                  const originalIdx = urls.indexOf(url);
-                                  axiosInstance.delete(`/url/${extractHash(url.shortUrl)}`)
-                                    .then(() => handleDeleted(originalIdx))
-                                    .catch(err => console.error("Failed to delete", err));
-                                }
-                              }}
-                              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                              Delete
-                            </button>
-                          </motion.div>
+                              <div className="py-0.5">
+                                <Link
+                                  to={`/analytics/${extractHash(url.shortUrl)}`}
+                                  onClick={() => setOpenMenuId(null)}
+                                  className="w-full flex items-center px-3 py-2 text-xs font-medium text-gray-700 dark:text-[#EDEDED] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-lg transition-colors"
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <BarChart2 className="w-4 h-4 text-gray-400" />
+                                    <span>Analytics</span>
+                                  </div>
+                                </Link>
+                                <button
+                                  onClick={() => {
+                                    setEditingUrl(url);
+                                    setIsCreateModalOpen(true);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="w-full flex items-center px-3 py-2 text-xs font-medium text-gray-700 dark:text-[#EDEDED] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-lg transition-colors"
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <Edit2 className="w-4 h-4 text-gray-400" />
+                                    <span>Edit</span>
+                                  </div>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleOpenQr(extractHash(url.shortUrl));
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="w-full flex items-center px-3 py-2 text-xs font-medium text-gray-700 dark:text-[#EDEDED] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-lg transition-colors"
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <QrCode className="w-4 h-4 text-gray-400" />
+                                    <span>QR Code</span>
+                                  </div>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const copyUrl = `${protocol}//${displayDomain}/${extractHash(url.shortUrl)}`;
+                                    navigator.clipboard.writeText(copyUrl);
+                                    setCopiedHash(url.shortUrl);
+                                    toast.success("Link copied to clipboard");
+                                    setTimeout(() => setCopiedHash(null), 2000);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="w-full flex items-center px-3 py-2 text-xs font-medium text-gray-700 dark:text-[#EDEDED] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-lg transition-colors"
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <Copy className="w-4 h-4 text-gray-400" />
+                                    <span>Copy Link</span>
+                                  </div>
+                                </button>
+                              </div>
+                              <div className="pt-1">
+                                <button
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    if (window.confirm("Are you sure you want to delete this link?")) {
+                                      const originalIdx = urls.indexOf(url);
+                                      axiosInstance.delete(`/url/${extractHash(url.shortUrl)}`)
+                                        .then(() => handleDeleted(originalIdx))
+                                        .catch(err => console.error("Failed to delete", err));
+                                    }
+                                  }}
+                                  className="w-full flex items-center px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors"
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <Trash2 className="w-4 h-4 text-red-500 dark:text-red-400" />
+                                    <span>Delete</span>
+                                  </div>
+                                </button>
+                              </div>
+                            </motion.div>
+                          </>
                         )}
                         </AnimatePresence>
                       </div>

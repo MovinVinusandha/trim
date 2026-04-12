@@ -115,53 +115,73 @@ const FoldersPage: React.FC = () => {
                       
                       <AnimatePresence>
                       {openMenuId === folder.id && (
-                        <motion.div 
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          transition={{ duration: 0.15, ease: "easeOut" }}
-                          className="absolute right-0 mt-1 w-36 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg z-[60] overflow-hidden"
-                        >
-                          <button
+                        <>
+                          {/* Invisible click-outside backdrop */}
+                          <div 
+                            className="fixed inset-0 z-40 bg-transparent cursor-default" 
                             onClick={(e) => {
                               e.stopPropagation();
                               setOpenMenuId(null);
-                              setActiveFolderId(folder.id);
-                              navigate(`/analytics/f/${slug}`);
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] flex items-center gap-2"
+                            }} 
+                          />
+                          <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.15, ease: "easeOut" }}
+                            className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl shadow-xl z-50 p-1 divide-y divide-gray-100 dark:divide-slate-800"
                           >
-                            <BarChart2 className="w-4 h-4 text-blue-500" />
-                            Analytics
-                          </button>
-                          {!isDefault && (
-                            <>
+                            <div className="py-0.5">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setOpenMenuId(null);
-                                  setFolderToEdit(folder);
-                                  setIsFolderModalOpen(true);
+                                  setActiveFolderId(folder.id);
+                                  navigate(`/analytics/f/${slug}`);
                                 }}
-                                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] flex items-center gap-2"
+                                className="w-full flex items-center px-3 py-2 text-xs font-medium text-gray-700 dark:text-[#EDEDED] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-lg transition-colors"
                               >
-                                <Pen className="w-4 h-4" />
-                                Edit
+                                <div className="flex items-center gap-2.5">
+                                  <BarChart2 className="w-4 h-4 text-gray-400" />
+                                  <span>Analytics</span>
+                                </div>
                               </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenMenuId(null);
-                                  setFolderToDelete(folder);
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Delete
-                              </button>
-                            </>
-                          )}
-                        </motion.div>
+                              {!isDefault && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(null);
+                                    setFolderToEdit(folder);
+                                    setIsFolderModalOpen(true);
+                                  }}
+                                  className="w-full flex items-center px-3 py-2 text-xs font-medium text-gray-700 dark:text-[#EDEDED] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-lg transition-colors"
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <Pen className="w-4 h-4 text-gray-400" />
+                                    <span>Edit</span>
+                                  </div>
+                                </button>
+                              )}
+                            </div>
+                            {!isDefault && (
+                              <div className="pt-1">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(null);
+                                    setFolderToDelete(folder);
+                                  }}
+                                  className="w-full flex items-center px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors"
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <Trash2 className="w-4 h-4 text-red-500 dark:text-red-400" />
+                                    <span>Delete</span>
+                                  </div>
+                                </button>
+                              </div>
+                            )}
+                          </motion.div>
+                        </>
                       )}
                       </AnimatePresence>
                     </div>
