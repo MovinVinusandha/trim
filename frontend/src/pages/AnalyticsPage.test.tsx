@@ -102,7 +102,12 @@ describe('AnalyticsPage', () => {
       expect(screen.getByText('100')).toBeInTheDocument();
     });
 
-    const btn7d = screen.getByText('7d');
+    // Open DateRangePicker popover
+    const trigger = screen.getByText('Last 30 days');
+    fireEvent.click(trigger);
+
+    // Select "Last 7 days"
+    const btn7d = screen.getByText('Last 7 days');
     fireEvent.click(btn7d);
 
     await waitFor(() => {

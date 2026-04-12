@@ -16,6 +16,9 @@ import {
 import Skeleton from 'react-loading-skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { UrlDto } from '../types';
+import { DateRangePicker } from '../components/DateRangePicker';
+import type { DateRangeValue } from '../components/DateRangePicker';
+import { format, parseISO } from 'date-fns';
 
 interface AnalyticsData {
   totalClicks: number;
@@ -67,7 +70,7 @@ const AnalyticsPage: React.FC = () => {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [period, setPeriod] = useState('30d');
+  const [dateRange, setDateRange] = useState<DateRangeValue>({ type: 'preset', value: '30d' });
 
   useEffect(() => {
     let isMounted = true;
@@ -108,7 +111,13 @@ const AnalyticsPage: React.FC = () => {
       setLoading(true);
       try {
         let endpoint = '/analytics';
-        const params: any = { period };
+        const params: any = {};
+        if (dateRange.type === 'preset') {
+          params.period = dateRange.value;
+        } else {
+          params.startDate = format(dateRange.start, "yyyy-MM-dd'T'HH:mm:ss");
+          params.endDate = format(dateRange.end, "yyyy-MM-dd'T'HH:mm:ss");
+        }
         if (tagIdParam) {
           params.tagId = tagIdParam;
         }
@@ -134,7 +143,7 @@ const AnalyticsPage: React.FC = () => {
     };
 
     fetchAnalytics();
-  }, [hashParam, folderSlug, folderIdParam, tagIdParam, period]);
+  }, [hashParam, folderSlug, folderIdParam, tagIdParam, dateRange]);
 
   const activeTagIds = useMemo(() => {
     return tagIdParam ? tagIdParam.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0) : [];
@@ -260,11 +269,43 @@ const AnalyticsPage: React.FC = () => {
     );
   }
 
+  const formatXAxisTick = (dateStr: string) => {
+    if (!dateStr) return '';
+    try {
+      const date = parseISO(dateStr.length === 10 ? dateStr + 'T00:00:00Z' : (dateStr.endsWith('Z') ? dateStr : dateStr + 'Z'));
+      if (isNaN(date.getTime())) return dateStr;
+      if (dateRange.type === 'preset' && dateRange.value === '24h') {
+        return format(date, 'h:mm a');
+      }
+      if (dateRange.type === 'preset' && (dateRange.value === '7d' || dateRange.value === '30d')) {
+        return format(date, 'EEE, MMM d');
+      }
+      return format(date, 'MMM d');
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const formatTooltipLabel = (label: any) => {
+    const dateStr = typeof label === 'string' ? label : (label ? String(label) : '');
+    if (!dateStr) return '';
+    try {
+      const date = parseISO(dateStr.length === 10 ? dateStr + 'T00:00:00Z' : (dateStr.endsWith('Z') ? dateStr : dateStr + 'Z'));
+      if (isNaN(date.getTime())) return dateStr;
+      if (dateRange.type === 'preset' && dateRange.value === '24h') {
+        return format(date, 'EEE, MMM d, h:mm a');
+      }
+      return format(date, 'EEE, MMM d');
+    } catch {
+      return dateStr;
+    }
+  };
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-gray-900 text-white p-3 rounded-md shadow-xl text-sm border border-gray-700">
-          <p className="text-gray-400 mb-1">{label}</p>
+          <p className="text-gray-400 mb-1">{formatTooltipLabel(label)}</p>
           <p className="font-semibold text-white">{payload[0].value} clicks</p>
         </div>
       );
@@ -282,8 +323,8 @@ const AnalyticsPage: React.FC = () => {
     <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
         
         <div className="flex flex-col gap-4">
-          {/* Action Bar with Filter Dropdown */}
-          <div className="flex items-center justify-between">
+          {/* Action Bar with Filter Dropdown and Date Range Picker */}
+          <div className="flex items-center gap-2">
             <div className="relative" ref={filterRef}>
               <button 
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -524,6 +565,8 @@ const AnalyticsPage: React.FC = () => {
                 )}
               </AnimatePresence>
             </div>
+            
+            <DateRangePicker value={dateRange} onChange={setDateRange} />
           </div>
 
           {/* Active Compound Filter Pills */}
@@ -920,21 +963,6 @@ const AnalyticsPage: React.FC = () => {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED]">Clicks over time</h2>
               <p className="text-sm text-gray-500 dark:text-[#A1A1AA]">Daily breakdown of link performance</p>
             </div>
-            <div className="inline-flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#222222] p-1">
-              {['24h', '7d', '30d', 'all'].map(p => (
-                <button
-                  key={p}
-                  onClick={() => setPeriod(p)}
-                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                    period === p 
-                    ? 'bg-white dark:bg-[#2B2B30] text-black dark:text-[#EDEDED] shadow-sm' 
-                    : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  {p === 'all' ? 'All time' : p}
-                </button>
-              ))}
-            </div>
           </div>
           
           <div className="relative w-full h-[300px]">
@@ -947,10 +975,16 @@ const AnalyticsPage: React.FC = () => {
                       <stop offset="95%" stopColor="#7c3aed" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} />
+                  <XAxis 
+                    dataKey="date" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#6b7280', fontSize: 11 }} 
+                    tickFormatter={formatXAxisTick}
+                    minTickGap={40}
+                  />
                   <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} allowDecimals={false} />
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip content={<CustomTooltip />} labelFormatter={formatTooltipLabel} />
                   <Area 
                     type="monotone" 
                     dataKey="count" 
