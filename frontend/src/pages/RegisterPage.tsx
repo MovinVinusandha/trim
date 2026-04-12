@@ -130,7 +130,7 @@ const RegisterPage: React.FC = () => {
           {/* Card Container */}
           <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-2xl p-8 shadow-xl max-w-md w-full mx-auto">
             <div className="text-center mb-6">
-              <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-[#EDEDED] mb-2">Create your Trim account</h1>
+              <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-[#EDEDED] mb-2">Create your trim account</h1>
             </div>
 
             <div className="space-y-6">
@@ -167,7 +167,7 @@ const RegisterPage: React.FC = () => {
                     disabled={step === 'confirm'}
                     value={form.email}
                     onChange={handleChange}
-                    placeholder="panic@thedis.co" 
+                    placeholder="panic@thedis.co"
                     className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500 disabled:opacity-50 disabled:bg-gray-50/80 dark:disabled:bg-[#151518] transition-all duration-200"
                   />
                 </div>
@@ -225,7 +225,7 @@ const RegisterPage: React.FC = () => {
                       autoFocus={step === 'confirm'}
                       value={step === 'form' ? form.password : confirmPassword}
                       onChange={step === 'form' ? handleChange : (e) => setConfirmPassword(e.target.value)}
-                      placeholder="••••••••" 
+                      placeholder={step === 'form' ? '••••••••' : 'Enter your password again'} 
                       className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500 transition-colors"
                     />
                     <button 
@@ -308,7 +308,7 @@ const RegisterPage: React.FC = () => {
           </div>
 
           <div className="text-center text-xs text-gray-500 dark:text-[#A1A1AA] max-w-sm px-4 mt-8 mx-auto">
-            By continuing, you agree to Trim's <a className="font-medium text-gray-700 dark:text-gray-300 hover:underline" href="#">Terms of Service</a> and <a className="font-medium text-gray-700 dark:text-gray-300 hover:underline" href="#">Privacy Policy</a>
+            By continuing, you agree to trim's <a className="font-medium text-gray-700 dark:text-gray-300 hover:underline" href="#">Terms of Service</a> and <a className="font-medium text-gray-700 dark:text-gray-300 hover:underline" href="#">Privacy Policy</a>
           </div>
 
         </motion.div>

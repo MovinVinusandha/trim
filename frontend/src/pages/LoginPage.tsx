@@ -113,7 +113,7 @@ const LoginPage: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="panic@thedis.co" 
+                  placeholder="janedoe@email.com" 
                   className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500"
                 />
               </div>
@@ -126,7 +126,7 @@ const LoginPage: React.FC = () => {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••" 
+                    placeholder="Enter your password"
                     className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500"
                   />
                   <button 
@@ -198,7 +198,7 @@ const LoginPage: React.FC = () => {
           </div>
 
           <div className="text-center text-xs text-gray-500 dark:text-[#A1A1AA] max-w-sm px-4 mt-8 mx-auto">
-            By continuing, you agree to Trim's <a className="font-medium text-gray-700 dark:text-gray-300 hover:underline" href="#">Terms of Service</a> and <a className="font-medium text-gray-700 dark:text-gray-300 hover:underline" href="#">Privacy Policy</a>
+            By continuing, you agree to trim's <a className="font-medium text-gray-700 dark:text-gray-300 hover:underline" href="#">Terms of Service</a> and <a className="font-medium text-gray-700 dark:text-gray-300 hover:underline" href="#">Privacy Policy</a>
           </div>
 
         </motion.div>
