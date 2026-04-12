@@ -167,7 +167,7 @@ const RegisterPage: React.FC = () => {
                     disabled={step === 'confirm'}
                     value={form.email}
                     onChange={handleChange}
-                    placeholder="panic@thedis.co"
+                    placeholder="janedoe@email.com"
                     className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500 disabled:opacity-50 disabled:bg-gray-50/80 dark:disabled:bg-[#151518] transition-all duration-200"
                   />
                 </div>
@@ -213,9 +213,9 @@ const RegisterPage: React.FC = () => {
                   
                   <motion.div 
                     key={step}
-                    initial={{ opacity: 0.85, scale: 0.995 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.15 }}
+                    initial={{ opacity: 0, x: step === 'confirm' ? 12 : -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
                     className="relative"
                   >
                     <input 
@@ -225,7 +225,7 @@ const RegisterPage: React.FC = () => {
                       autoFocus={step === 'confirm'}
                       value={step === 'form' ? form.password : confirmPassword}
                       onChange={step === 'form' ? handleChange : (e) => setConfirmPassword(e.target.value)}
-                      placeholder={step === 'form' ? '••••••••' : 'Enter your password again'} 
+                      placeholder={step === 'form' ? 'At least 8 characters' : 'Repeat your password'} 
                       className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500 transition-colors"
                     />
                     <button 

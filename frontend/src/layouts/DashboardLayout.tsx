@@ -161,7 +161,7 @@ const DashboardLayout: React.FC = () => {
       return (
         <button 
           onClick={() => toast.success('Export functionality coming soon!')}
-          className="bg-black text-white dark:bg-white dark:text-slate-900 px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-gray-800 dark:hover:bg-slate-200 transition-colors shadow-sm"
+          className="bg-black text-white dark:bg-white dark:text-slate-900 px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-gray-800 dark:hover:bg-slate-200 active:scale-[0.98] transition-all duration-150 shadow-sm"
         >
           <Download className="w-4 h-4" /> Export
         </button>
@@ -174,7 +174,7 @@ const DashboardLayout: React.FC = () => {
             setFolderToEdit(null);
             setIsFolderModalOpen(true);
           }} 
-          className="bg-black text-white dark:bg-white dark:text-slate-900 px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-gray-800 dark:hover:bg-slate-200 transition-colors shadow-sm"
+          className="bg-black text-white dark:bg-white dark:text-slate-900 px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-gray-800 dark:hover:bg-slate-200 active:scale-[0.98] transition-all duration-150 shadow-sm"
         >
           <FolderPlus className="w-4 h-4" /> Create folder
         </button>
@@ -187,7 +187,7 @@ const DashboardLayout: React.FC = () => {
             setTagToEdit(null);
             setIsCreateTagModalOpen(true);
           }} 
-          className="bg-black text-white dark:bg-white dark:text-slate-900 px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-gray-800 dark:hover:bg-slate-200 transition-colors shadow-sm"
+          className="bg-black text-white dark:bg-white dark:text-slate-900 px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-gray-800 dark:hover:bg-slate-200 active:scale-[0.98] transition-all duration-150 shadow-sm"
         >
           <TagIcon className="w-4 h-4" /> Create tag
         </button>
@@ -197,7 +197,7 @@ const DashboardLayout: React.FC = () => {
     return (
       <button 
         onClick={() => setIsCreateModalOpen(true)}
-        className="bg-black text-white dark:bg-white dark:text-slate-900 px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-gray-800 dark:hover:bg-slate-200 transition-colors shadow-sm"
+        className="bg-black text-white dark:bg-white dark:text-slate-900 px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-gray-800 dark:hover:bg-slate-200 active:scale-[0.98] transition-all duration-150 shadow-sm"
       >
         <LinkIcon className="w-4 h-4" /> Create link
       </button>
@@ -236,10 +236,10 @@ const DashboardLayout: React.FC = () => {
             <AnimatePresence>
             {isThemeMenuOpen && (
               <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
+                initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                transition={{ duration: 0.1, ease: "easeOut" }}
                 className="absolute left-full ml-4 bottom-0 z-50 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] shadow-xl rounded-lg w-32 p-1 flex flex-col gap-1"
               >
                 <button
@@ -276,10 +276,10 @@ const DashboardLayout: React.FC = () => {
             <AnimatePresence>
             {isUserMenuOpen && (
               <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
+                initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                transition={{ duration: 0.1, ease: "easeOut" }}
                 className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-xl z-50 p-2"
               >
                 <div className="px-3 py-2 border-b border-gray-100 dark:border-[#2B2B30] mb-1">
@@ -368,10 +368,10 @@ const DashboardLayout: React.FC = () => {
                 <AnimatePresence>
                 {isFolderSwitcherOpen && (
                   <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
+                    initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                    transition={{ duration: 0.1, ease: "easeOut" }}
                     className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] shadow-xl rounded-lg p-2 z-[100] flex flex-col gap-2"
                   >
                     <div className="relative flex items-center px-2 border-b border-gray-100 dark:border-slate-800">

@@ -240,8 +240,20 @@ const SettingsPage: React.FC = () => {
 
       <AnimatePresence>
       {isDeleteModalOpen && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#1E1E21] max-w-md w-full rounded-xl p-6 shadow-2xl relative">
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          exit={{ opacity: 0 }} 
+          transition={{ duration: 0.15 }} 
+          className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+        >
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.96, y: 8 }} 
+            animate={{ opacity: 1, scale: 1, y: 0 }} 
+            exit={{ opacity: 0, scale: 0.96, y: 8 }} 
+            transition={{ duration: 0.15, ease: "easeOut" }} 
+            className="bg-white dark:bg-[#1E1E21] max-w-md w-full rounded-xl p-6 shadow-2xl relative border border-gray-200 dark:border-[#2B2B30]"
+          >
             <button 
               onClick={() => setIsDeleteModalOpen(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
@@ -293,7 +305,7 @@ const SettingsPage: React.FC = () => {
             >
                {isDeleting ? 'Deleting...' : 'Delete Account'}
             </button>
-          </div>
+          </motion.div>
         </motion.div>
       )}
       </AnimatePresence>

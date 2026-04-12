@@ -112,10 +112,10 @@ const TagsPage: React.FC = () => {
                           }} 
                         />
                         <motion.div 
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          transition={{ duration: 0.15, ease: "easeOut" }}
+                          initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                          transition={{ duration: 0.1, ease: "easeOut" }}
                           className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl shadow-xl z-50 p-1 divide-y divide-gray-100 dark:divide-slate-800"
                         >
                           <div className="py-0.5">

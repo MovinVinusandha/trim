@@ -403,14 +403,14 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
           initial={{ opacity: 0 }} 
           animate={{ opacity: 1 }} 
           exit={{ opacity: 0 }} 
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.15 }}
           className="fixed inset-0 bg-gray-500/30 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
         >
           <motion.div 
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             className="bg-white dark:bg-[#1E1E21] rounded-2xl shadow-xl w-full max-w-5xl z-[101] overflow-visible flex flex-col relative max-h-[95vh] min-h-[640px] border border-transparent dark:border-[#2B2B30]"
           >
         {/* Header */}
@@ -528,8 +528,15 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                     <ChevronsUpDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
                   
-                  {isTagDropdownOpen && (
-                    <div className="absolute top-full mt-1 left-0 w-full z-40 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl shadow-xl p-1 flex flex-col">
+                  <AnimatePresence>
+                    {isTagDropdownOpen && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                        transition={{ duration: 0.1, ease: "easeOut" }}
+                        className="absolute top-full mt-1 left-0 w-full z-40 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl shadow-xl p-1 flex flex-col"
+                      >
                       <input
                         type="text"
                         autoFocus={true}
@@ -566,8 +573,9 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                           </button>
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   )}
+                </AnimatePresence>
                 </div>
 
                 {/* Password */}
@@ -711,60 +719,68 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                         </span>
                       </button>
                       
-                      {isFolderDropdownOpen && (
-                        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg overflow-hidden flex flex-col p-1">
-                          <div className="p-1 border-b border-gray-100">
-                            <input
-                              type="text"
-                              placeholder="Search folders..."
-                              value={folderSearchQuery}
-                              onChange={(e) => setFolderSearchQuery(e.target.value)}
-                              className="w-full px-2 py-1 text-sm bg-gray-50 dark:bg-[#111113] rounded border border-gray-200 dark:border-[#2B2B30] focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors text-gray-900 dark:text-[#EDEDED]"
-                            />
-                          </div>
-                          <div className="max-h-60 overflow-y-auto p-1 space-y-1">
-                            {filteredFolders.map(folder => {
-                              const isDefault = folder.name.toLowerCase() === 'links';
-                              const isSelected = selectedFolderId === folder.id || (isDefault && selectedFolderId === '');
-                              return (
-                                <motion.button
-                                  layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
-                                  key={folder.id}
-                                  type="button"
-                                  onClick={() => { setSelectedFolderId(folder.id); setIsFolderDropdownOpen(false); }}
-                                  className="w-full flex items-center justify-between px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-[#2B2B30] text-gray-700 dark:text-[#EDEDED]"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <Folder className={`w-3.5 h-3.5 ${isDefault ? 'text-blue-500' : 'text-emerald-500'}`} />
-                                    <span className="truncate">{folder.name}</span>
-                                    {isDefault && (
-                                      <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold">
-                                        Default
-                                      </span>
-                                    )}
-                                  </div>
-                                  {isSelected && <Check className="w-3.5 h-3.5 text-black dark:text-white" />}
-                                </motion.button>
-                              );
-                            })}
-                            {filteredFolders.length === 0 && (
-                              <div className="px-2 py-2 text-xs text-gray-500 text-center">No folders found</div>
-                            )}
-                          </div>
-                          <div className="p-1 border-t border-gray-100">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsFolderDropdownOpen(false); // Close the dropdown
-                                if (onOpenFolderModal) onOpenFolderModal(); // Open the Folder modal
-                              }}
-                              className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-[#2B2B30] text-gray-700 dark:text-[#EDEDED]"
-                            >
-                              <FolderPlus className="w-4 h-4" /> Create new folder
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                      <AnimatePresence>
+                        {isFolderDropdownOpen && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                            transition={{ duration: 0.1, ease: "easeOut" }}
+                            className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg overflow-hidden flex flex-col p-1"
+                          >
+                            <div className="p-1 border-b border-gray-100">
+                              <input
+                                type="text"
+                                placeholder="Search folders..."
+                                value={folderSearchQuery}
+                                onChange={(e) => setFolderSearchQuery(e.target.value)}
+                                className="w-full px-2 py-1 text-sm bg-gray-50 dark:bg-[#111113] rounded border border-gray-200 dark:border-[#2B2B30] focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors text-gray-900 dark:text-[#EDEDED]"
+                              />
+                            </div>
+                            <div className="max-h-60 overflow-y-auto p-1 space-y-1">
+                              {filteredFolders.map(folder => {
+                                const isDefault = folder.name.toLowerCase() === 'links';
+                                const isSelected = selectedFolderId === folder.id || (isDefault && selectedFolderId === '');
+                                return (
+                                  <motion.button
+                                    layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
+                                    key={folder.id}
+                                    type="button"
+                                    onClick={() => { setSelectedFolderId(folder.id); setIsFolderDropdownOpen(false); }}
+                                    className="w-full flex items-center justify-between px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-[#2B2B30] text-gray-700 dark:text-[#EDEDED]"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <Folder className={`w-3.5 h-3.5 ${isDefault ? 'text-blue-500' : 'text-emerald-500'}`} />
+                                      <span className="truncate">{folder.name}</span>
+                                      {isDefault && (
+                                        <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold">
+                                          Default
+                                        </span>
+                                      )}
+                                    </div>
+                                    {isSelected && <Check className="w-3.5 h-3.5 text-black dark:text-white" />}
+                                  </motion.button>
+                                );
+                              })}
+                              {filteredFolders.length === 0 && (
+                                <div className="px-2 py-2 text-xs text-gray-500 text-center">No folders found</div>
+                              )}
+                            </div>
+                            <div className="p-1 border-t border-gray-100">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsFolderDropdownOpen(false); // Close the dropdown
+                                  if (onOpenFolderModal) onOpenFolderModal(); // Open the Folder modal
+                                }}
+                                className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-[#2B2B30] text-gray-700 dark:text-[#EDEDED]"
+                              >
+                                <FolderPlus className="w-4 h-4" /> Create new folder
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </>
                   )}
                 </div>
