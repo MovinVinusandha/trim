@@ -466,45 +466,35 @@ const DashboardPage: React.FC = () => {
                     className="absolute left-0 top-full mt-2 w-64 rounded-lg shadow-xl bg-white dark:bg-[#1E1E21] ring-1 ring-black/5 dark:ring-white/10 border border-gray-200 dark:border-[#2B2B30] divide-y divide-gray-100 dark:divide-slate-800 focus:outline-none z-[60] overflow-hidden"
                   >
                     {activeFilter === 'none' ? (
-                      <>
-                        <div className="p-2 border-b border-gray-100 dark:border-[#2B2B30]">
-                          <div className="relative">
-                            <input 
-                              type="text"
-                              placeholder="Filter..." 
-                              className="block w-full px-3 py-2 border-none bg-white dark:bg-[#111113] text-sm text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:ring-0"
-                            />
+                      <div className="py-1 p-1">
+                        <button 
+                          onClick={() => { setActiveFilter('tag'); setTagSearch(''); }}
+                          className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-md transition-colors group"
+                        >
+                          <div className="flex items-center">
+                            <Tag className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                            Tag
                           </div>
-                        </div>
-                        <div className="py-1 p-1">
-                          <button 
-                            onClick={() => { setActiveFilter('tag'); setTagSearch(''); }}
-                            className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-md transition-colors group"
-                          >
-                            <div className="flex items-center">
-                              <Tag className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
-                              Tag
-                            </div>
-                          </button>
-                        </div>
-                      </>
+                        </button>
+                      </div>
                     ) : activeFilter === 'tag' ? (
                       <>
-                        <div className="p-2 border-b border-gray-100 dark:border-[#2B2B30] flex items-center gap-2">
+                        <div className="p-1 border-b border-gray-100 dark:border-slate-800 flex items-center">
                           <button 
                             onClick={() => { setActiveFilter('none'); setTagSearch(''); }} 
-                            className="p-1 hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded text-gray-500"
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded text-gray-500 ml-1"
                           >
                             <ChevronLeft className="w-4 h-4" />
                           </button>
-                          <div className="relative flex-1">
-                            <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                          <div className="relative flex-1 flex items-center">
+                            <Search className="w-3.5 h-3.5 text-gray-400 ml-2" />
                             <input 
                               type="text"
+                              autoFocus={true}
                               value={tagSearch}
                               onChange={e => setTagSearch(e.target.value)}
                               placeholder="Search tags..." 
-                              className="block w-full pl-9 pr-3 py-1.5 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm bg-white dark:bg-[#1E1E21] text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-2 px-3 text-gray-900 dark:text-white placeholder-gray-400"
                             />
                           </div>
                         </div>
@@ -690,7 +680,7 @@ const DashboardPage: React.FC = () => {
                 placeholder="Search by short link or URL" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full sm:w-auto pl-9 pr-4 py-1.5 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black dark:bg-[#1E1E21] dark:text-[#EDEDED]"
+                className="w-full sm:w-auto pl-8 pr-3 py-1.5 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-md text-xs text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors shadow-sm"
               />
             </div>
           </div>
@@ -767,15 +757,16 @@ const DashboardPage: React.FC = () => {
                           transition={{ duration: 0.15, ease: "easeOut" }}
                           className="absolute left-0 top-full mt-2 w-64 rounded-lg shadow-xl bg-white dark:bg-[#1E1E21] ring-1 ring-black/5 dark:ring-white/10 border border-gray-200 dark:border-[#2B2B30] divide-y divide-gray-100 dark:divide-slate-800 focus:outline-none z-[70] overflow-hidden"
                         >
-                          <div className="p-2 border-b border-gray-100 dark:border-[#2B2B30]">
-                            <div className="relative">
-                              <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                          <div className="p-1 border-b border-gray-100 dark:border-slate-800">
+                            <div className="relative flex items-center">
+                              <Search className="w-3.5 h-3.5 text-gray-400 ml-2" />
                               <input 
                                 type="text"
+                                autoFocus={true}
                                 value={tagPillSearch}
                                 onChange={e => setTagPillSearch(e.target.value)}
                                 placeholder="Tag..." 
-                                className="block w-full pl-9 pr-3 py-1.5 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm bg-white dark:bg-[#1E1E21] text-gray-900 dark:text-[#EDEDED] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-2 px-3 text-gray-900 dark:text-white placeholder-gray-400"
                               />
                             </div>
                           </div>

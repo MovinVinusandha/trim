@@ -374,14 +374,15 @@ const DashboardLayout: React.FC = () => {
                     transition={{ duration: 0.2 }}
                     className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] shadow-xl rounded-lg p-2 z-[100] flex flex-col gap-2"
                   >
-                    <div className="relative flex items-center justify-between gap-2 border border-gray-200 dark:border-[#2B2B30] rounded-md bg-white dark:bg-[#1E1E21] focus-within:ring-2 focus-within:ring-black dark:focus-within:ring-white transition-shadow px-2">
-                      <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <div className="relative flex items-center px-2 border-b border-gray-100 dark:border-slate-800">
+                      <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 ml-1" />
                       <input 
                         type="text" 
+                        autoFocus={true}
                         placeholder="Search folders..." 
                         value={folderSearch}
                         onChange={(e) => setFolderSearch(e.target.value)}
-                        className="flex-grow w-full py-1.5 bg-transparent border-none focus:ring-0 text-sm dark:text-[#EDEDED] px-1"
+                        className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-2 px-3 text-gray-900 dark:text-white placeholder-gray-400"
                       />
                       <button
                         onClick={() => {

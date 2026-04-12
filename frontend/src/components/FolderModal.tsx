@@ -95,7 +95,7 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSuccess, f
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   autoFocus
-                  className="block w-full rounded-lg border border-gray-300 dark:border-[#2B2B30] bg-white dark:bg-[#1E1E21] px-3 py-2 text-sm shadow-sm focus:border-black focus:ring-1 focus:ring-black dark:focus:border-white dark:focus:ring-white dark:text-white placeholder:text-gray-400 transition-colors" 
+                  className="block w-full rounded-lg border border-gray-300 dark:border-[#2B2B30] bg-white dark:bg-[#1E1E21] px-3 py-2 text-sm shadow-sm focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors dark:text-white placeholder:text-gray-400" 
                   placeholder="e.g. Marketing Campaigns" 
                 />
               </div>
@@ -110,7 +110,7 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSuccess, f
                 <button 
                   type="submit" 
                   disabled={loading || name.trim() === ''}
-                  className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white dark:text-black bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black dark:focus:ring-white disabled:bg-gray-50 dark:disabled:bg-slate-800 disabled:text-gray-400 dark:disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
+                  className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white dark:text-black bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 dark:focus:ring-slate-500 disabled:bg-gray-50 dark:disabled:bg-slate-800 disabled:text-gray-400 dark:disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
                 >
                   {loading ? 'Saving...' : 'Save folder'}
                 </button>

@@ -46,7 +46,7 @@ const TagsPage: React.FC = () => {
             placeholder="Search tags..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black dark:bg-[#1E1E21] dark:text-[#EDEDED]"
+            className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-[#2B2B30] rounded-md text-sm focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors dark:bg-[#1E1E21] dark:text-[#EDEDED]"
           />
         </div>
 

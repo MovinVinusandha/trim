@@ -457,7 +457,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                     required 
                     value={longUrl}
                     onChange={(e) => setLongUrl(e.target.value)}
-                    className="block w-full rounded-md border border-gray-300 dark:border-[#2B2B30] shadow-sm focus:border-black focus:ring-1 focus:ring-black focus:dark:ring-white px-3 py-2 sm:text-sm placeholder:text-gray-400 dark:placeholder-[#6b7280] dark:bg-[#111113] dark:text-[#EDEDED]"
+                    className="block w-full rounded-md border border-gray-300 dark:border-[#2B2B30] shadow-sm focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors px-3 py-2 sm:text-sm placeholder:text-gray-400 dark:placeholder-[#6b7280] dark:bg-[#111113] dark:text-[#EDEDED]"
                     placeholder="https://dub.co/help/article/dub-links" 
                   />
                 </div>
@@ -488,7 +488,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                       value={customAlias}
                       onChange={(e) => setCustomAlias(e.target.value.replace(/[^a-zA-Z0-9-_]/g, ''))}
                       disabled={!!urlToEdit}
-                      className="block flex-1 min-w-0 w-full rounded-none rounded-r-md border border-gray-300 dark:border-[#2B2B30] focus:border-black focus:ring-1 focus:ring-black focus:dark:ring-white px-4 sm:px-5 py-2 sm:text-sm disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-slate-800 dark:bg-[#111113] dark:text-[#EDEDED] dark:placeholder-[#6b7280]" 
+                      className="block flex-1 min-w-0 w-full rounded-none rounded-r-md border border-gray-300 dark:border-[#2B2B30] focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors px-4 sm:px-5 py-2 sm:text-sm disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-slate-800 dark:bg-[#111113] dark:text-[#EDEDED] dark:placeholder-[#6b7280]" 
                     />
                   </div>
                 </div>
@@ -536,7 +536,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                           placeholder="Search or create tag..."
                           value={tagSearchQuery}
                           onChange={(e) => setTagSearchQuery(e.target.value)}
-                          className="w-full px-2 py-1 text-sm bg-gray-50 dark:bg-[#111113] rounded border border-gray-200 dark:border-[#2B2B30] focus:ring-0 text-gray-900 dark:text-[#EDEDED] outline-none"
+                          className="w-full px-2 py-1 text-sm bg-gray-50 dark:bg-[#111113] rounded border border-gray-200 dark:border-[#2B2B30] focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors text-gray-900 dark:text-[#EDEDED]"
                         />
                       </div>
                       <div className="max-h-60 overflow-y-auto p-1 space-y-1">
@@ -589,7 +589,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                       value={password}
                       disabled={removePassword}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full rounded-md border border-gray-300 py-2 pl-9 pr-10 shadow-sm focus:border-black focus:ring-1 focus:ring-black sm:text-sm placeholder:text-gray-400 disabled:bg-gray-100 disabled:text-gray-500 dark:bg-[#111113] dark:border-[#2B2B30] dark:text-[#EDEDED] dark:placeholder-[#6b7280]"
+                      className="block w-full rounded-md border border-gray-300 py-2 pl-9 pr-10 shadow-sm focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors sm:text-sm placeholder:text-gray-400 disabled:bg-gray-100 disabled:text-gray-500 dark:bg-[#111113] dark:border-[#2B2B30] dark:text-[#EDEDED] dark:placeholder-[#6b7280]"
                     />
                     <button
                       type="button"
@@ -660,7 +660,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                           setExpiresAt(utcString);
                           setExpirationPreset('Custom');
                         }}
-                        className="block w-full sm:w-auto rounded-md border border-gray-300 dark:border-[#2B2B30] shadow-sm focus:border-black focus:ring-1 focus:ring-black focus:dark:ring-white px-3 py-2 sm:text-sm text-gray-700 dark:text-[#EDEDED] dark:bg-[#111113] dark:placeholder-[#6b7280] dark:[color-scheme:dark]"
+                        className="block w-full sm:w-auto rounded-md border border-gray-300 dark:border-[#2B2B30] shadow-sm focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors px-3 py-2 sm:text-sm text-gray-700 dark:text-[#EDEDED] dark:bg-[#111113] dark:placeholder-[#6b7280] dark:[color-scheme:dark]"
                       />
                     )}
                   </div>
@@ -690,7 +690,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                       <button 
                         type="button"
                         onClick={() => setIsFolderDropdownOpen(!isFolderDropdownOpen)}
-                        className="relative w-full cursor-pointer rounded-md border border-gray-300 dark:border-[#2B2B30] bg-white dark:bg-[#111113] dark:text-[#EDEDED] py-2 pl-3 pr-10 text-left shadow-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black sm:text-sm flex items-center gap-2"
+                        className="relative w-full cursor-pointer rounded-md border border-gray-300 dark:border-[#2B2B30] bg-white dark:bg-[#111113] dark:text-[#EDEDED] py-2 pl-3 pr-10 text-left shadow-sm focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors sm:text-sm flex items-center gap-2"
                       >
                         {(() => {
                           const currentFolder = (localFolders || []).find(f => f.id === selectedFolderId);
@@ -720,7 +720,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                               placeholder="Search folders..."
                               value={folderSearchQuery}
                               onChange={(e) => setFolderSearchQuery(e.target.value)}
-                              className="w-full px-2 py-1 text-sm bg-gray-50 dark:bg-[#111113] rounded border border-gray-200 dark:border-[#2B2B30] focus:ring-0 text-gray-900 dark:text-[#EDEDED] outline-none"
+                              className="w-full px-2 py-1 text-sm bg-gray-50 dark:bg-[#111113] rounded border border-gray-200 dark:border-[#2B2B30] focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors text-gray-900 dark:text-[#EDEDED]"
                             />
                           </div>
                           <div className="max-h-60 overflow-y-auto p-1 space-y-1">
@@ -812,7 +812,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
               type="submit" 
               form="create-link-form"
               disabled={loading}
-              className="inline-flex items-center gap-2 rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-slate-500 focus:ring-offset-2 transition-colors disabled:opacity-50"
             >
               {loading ? (urlToEdit ? 'Saving...' : 'Creating...') : (urlToEdit ? 'Save changes' : 'Create link')}
               <span className="flex items-center text-[10px] text-gray-400 border border-gray-700 px-1 rounded bg-gray-900 ml-1">
