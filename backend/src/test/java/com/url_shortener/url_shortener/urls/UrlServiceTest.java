@@ -153,7 +153,7 @@ public class UrlServiceTest {
         when(cacheManager.getCache("urls")).thenReturn(cache);
         org.springframework.test.util.ReflectionTestUtils.setField(urlService, "cacheManager", cacheManager);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(clickEventRepository.countByUrl_Id(any(), any())).thenReturn(0L);
+        when(clickEventRepository.countByUrl_Id(any(), any(), any())).thenReturn(0L);
 
         urlService.updateUrl("hash123", requestDto, owner);
 

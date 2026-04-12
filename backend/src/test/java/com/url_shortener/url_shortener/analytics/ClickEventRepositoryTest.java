@@ -47,7 +47,7 @@ class ClickEventRepositoryTest {
 
     @Test
     void countOverallClicksByCountry_Success() {
-        List<Object[]> results = clickEventRepository.countOverallClicksByCountry(testUser.getId(), LocalDateTime.now().minusDays(2), null, null, null);
+        List<Object[]> results = clickEventRepository.countOverallClicksByCountry(testUser.getId(), LocalDateTime.now().minusDays(2), null, null, null, null);
         
         assertThat(results).hasSize(1);
         assertThat(results.get(0)[0]).isEqualTo("US");
@@ -56,13 +56,25 @@ class ClickEventRepositoryTest {
     
     @Test
     void countOverallClicksByDate_Success() {
-        List<Object[]> results = clickEventRepository.countOverallClicksByDate(testUser.getId(), LocalDateTime.now().minusDays(2), null, null, null);
+        List<Object[]> results = clickEventRepository.countOverallClicksByDate(testUser.getId(), LocalDateTime.now().minusDays(2), null, null, null, null);
         assertThat(results).isNotEmpty();
     }
     
     @Test
+    void countOverallClicksByHour_Success() {
+        List<Object[]> results = clickEventRepository.countOverallClicksByHour(testUser.getId(), LocalDateTime.now().minusDays(2), null, null, null, null);
+        assertThat(results).isNotEmpty();
+    }
+
+    @Test
+    void countByHourForUrl_Success() {
+        List<Object[]> results = clickEventRepository.countByHourForUrl(testUrl.getId(), LocalDateTime.now().minusDays(2), null);
+        assertThat(results).isNotEmpty();
+    }
+
+    @Test
     void countByDeviceForUrl_Success() {
-        List<Object[]> results = clickEventRepository.countByDeviceForUrl(testUrl.getId(), LocalDateTime.now().minusDays(2));
+        List<Object[]> results = clickEventRepository.countByDeviceForUrl(testUrl.getId(), LocalDateTime.now().minusDays(2), null);
         assertThat(results).hasSize(2);
     }
 }

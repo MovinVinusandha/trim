@@ -30,6 +30,8 @@ public class AnalyticsController {
     public ResponseEntity<AnalyticsResponseDto> getAnalytics(
             @PathVariable String hash,
             @RequestParam(name = "period", defaultValue = "all") String period,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
             Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
             throw new UrlNotFoundException();
@@ -39,7 +41,7 @@ public class AnalyticsController {
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(UrlNotFoundException::new);
 
-        AnalyticsResponseDto response = analyticsService.getAnalytics(hash, currentUser, period);
+        AnalyticsResponseDto response = analyticsService.getAnalytics(hash, currentUser, period, startDate, endDate);
         return ResponseEntity.ok(response);
     }
 
@@ -48,35 +50,41 @@ public class AnalyticsController {
     public ResponseEntity<AnalyticsResponseDto> getOverallAnalytics(
             Authentication authentication,
             @RequestParam(name = "period", defaultValue = "all") String period,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
             @RequestParam(required = false) String hash,
             @RequestParam(required = false) List<Long> tagId,
             @RequestParam(required = false) Long folderId) {
         Long userId = (Long) authentication.getPrincipal();
         User currentUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return ResponseEntity.ok(analyticsService.getOverallAnalytics(currentUser, period, hash, tagId, folderId));
+        return ResponseEntity.ok(analyticsService.getOverallAnalytics(currentUser, period, startDate, endDate, hash, tagId, folderId));
     }
 
     @GetMapping("/analytics/folder/{folderId}")
     public ResponseEntity<AnalyticsResponseDto> getFolderAnalytics(
             @PathVariable Long folderId, 
             Authentication authentication,
-            @RequestParam(name = "period", defaultValue = "all") String period) {
+            @RequestParam(name = "period", defaultValue = "all") String period,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
         Long userId = (Long) authentication.getPrincipal();
         User currentUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return ResponseEntity.ok(analyticsService.getFolderAnalytics(folderId, currentUser, period));
+        return ResponseEntity.ok(analyticsService.getFolderAnalytics(folderId, currentUser, period, startDate, endDate));
     }
 
     @GetMapping("/analytics/folder/slug/{slug}")
     public ResponseEntity<AnalyticsResponseDto> getFolderAnalyticsBySlug(
             @PathVariable String slug, 
             Authentication authentication,
-            @RequestParam(name = "period", defaultValue = "all") String period) {
+            @RequestParam(name = "period", defaultValue = "all") String period,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
         Long userId = (Long) authentication.getPrincipal();
         User currentUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return ResponseEntity.ok(analyticsService.getFolderAnalyticsBySlug(slug, currentUser, period));
+        return ResponseEntity.ok(analyticsService.getFolderAnalyticsBySlug(slug, currentUser, period, startDate, endDate));
     }
     @GetMapping("/analytics/usage")
     @Operation(summary = "Get global usage stats for the current user")
