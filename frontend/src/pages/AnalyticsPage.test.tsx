@@ -64,7 +64,6 @@ describe('AnalyticsPage', () => {
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
     
     await waitFor(() => {
-      expect(screen.getByText('Overall Analytics')).toBeInTheDocument();
       expect(screen.getByText('1,234')).toBeInTheDocument();
       expect(screen.getAllByText('Chrome')[0]).toBeInTheDocument();
     });

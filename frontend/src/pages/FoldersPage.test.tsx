@@ -68,7 +68,7 @@ describe('FoldersPage', () => {
     fireEvent.click(defaultFolder);
     
     expect(mockSetActiveFolderId).toHaveBeenCalledWith(1);
-    expect(mockNavigate).toHaveBeenCalledWith('/dashboard?folderId=1');
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard/f/links');
   });
 
   it('clicking a custom folder card navigates to dashboard and sets active folder', () => {
@@ -78,7 +78,7 @@ describe('FoldersPage', () => {
     fireEvent.click(marketingFolder);
     
     expect(mockSetActiveFolderId).toHaveBeenCalledWith(2);
-    expect(mockNavigate).toHaveBeenCalledWith('/dashboard?folderId=2');
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard/f/marketing');
   });
 
   it('clicking Analytics in 3-dot menu of a folder navigates to analytics with folderId', () => {
@@ -94,7 +94,7 @@ describe('FoldersPage', () => {
     fireEvent.click(analyticsBtn);
     
     expect(mockSetActiveFolderId).toHaveBeenCalledWith(2);
-    expect(mockNavigate).toHaveBeenCalledWith('/analytics?folderId=2');
+    expect(mockNavigate).toHaveBeenCalledWith('/analytics/f/marketing');
   });
 
   it('clicking Analytics in 3-dot menu of default Links folder navigates to folder analytics', () => {
@@ -110,6 +110,6 @@ describe('FoldersPage', () => {
     fireEvent.click(analyticsBtn);
     
     expect(mockSetActiveFolderId).toHaveBeenCalledWith(1);
-    expect(mockNavigate).toHaveBeenCalledWith('/analytics?folderId=1');
+    expect(mockNavigate).toHaveBeenCalledWith('/analytics/f/links');
   });
 });

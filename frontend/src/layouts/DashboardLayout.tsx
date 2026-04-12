@@ -65,6 +65,10 @@ const DashboardLayout: React.FC = () => {
   const { theme, setTheme } = useTheme();
 
   useEffect(() => {
+    setIsFolderSwitcherOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (folderSwitcherRef.current && !folderSwitcherRef.current.contains(event.target as Node)) {
         setIsFolderSwitcherOpen(false);
@@ -199,6 +203,10 @@ const DashboardLayout: React.FC = () => {
       </button>
     );
   };
+
+  const activeFolderName = folderSlug 
+    ? (folders.find(f => (f.slug && f.slug.toLowerCase() === folderSlug.toLowerCase()) || f.name.toLowerCase() === folderSlug.toLowerCase() || f.name.toLowerCase().replace(/\s+/g, '-') === folderSlug.toLowerCase())?.name || folderSlug)
+    : (activeFolderId ? (folders.find(f => f.id === activeFolderId)?.name || 'All Links') : 'All Links');
 
   return (
     <div className="h-screen flex overflow-hidden bg-[#E4E4E4] dark:bg-[#111113] text-gray-900 dark:text-[#EDEDED] font-sans">
@@ -347,13 +355,13 @@ const DashboardLayout: React.FC = () => {
                   Settings
                 </h1>
               </div>
-            ) : location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/f/') || location.pathname === '/analytics' || location.pathname.startsWith('/analytics/f/') ? (
+            ) : location.pathname.startsWith('/dashboard') ? (
               <>
                 <button 
                   onClick={() => setIsFolderSwitcherOpen(!isFolderSwitcherOpen)}
                   className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED] flex items-center gap-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2B2B30] px-2 py-1 rounded-md transition-colors"
                 >
-                  {folderSlug ? (folders.find(f => (f.slug && f.slug.toLowerCase() === folderSlug.toLowerCase()) || f.name.toLowerCase() === folderSlug.toLowerCase() || f.name.toLowerCase().replace(/\s+/g, '-') === folderSlug.toLowerCase())?.name || folderSlug) : (activeFolderId ? folders.find(f => f.id === activeFolderId)?.name || 'Links' : 'Links')}
+                  {activeFolderName}
                   <ChevronDown className="w-4 h-4 text-gray-400" />
                 </button>
                 
@@ -391,11 +399,7 @@ const DashboardLayout: React.FC = () => {
                       <button
                         onClick={() => {
                           setActiveFolderId(null);
-                          if (location.pathname.startsWith('/analytics')) {
-                            navigate('/analytics');
-                          } else {
-                            navigate('/dashboard');
-                          }
+                          navigate('/dashboard');
                           setIsFolderSwitcherOpen(false);
                         }}
                         className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between ${!folderSlug && !activeFolderId ? 'bg-gray-100 dark:bg-[#222222] text-gray-900 dark:text-[#EDEDED] font-medium' : 'text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
@@ -417,11 +421,7 @@ const DashboardLayout: React.FC = () => {
                             key={folder.id}
                             onClick={() => {
                               setActiveFolderId(folder.id);
-                              if (location.pathname.startsWith('/analytics')) {
-                                navigate(`/analytics/f/${slug}`);
-                              } else {
-                                navigate(`/dashboard/f/${slug}`);
-                              }
+                              navigate(`/dashboard/f/${slug}`);
                               setIsFolderSwitcherOpen(false);
                             }}
                             className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between ${isSelected ? 'bg-gray-100 dark:bg-[#222222] text-gray-900 dark:text-[#EDEDED] font-medium' : 'text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
@@ -446,7 +446,7 @@ const DashboardLayout: React.FC = () => {
                         navigate('/folders?create=true');
                         setIsFolderSwitcherOpen(false);
                       }}
-                      className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-md transition-colors flex items-center gap-2 font-medium"
+                      className="w-full text-left px-3 py-2 text-sm text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-md transition-colors flex items-center gap-2 font-medium"
                     >
                       <FolderPlus className="w-4 h-4 text-gray-400" />
                       Create new folder
@@ -455,6 +455,18 @@ const DashboardLayout: React.FC = () => {
                 )}
                 </AnimatePresence>
               </>
+            ) : location.pathname.startsWith('/analytics') ? (
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED] px-2 py-1">
+                Analytics
+              </h1>
+            ) : location.pathname.startsWith('/folders') ? (
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED] px-2 py-1">
+                Folders
+              </h1>
+            ) : location.pathname.startsWith('/tags') ? (
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED] px-2 py-1">
+                Tags
+              </h1>
             ) : (
               <h1 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED] px-2 py-1">
                 {getTitle()}

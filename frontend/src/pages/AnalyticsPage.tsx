@@ -856,58 +856,6 @@ const AnalyticsPage: React.FC = () => {
               )}
             </div>
           )}
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {(hashParam || folderSlug || folderIdParam || tagIdParam) && (
-                <button 
-                  onClick={() => {
-                    navigate('/analytics');
-                  }}
-                  className="p-1.5 rounded-lg border border-gray-200 dark:border-[#2B2B30] hover:bg-gray-100 dark:hover:bg-[#2B2B30] text-gray-500 dark:text-[#A1A1AA] transition-colors"
-                  title="Clear all filters"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </button>
-              )}
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-[#EDEDED] flex items-center gap-2">
-                  {hashParam ? (
-                    <>Analytics for <span className="text-[#7c3aed]">/{hashParam}</span></>
-                  ) : folderSlug || folderIdParam ? (
-                    <>
-                      <FolderIcon className={`w-5 h-5 ${currentFolder?.name.toLowerCase() === 'links' ? 'text-blue-500' : 'text-emerald-500'} shrink-0`} />
-                      <span>Analytics for Folder:</span>
-                      <span className={currentFolder?.name.toLowerCase() === 'links' ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}>
-                        {currentFolder?.name || folderSlug || folderIdParam}
-                      </span>
-                    </>
-                  ) : tagIdParam ? (
-                    <>
-                      <Tag className="w-5 h-5 text-[#7c3aed] shrink-0" />
-                      <span>Analytics for Tag:</span>
-                      <span className="text-[#8b5cf6]">
-                        {(() => {
-                          const tagIds = tagIdParam.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
-                          if (tagIds.length === 1) {
-                            return tags?.find(t => t.id === tagIds[0])?.name || tagIds[0];
-                          }
-                          return `${tagIds.length} Tags`;
-                        })()}
-                      </span>
-                    </>
-                  ) : (
-                    'Overall Analytics'
-                  )}
-                </h1>
-                {currentFolder && (
-                  <p className="text-xs text-gray-500 dark:text-[#A1A1AA] mt-0.5">
-                    Filtered by folder • {currentFolder.linkCount ?? 0} {(currentFolder.linkCount === 1) ? 'link' : 'links'}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Summary Grid */}

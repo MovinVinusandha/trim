@@ -14,9 +14,10 @@ const FoldersPage: React.FC = () => {
   const [folderToDelete, setFolderToDelete] = useState<any | null>(null);
   const [searchParams] = useSearchParams();
 
-  const handleFolderClick = (folderId: number | null) => {
-    setActiveFolderId(folderId);
-    navigate(folderId ? `/dashboard?folderId=${folderId}` : '/dashboard');
+  const handleFolderClick = (folder: any) => {
+    setActiveFolderId(folder.id);
+    const slug = folder.slug || encodeURIComponent(folder.name.toLowerCase().replace(/\s+/g, '-'));
+    navigate(`/dashboard/f/${slug}`);
   };
 
   useEffect(() => {
@@ -73,6 +74,7 @@ const FoldersPage: React.FC = () => {
           ) : (
             filteredFolders.map(folder => {
               const isDefault = folder.name.toLowerCase() === 'links';
+              const slug = folder.slug || encodeURIComponent(folder.name.toLowerCase().replace(/\s+/g, '-'));
               return (
                 <motion.div 
                   layout 
@@ -80,8 +82,8 @@ const FoldersPage: React.FC = () => {
                   animate={{ opacity: 1, scale: 1 }} 
                   transition={{ duration: 0.2 }} 
                   key={folder.id} 
-                  onClick={() => handleFolderClick(folder.id)} 
-                  className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow group relative cursor-pointer"
+                  onClick={() => handleFolderClick(folder)} 
+                  className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-4 hover:shadow-md transition-colors group relative cursor-pointer hover:border-gray-300 dark:hover:border-slate-700"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
@@ -125,7 +127,7 @@ const FoldersPage: React.FC = () => {
                               e.stopPropagation();
                               setOpenMenuId(null);
                               setActiveFolderId(folder.id);
-                              navigate(`/analytics?folderId=${folder.id}`);
+                              navigate(`/analytics/f/${slug}`);
                             }}
                             className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] flex items-center gap-2"
                           >
