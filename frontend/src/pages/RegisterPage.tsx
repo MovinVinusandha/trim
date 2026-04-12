@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, CheckCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Eye, EyeOff, CheckCircle, ArrowLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import axiosInstance, { extractBackendError } from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import BrandLogo from '../components/BrandLogo';
@@ -12,11 +12,13 @@ const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const { token } = useAuth();
 
+  const [step, setStep] = useState<'form' | 'confirm'>('form');
   const [form, setForm] = useState<RegisterPayload>({
     name: '',
     email: '',
     password: '',
   });
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -26,9 +28,33 @@ const RegisterPage: React.FC = () => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleNextStep = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!form.name.trim() || !form.email.trim() || !form.password) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    setStep('confirm');
+    setError('');
+  };
+
+  const handleFinalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (form.password !== confirmPassword) {
+      setError('Passwords do not match. Please try again.');
+      return;
+    }
+
     setLoading(true);
     try {
       await axiosInstance.post('/user', form);
@@ -115,44 +141,92 @@ const RegisterPage: React.FC = () => {
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={step === 'form' ? handleNextStep : handleFinalSubmit} className="space-y-4">
+                {/* Full name */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-900 dark:text-[#EDEDED] text-left">Full name</label>
                   <input 
                     type="text"
                     name="name"
                     required
+                    disabled={step === 'confirm'}
                     value={form.name}
                     onChange={handleChange}
                     placeholder="Jane Doe" 
-                    className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500"
+                    className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500 disabled:opacity-50 disabled:bg-gray-50/80 dark:disabled:bg-[#151518] transition-all duration-200"
                   />
                 </div>
 
+                {/* Work email */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-900 dark:text-[#EDEDED] text-left">Work email</label>
                   <input 
                     type="email" 
                     name="email"
                     required
+                    disabled={step === 'confirm'}
                     value={form.email}
                     onChange={handleChange}
                     placeholder="panic@thedis.co" 
-                    className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500"
+                    className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500 disabled:opacity-50 disabled:bg-gray-50/80 dark:disabled:bg-[#151518] transition-all duration-200"
                   />
                 </div>
 
+                {/* Single Dynamic Password Slot with Smooth Transition */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-900 dark:text-[#EDEDED] text-left">Password</label>
-                  <div className="relative">
+                  <div className="min-h-[22px]">
+                    <AnimatePresence mode="wait" initial={false}>
+                      {step === 'form' ? (
+                        <motion.div
+                          key="label-password"
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 4 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <label className="block text-sm font-medium text-gray-900 dark:text-[#EDEDED] text-left">Password</label>
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="label-confirm"
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 4 }}
+                          transition={{ duration: 0.15 }}
+                          className="flex items-center justify-between"
+                        >
+                          <label className="block text-sm font-medium text-gray-900 dark:text-[#EDEDED] text-left">Confirm Password</label>
+                          <button 
+                            type="button" 
+                            onClick={() => {
+                              setStep('form');
+                              setError('');
+                            }} 
+                            className="text-gray-400 hover:text-gray-900 dark:hover:text-white flex items-center gap-1 text-xs transition-colors"
+                          >
+                            <ArrowLeft className="w-3.5 h-3.5" /> Change info
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  
+                  <motion.div 
+                    key={step}
+                    initial={{ opacity: 0.85, scale: 0.995 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.15 }}
+                    className="relative"
+                  >
                     <input 
                       type={showPassword ? 'text' : 'password'}
-                      name="password"
+                      name={step === 'form' ? 'password' : 'confirmPassword'}
                       required
-                      value={form.password}
-                      onChange={handleChange}
+                      autoFocus={step === 'confirm'}
+                      value={step === 'form' ? form.password : confirmPassword}
+                      onChange={step === 'form' ? handleChange : (e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••" 
-                      className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500"
+                      className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500 transition-colors"
                     />
                     <button 
                       type="button" 
@@ -161,22 +235,32 @@ const RegisterPage: React.FC = () => {
                     >
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
-                  </div>
+                  </motion.div>
                 </div>
 
-                {error && (
-                  <div className="text-red-500 text-sm text-center font-medium pt-1">
-                    {error}
-                  </div>
-                )}
+                <AnimatePresence>
+                  {error && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -4, height: 0 }}
+                      animate={{ opacity: 1, y: 0, height: 'auto' }}
+                      exit={{ opacity: 0, y: -4, height: 0 }}
+                      transition={{ duration: 0.15 }}
+                      className="text-red-500 text-sm text-center font-medium pt-1 overflow-hidden"
+                    >
+                      {error}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-                <button 
+                <motion.button 
+                  whileHover={{ scale: 1.005 }}
+                  whileTap={{ scale: 0.995 }}
                   type="submit"
                   disabled={loading || success}
-                  className="w-full bg-black text-white dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 rounded-lg py-2.5 font-medium transition-colors disabled:opacity-50 mt-2"
+                  className="w-full bg-black text-white dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 rounded-lg py-2.5 font-medium transition-all disabled:opacity-50 mt-2"
                 >
                   {loading ? 'Creating account...' : 'Sign Up'}
-                </button>
+                </motion.button>
               </form>
 
               <div className="relative my-6">

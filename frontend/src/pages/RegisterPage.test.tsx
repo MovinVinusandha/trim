@@ -35,7 +35,66 @@ describe('RegisterPage', () => {
     expect((passwordInput as HTMLInputElement).value).toBe('password123');
   });
 
-  it('submitting the form triggers the API call', async () => {
+  it('validates required fields and minimum password length', async () => {
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>);
+    
+    // Attempt next step without values
+    fireEvent.submit(document.querySelector('form')!);
+    expect(screen.getByText('Please fill in all fields')).toBeInTheDocument();
+
+    // Fill in short password
+    fireEvent.change(screen.getByPlaceholderText('Jane Doe'), { target: { value: 'John' } });
+    fireEvent.change(screen.getByPlaceholderText('panic@thedis.co'), { target: { value: 'test@test.com' } });
+    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'short' } });
+    
+    fireEvent.submit(document.querySelector('form')!);
+    expect(screen.getByText('Password must be at least 8 characters')).toBeInTheDocument();
+  });
+
+  it('allows navigating back to step 1 via Change info button', async () => {
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>);
+    
+    fireEvent.change(screen.getByPlaceholderText('Jane Doe'), { target: { value: 'John' } });
+    fireEvent.change(screen.getByPlaceholderText('panic@thedis.co'), { target: { value: 'test@test.com' } });
+    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'password123' } });
+    
+    fireEvent.submit(document.querySelector('form')!);
+
+    await waitFor(() => {
+      expect(screen.getByText('Confirm Password')).toBeInTheDocument();
+      expect(screen.getByText('Change info')).toBeInTheDocument();
+    });
+
+    // Click back to step 1
+    fireEvent.click(screen.getByText('Change info'));
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Jane Doe')).toBeInTheDocument();
+    });
+  });
+
+  it('displays error when confirm password does not match', async () => {
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>);
+    
+    fireEvent.change(screen.getByPlaceholderText('Jane Doe'), { target: { value: 'John' } });
+    fireEvent.change(screen.getByPlaceholderText('panic@thedis.co'), { target: { value: 'test@test.com' } });
+    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'password123' } });
+    
+    fireEvent.submit(document.querySelector('form')!);
+
+    await waitFor(() => {
+      expect(screen.getByText('Confirm Password')).toBeInTheDocument();
+    });
+
+    // Step 2: enter mismatching password
+    const confirmInput = document.querySelector('input[name="confirmPassword"]') as HTMLInputElement;
+    fireEvent.change(confirmInput, { target: { value: 'different123' } });
+    fireEvent.submit(document.querySelector('form')!);
+
+    expect(screen.getByText('Passwords do not match. Please try again.')).toBeInTheDocument();
+    expect(axiosInstance.post).not.toHaveBeenCalled();
+  });
+
+  it('submitting with matching password triggers the API call', async () => {
     (axiosInstance.post as any).mockResolvedValue({});
     
     render(<MemoryRouter><RegisterPage /></MemoryRouter>);
@@ -44,7 +103,16 @@ describe('RegisterPage', () => {
     fireEvent.change(screen.getByPlaceholderText('panic@thedis.co'), { target: { value: 'test@test.com' } });
     fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'password123' } });
     
-    fireEvent.click(screen.getByText('Sign Up'));
+    fireEvent.submit(document.querySelector('form')!);
+
+    await waitFor(() => {
+      expect(screen.getByText('Confirm Password')).toBeInTheDocument();
+    });
+
+    // Step 2: enter matching password
+    const confirmInput = document.querySelector('input[name="confirmPassword"]') as HTMLInputElement;
+    fireEvent.change(confirmInput, { target: { value: 'password123' } });
+    fireEvent.submit(document.querySelector('form')!);
     
     await waitFor(() => {
       expect(axiosInstance.post).toHaveBeenCalledWith('/user', {
@@ -64,9 +132,17 @@ describe('RegisterPage', () => {
     
     fireEvent.change(screen.getByPlaceholderText('Jane Doe'), { target: { value: 'John' } });
     fireEvent.change(screen.getByPlaceholderText('panic@thedis.co'), { target: { value: 'test@test.com' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'wrong' } });
+    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'password123' } });
     
-    fireEvent.click(screen.getByText('Sign Up'));
+    fireEvent.submit(document.querySelector('form')!);
+
+    await waitFor(() => {
+      expect(screen.getByText('Confirm Password')).toBeInTheDocument();
+    });
+
+    const confirmInput = document.querySelector('input[name="confirmPassword"]') as HTMLInputElement;
+    fireEvent.change(confirmInput, { target: { value: 'password123' } });
+    fireEvent.submit(document.querySelector('form')!);
     
     await waitFor(() => {
       expect(screen.getByText('Email already in use')).toBeInTheDocument();
