@@ -3,7 +3,7 @@ import { Calendar as CalendarIcon, ChevronDown, ChevronLeft, ChevronRight } from
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   format, addMonths, subMonths, startOfMonth, endOfMonth, 
-  startOfWeek, endOfWeek, isSameMonth, isSameDay, eachDayOfInterval, 
+  startOfWeek, endOfWeek, isSameMonth, isSameDay, isToday, eachDayOfInterval, 
   isWithinInterval, isBefore, isAfter, startOfDay, endOfDay
 } from 'date-fns';
 
@@ -19,17 +19,16 @@ interface DateRangePickerProps {
 interface PresetItem {
   label: string;
   value: string;
-  shortcut?: string;
   isCustom?: boolean;
 }
 
 const PRESETS: PresetItem[] = [
-  { label: 'Last 24 hours', value: '24h', shortcut: 'D' },
-  { label: 'Last 7 days', value: '7d', shortcut: 'W' },
-  { label: 'Last 30 days', value: '30d', shortcut: 'M' },
-  { label: 'Month to date', value: 'mtd', shortcut: 'T', isCustom: true },
-  { label: 'Year to date', value: 'ytd', shortcut: 'Y', isCustom: true },
-  { label: 'All time', value: 'all', shortcut: 'A' },
+  { label: 'Last 24 hours', value: '24h' },
+  { label: 'Last 7 days', value: '7d' },
+  { label: 'Last 30 days', value: '30d' },
+  { label: 'Month to date', value: 'mtd', isCustom: true },
+  { label: 'Year to date', value: 'ytd', isCustom: true },
+  { label: 'All time', value: 'all' },
 ];
 
 export const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) => {
@@ -150,6 +149,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChang
             const isSelected = isSelectedStart || isSelectedEnd;
             const inRange = isInRange(day);
             const isCurrentMonth = isSameMonth(day, month);
+            const isDayToday = isToday(day);
 
             return (
               <div 
@@ -177,13 +177,16 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChang
 
                 {/* Day Number */}
                 <div 
-                  className={`relative z-10 flex items-center justify-center w-8 h-8 transition-colors
+                  className={`relative z-10 flex flex-col items-center justify-center w-8 h-8 transition-colors
                     ${isSelected ? 'bg-blue-600 text-white rounded-md font-bold' : ''}
                     ${!isSelected && inRange ? 'text-blue-700 dark:text-blue-300' : ''}
                     ${!isSelected && !inRange && isCurrentMonth ? 'hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded-md' : ''}
                   `}
                 >
-                  {format(day, 'd')}
+                  <span>{format(day, 'd')}</span>
+                  {isDayToday && !isSelected && (
+                    <span className="w-1 h-1 bg-blue-600 rounded-full absolute bottom-0.5" />
+                  )}
                 </div>
               </div>
             );
@@ -287,11 +290,6 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChang
                     }`}
                   >
                     <span>{preset.label}</span>
-                    {preset.shortcut && (
-                      <span className="bg-gray-100 dark:bg-[#2B2B30] border border-gray-200 dark:border-slate-700 text-gray-400 text-[10px] px-1.5 py-0.5 rounded font-mono">
-                        {preset.shortcut}
-                      </span>
-                    )}
                   </button>
                 );
               })}

@@ -303,10 +303,21 @@ const AnalyticsPage: React.FC = () => {
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const formattedLabel = formatTooltipLabel(label);
       return (
-        <div className="bg-gray-900 text-white p-3 rounded-md shadow-xl text-sm border border-gray-700">
-          <p className="text-gray-400 mb-1">{formatTooltipLabel(label)}</p>
-          <p className="font-semibold text-white">{payload[0].value} clicks</p>
+        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg p-3 shadow-md text-xs min-w-[140px]">
+          <div className="text-gray-500 dark:text-slate-400 pb-1.5 mb-1.5 border-b border-gray-100 dark:border-slate-800 font-medium">
+            {formattedLabel}
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-1.5 text-gray-700 dark:text-slate-200">
+              <span className="w-2.5 h-2.5 rounded-sm bg-blue-500 shrink-0" />
+              <span>Clicks</span>
+            </div>
+            <span className="font-semibold text-gray-900 dark:text-white font-mono">
+              {payload[0].value?.toLocaleString()}
+            </span>
+          </div>
         </div>
       );
     }
@@ -901,108 +912,72 @@ const AnalyticsPage: React.FC = () => {
           )}
         </div>
 
-        {/* Summary Grid */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-6 flex flex-col gap-1">
-            <div className="flex items-center justify-between">
-              <p className="text-gray-500 dark:text-[#A1A1AA] text-sm font-medium flex items-center gap-2">
-                <MousePointerClick className="w-4 h-4" /> Total Clicks
-              </p>
-            </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <p className="text-gray-900 dark:text-[#EDEDED] text-3xl font-semibold tracking-tight">{totalClicks.toLocaleString()}</p>
-            </div>
-            <p className="text-xs text-gray-400 mt-1">All time</p>
-          </div>
-
-          <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-6 flex flex-col gap-1">
-            <div className="flex items-center justify-between">
-              <p className="text-gray-500 dark:text-[#A1A1AA] text-sm font-medium flex items-center gap-2">
-                <Users className="w-4 h-4" /> Unique Visitors
-              </p>
-            </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <p className="text-gray-900 dark:text-[#EDEDED] text-3xl font-semibold tracking-tight">-</p>
-            </div>
-            <p className="text-xs text-gray-400 mt-1">Not tracked yet</p>
-          </div>
-
-          <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-6 flex flex-col gap-1">
-            <div className="flex items-center justify-between">
-              <p className="text-gray-500 dark:text-[#A1A1AA] text-sm font-medium flex items-center gap-2">
-                <Percent className="w-4 h-4" /> Avg. CTR
-              </p>
-            </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <p className="text-gray-900 dark:text-[#EDEDED] text-3xl font-semibold tracking-tight">-</p>
-            </div>
-            <p className="text-xs text-gray-400 mt-1">Not tracked yet</p>
-          </div>
-
-          <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-6 flex flex-col gap-1">
-            <div className="flex items-center justify-between">
-              <p className="text-gray-500 dark:text-[#A1A1AA] text-sm font-medium flex items-center gap-2">
-                <Share2 className="w-4 h-4" /> Top Source
-              </p>
-            </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <p className="text-gray-900 dark:text-[#EDEDED] text-3xl font-semibold tracking-tight truncate">
-                {clicksByBrowser.length > 0 ? clicksByBrowser[0].browser : 'N/A'}
-              </p>
-            </div>
-            <p className="text-xs text-gray-400 mt-1">Top Referrer</p>
-          </div>
-
-        </section>
-
-        {/* Main Chart */}
-        <section className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm p-6 flex flex-col gap-6">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED]">Clicks over time</h2>
-              <p className="text-sm text-gray-500 dark:text-[#A1A1AA]">Daily breakdown of link performance</p>
-            </div>
-          </div>
-          
-          <div className="relative w-full h-[300px]">
-            {clicksByDate.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={clicksByDate} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#7c3aed" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis 
-                    dataKey="date" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#6b7280', fontSize: 11 }} 
-                    tickFormatter={formatXAxisTick}
-                    minTickGap={40}
-                  />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} allowDecimals={false} />
-                  <Tooltip content={<CustomTooltip />} labelFormatter={formatTooltipLabel} />
-                  <Area 
-                    type="monotone" 
-                    dataKey="count" 
-                    stroke="#7c3aed" 
-                    strokeWidth={2} 
-                    fillOpacity={1} 
-                    fill="url(#colorClicks)" 
-                    activeDot={{ r: 6, fill: '#ffffff', stroke: '#7c3aed', strokeWidth: 2 }} 
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-600 border border-dashed border-gray-200 dark:border-[#2B2B30] rounded-lg">
-                No data available for the selected period
+        {/* Unified Master Card */}
+        <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl shadow-sm overflow-hidden flex flex-col w-full">
+          {/* Integrated Metric Header Bar */}
+          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-[#2B2B30] border-b border-gray-200 dark:border-[#2B2B30]">
+            {/* Column 1: Clicks */}
+            <div className="p-4 sm:p-5 bg-gray-50/50 dark:bg-slate-800/30">
+              <div className="text-xs font-medium text-gray-500 dark:text-[#A1A1AA] flex items-center gap-1.5">
+                <MousePointerClick className="w-3.5 h-3.5" /> Clicks
               </div>
-            )}
+              <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-[#EDEDED] mt-1">
+                {totalClicks.toLocaleString()}
+              </div>
+            </div>
+
+            {/* Column 2: Top Source */}
+            <div className="p-4 sm:p-5">
+              <div className="text-xs font-medium text-gray-500 dark:text-[#A1A1AA] flex items-center gap-1.5">
+                <Share2 className="w-3.5 h-3.5" /> Top Source
+              </div>
+              <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-[#EDEDED] mt-1 truncate">
+                {clicksByBrowser.length > 0 ? clicksByBrowser[0].browser : 'N/A'}
+              </div>
+            </div>
           </div>
-        </section>
+
+          {/* Chart Container */}
+          <div className="p-6 relative">
+            <div className="relative w-full h-[300px]">
+              {clicksByDate.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={clicksByDate} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis 
+                      dataKey="date" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#6b7280', fontSize: 11 }} 
+                      tickFormatter={formatXAxisTick}
+                      minTickGap={40}
+                    />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} allowDecimals={false} />
+                    <Tooltip content={<CustomTooltip />} labelFormatter={formatTooltipLabel} />
+                    <Area 
+                      type="monotone" 
+                      dataKey="count" 
+                      stroke="#2563eb" 
+                      strokeWidth={2} 
+                      fillOpacity={1} 
+                      fill="url(#colorClicks)" 
+                      activeDot={{ r: 5, fill: '#ffffff', stroke: '#2563eb', strokeWidth: 2 }} 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-600 border border-dashed border-gray-200 dark:border-[#2B2B30] rounded-lg">
+                  No data available for the selected period
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Breakdown Grids */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
