@@ -2,12 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   ChevronRight, Globe, X, HelpCircle, Shuffle, 
   Tag, FolderArchive, ChevronsUpDown, 
-  Lock, CornerDownLeft, Pencil, Check, FolderPlus, Eye, EyeOff, ArrowRight, Folder
+  Lock, CornerDownLeft, Pencil, Check, FolderPlus, Eye, EyeOff, ArrowRight, Folder,
+  Calendar as CalendarIcon, ChevronDown, ChevronLeft
 } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import axios from 'axios';
 import type { UrlEntry } from '../types';
-import { format, parseISO, formatDistanceToNow, addDays, startOfDay } from 'date-fns';
+import { 
+  format, parseISO, formatDistanceToNow, addDays, startOfDay,
+  addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
+  isSameMonth, isSameDay, isToday, eachDayOfInterval 
+} from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Tag as TagType, Folder as FolderType } from '../types';
 
@@ -131,6 +136,11 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
   const [folderSearchQuery, setFolderSearchQuery] = useState('');
   const folderRef = useRef<HTMLDivElement>(null);
   useClickOutside(folderRef, () => setIsFolderDropdownOpen(false));
+
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const datePickerRef = useRef<HTMLDivElement>(null);
+  const [pickerMonth, setPickerMonth] = useState<Date>(new Date());
+  useClickOutside(datePickerRef, () => setIsDatePickerOpen(false));
 
   useEffect(() => {
     if (isOpen) {
@@ -385,15 +395,192 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
     );
   };
 
-  const getLocalInputValue = () => {
-    if (!expiresAt) return '';
-    try {
-      // Parse the UTC state and format it to local time WITHOUT seconds
-      const date = parseISO(expiresAt.endsWith('Z') ? expiresAt : expiresAt + 'Z');
-      return format(date, "yyyy-MM-dd'T'HH:mm");
-    } catch (e) {
-      return '';
+  const getTimeValues = () => {
+    if (!expiresAt) {
+      return { hour: '12', minute: '00', ampm: 'PM' };
     }
+    try {
+      const date = parseISO(expiresAt.endsWith('Z') ? expiresAt : expiresAt + 'Z');
+      const h24 = date.getHours();
+      const h12 = h24 % 12 || 12;
+      const mins = Math.floor(date.getMinutes() / 5) * 5;
+      const minuteStr = mins.toString().padStart(2, '0');
+      const ampm = h24 >= 12 ? 'PM' : 'AM';
+      return { hour: h12.toString(), minute: minuteStr, ampm };
+    } catch (e) {
+      return { hour: '12', minute: '00', ampm: 'PM' };
+    }
+  };
+
+  const updateExpiresAt = (day: Date, hourStr: string, minuteStr: string, ampmStr: string) => {
+    let h = parseInt(hourStr, 10) || 12;
+    if (ampmStr === 'PM' && h < 12) h += 12;
+    if (ampmStr === 'AM' && h === 12) h = 0;
+    const m = parseInt(minuteStr, 10) || 0;
+
+    const localDate = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, m, 0);
+    const utcString = localDate.toISOString().substring(0, 19);
+    setExpiresAt(utcString);
+    setExpirationPreset('Custom');
+  };
+
+  const handleSelectDay = (day: Date) => {
+    const { hour, minute, ampm } = getTimeValues();
+    updateExpiresAt(day, hour, minute, ampm);
+  };
+
+  const handleTimeChange = (type: 'hour' | 'minute' | 'ampm', val: string) => {
+    const currentValues = getTimeValues();
+    const newHour = type === 'hour' ? val : currentValues.hour;
+    const newMinute = type === 'minute' ? val : currentValues.minute;
+    const newAmPm = type === 'ampm' ? val : currentValues.ampm;
+    const baseDay = expiresAt ? (safeParseISO(expiresAt.endsWith('Z') ? expiresAt : expiresAt + 'Z') || new Date()) : new Date();
+    updateExpiresAt(baseDay, newHour, newMinute, newAmPm);
+  };
+
+  const renderCustomDatePicker = () => {
+    const monthStart = startOfMonth(pickerMonth);
+    const monthEnd = endOfMonth(monthStart);
+    const startDate = startOfWeek(monthStart);
+    const endDate = endOfWeek(monthEnd);
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
+
+    const selectedDate = expiresAt ? safeParseISO(expiresAt.endsWith('Z') ? expiresAt : expiresAt + 'Z') : null;
+    const timeValues = getTimeValues();
+
+    return (
+      <div className="relative z-40" ref={datePickerRef}>
+        <button 
+          type="button" 
+          onClick={() => setIsDatePickerOpen(!isDatePickerOpen)} 
+          className="w-full flex items-center justify-between border border-gray-200 dark:border-[#2B2B30] bg-white dark:bg-[#111113] rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-[#EDEDED] shadow-sm hover:bg-gray-50 dark:hover:bg-[#2B2B30] transition-colors"
+        >
+          <div className="flex items-center gap-2 truncate">
+            <CalendarIcon className="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0" />
+            <span className="truncate">
+              {selectedDate 
+                ? format(selectedDate, 'PPpp') 
+                : 'Select custom date and time...'}
+            </span>
+          </div>
+          <ChevronDown className="w-4 h-4 text-gray-400 shrink-0 ml-2" />
+        </button>
+
+        <AnimatePresence>
+          {isDatePickerOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 6, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 6, scale: 0.98 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
+              className="absolute bottom-full mb-2 left-0 z-[60] bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-2xl shadow-2xl p-4 w-72"
+            >
+              <div className="space-y-3">
+                {/* Month Header */}
+                <div className="flex items-center justify-between pb-1 border-b border-gray-100 dark:border-[#2B2B30]">
+                  <button
+                    type="button"
+                    onClick={() => setPickerMonth(subMonths(pickerMonth, 1))}
+                    className="p-1 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded-md transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {format(pickerMonth, 'MMMM yyyy')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPickerMonth(addMonths(pickerMonth, 1))}
+                    className="p-1 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded-md transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Weekday Headers */}
+                <div className="grid grid-cols-7 text-center text-[11px] font-medium text-gray-400 dark:text-gray-500">
+                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+                    <div key={d} className="py-1">{d}</div>
+                  ))}
+                </div>
+
+                {/* Calendar Days Grid */}
+                <div className="grid grid-cols-7 gap-1">
+                  {days.map((day) => {
+                    const isCurrentMonth = isSameMonth(day, monthStart);
+                    const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
+                    const isDayToday = isToday(day);
+
+                    return (
+                      <button
+                        key={day.toISOString()}
+                        type="button"
+                        disabled={!isCurrentMonth}
+                        onClick={() => handleSelectDay(day)}
+                        className={`relative flex flex-col items-center justify-center h-8 text-xs rounded-md transition-colors ${
+                          !isCurrentMonth
+                            ? 'text-gray-300 dark:text-gray-700 cursor-default opacity-40'
+                            : isSelected
+                            ? 'bg-blue-600 text-white font-bold shadow-sm'
+                            : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#2B2B30]'
+                        }`}
+                      >
+                        <span>{format(day, 'd')}</span>
+                        {isDayToday && !isSelected && (
+                          <span className="w-1 h-1 bg-blue-600 rounded-full absolute bottom-0.5" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Time Selection Section */}
+                <div className="pt-3 border-t border-gray-100 dark:border-[#2B2B30] flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Time</span>
+                  <div className="flex items-center gap-1.5">
+                    <select
+                      value={timeValues.hour}
+                      onChange={(e) => handleTimeChange('hour', e.target.value)}
+                      className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-[#2B2B30] rounded-md px-2 py-1 text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                    >
+                      {Array.from({ length: 12 }, (_, i) => (i + 1).toString()).map((h) => (
+                        <option key={h} value={h}>{h.padStart(2, '0')}</option>
+                      ))}
+                    </select>
+                    <span className="text-gray-400 text-xs font-bold">:</span>
+                    <select
+                      value={timeValues.minute}
+                      onChange={(e) => handleTimeChange('minute', e.target.value)}
+                      className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-[#2B2B30] rounded-md px-2 py-1 text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                    >
+                      {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                    <div className="flex bg-gray-100 dark:bg-[#111113] p-0.5 rounded-md border border-gray-200 dark:border-[#2B2B30]">
+                      {['AM', 'PM'].map((period) => (
+                        <button
+                          key={period}
+                          type="button"
+                          onClick={() => handleTimeChange('ampm', period)}
+                          className={`px-2 py-0.5 text-[11px] font-bold rounded transition-colors ${
+                            timeValues.ampm === period
+                              ? 'bg-white dark:bg-[#2B2B30] text-gray-900 dark:text-white shadow-xs'
+                              : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                          }`}
+                        >
+                          {period}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
   };
 
   return (
@@ -654,22 +841,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                       ))}
                     </div>
                     {renderExpirationStatus()}
-                    {expirationPreset.toLowerCase() === 'custom' && (
-                      <input
-                        type="datetime-local"
-                        value={getLocalInputValue()}
-                        onChange={(e) => {
-                          if (!e.target.value) {
-                            setExpiresAt('');
-                            return;
-                          }
-                          const utcString = new Date(e.target.value).toISOString().substring(0, 19);
-                          setExpiresAt(utcString);
-                          setExpirationPreset('Custom');
-                        }}
-                        className="block w-full sm:w-auto rounded-md border border-gray-300 dark:border-[#2B2B30] shadow-sm focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors px-3 py-2 sm:text-sm text-gray-700 dark:text-[#EDEDED] dark:bg-[#111113] dark:placeholder-[#6b7280] dark:[color-scheme:dark]"
-                      />
-                    )}
+                    {expirationPreset.toLowerCase() === 'custom' && renderCustomDatePicker()}
                   </div>
                 </div>
               </div>

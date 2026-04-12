@@ -202,4 +202,29 @@ describe('CreateLinkModal', () => {
       expect(screen.getByText('Work')).toBeInTheDocument();
     });
   });
+
+  it('renders custom calendar date picker when Custom expiration preset is clicked', () => {
+    render(
+      <CreateLinkModal 
+        isOpen={true} 
+        onClose={vi.fn()} 
+        onSuccess={vi.fn()} 
+        folders={[]} 
+        tags={[]} 
+      />
+    );
+    
+    const customBtn = screen.getByText('Custom');
+    fireEvent.click(customBtn);
+
+    // Trigger button should be rendered
+    const triggerBtn = screen.getByRole('button', { name: /select custom date and time|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec/i });
+    expect(triggerBtn).toBeInTheDocument();
+
+    // Clicking trigger button toggles popover grid with weekdays
+    fireEvent.click(triggerBtn);
+    expect(screen.getByText('Su')).toBeInTheDocument();
+    expect(screen.getByText('Mo')).toBeInTheDocument();
+    expect(screen.getByText('Time')).toBeInTheDocument();
+  });
 });
