@@ -23,8 +23,8 @@ describe('RegisterPage', () => {
     render(<MemoryRouter><RegisterPage /></MemoryRouter>);
     
     const nameInput = screen.getByPlaceholderText('Jane Doe');
-    const emailInput = screen.getByPlaceholderText('panic@thedis.co');
-    const passwordInput = screen.getByPlaceholderText('••••••••');
+    const emailInput = screen.getByPlaceholderText('janedoe@email.com');
+    const passwordInput = screen.getByPlaceholderText('At least 8 characters');
     
     fireEvent.change(nameInput, { target: { value: 'John Doe' } });
     fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
@@ -44,8 +44,8 @@ describe('RegisterPage', () => {
 
     // Fill in short password
     fireEvent.change(screen.getByPlaceholderText('Jane Doe'), { target: { value: 'John' } });
-    fireEvent.change(screen.getByPlaceholderText('panic@thedis.co'), { target: { value: 'test@test.com' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'short' } });
+    fireEvent.change(screen.getByPlaceholderText('janedoe@email.com'), { target: { value: 'test@test.com' } });
+    fireEvent.change(screen.getByPlaceholderText('At least 8 characters'), { target: { value: 'short' } });
     
     fireEvent.submit(document.querySelector('form')!);
     expect(screen.getByText('Password must be at least 8 characters')).toBeInTheDocument();
@@ -55,8 +55,8 @@ describe('RegisterPage', () => {
     render(<MemoryRouter><RegisterPage /></MemoryRouter>);
     
     fireEvent.change(screen.getByPlaceholderText('Jane Doe'), { target: { value: 'John' } });
-    fireEvent.change(screen.getByPlaceholderText('panic@thedis.co'), { target: { value: 'test@test.com' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByPlaceholderText('janedoe@email.com'), { target: { value: 'test@test.com' } });
+    fireEvent.change(screen.getByPlaceholderText('At least 8 characters'), { target: { value: 'password123' } });
     
     fireEvent.submit(document.querySelector('form')!);
 
@@ -76,8 +76,8 @@ describe('RegisterPage', () => {
     render(<MemoryRouter><RegisterPage /></MemoryRouter>);
     
     fireEvent.change(screen.getByPlaceholderText('Jane Doe'), { target: { value: 'John' } });
-    fireEvent.change(screen.getByPlaceholderText('panic@thedis.co'), { target: { value: 'test@test.com' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByPlaceholderText('janedoe@email.com'), { target: { value: 'test@test.com' } });
+    fireEvent.change(screen.getByPlaceholderText('At least 8 characters'), { target: { value: 'password123' } });
     
     fireEvent.submit(document.querySelector('form')!);
 
@@ -100,8 +100,8 @@ describe('RegisterPage', () => {
     render(<MemoryRouter><RegisterPage /></MemoryRouter>);
     
     fireEvent.change(screen.getByPlaceholderText('Jane Doe'), { target: { value: 'John' } });
-    fireEvent.change(screen.getByPlaceholderText('panic@thedis.co'), { target: { value: 'test@test.com' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByPlaceholderText('janedoe@email.com'), { target: { value: 'test@test.com' } });
+    fireEvent.change(screen.getByPlaceholderText('At least 8 characters'), { target: { value: 'password123' } });
     
     fireEvent.submit(document.querySelector('form')!);
 
@@ -131,8 +131,8 @@ describe('RegisterPage', () => {
     render(<MemoryRouter><RegisterPage /></MemoryRouter>);
     
     fireEvent.change(screen.getByPlaceholderText('Jane Doe'), { target: { value: 'John' } });
-    fireEvent.change(screen.getByPlaceholderText('panic@thedis.co'), { target: { value: 'test@test.com' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByPlaceholderText('janedoe@email.com'), { target: { value: 'test@test.com' } });
+    fireEvent.change(screen.getByPlaceholderText('At least 8 characters'), { target: { value: 'password123' } });
     
     fireEvent.submit(document.querySelector('form')!);
 

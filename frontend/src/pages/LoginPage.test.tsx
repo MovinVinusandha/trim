@@ -24,8 +24,8 @@ describe('LoginPage', () => {
     (useAuth as any).mockReturnValue({ login: vi.fn() });
     render(<MemoryRouter><LoginPage /></MemoryRouter>);
     
-    const emailInput = screen.getByPlaceholderText('panic@thedis.co');
-    const passwordInput = screen.getByPlaceholderText('••••••••');
+    const emailInput = screen.getByPlaceholderText('janedoe@email.com');
+    const passwordInput = screen.getByPlaceholderText('Enter your password');
     
     fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
@@ -41,8 +41,8 @@ describe('LoginPage', () => {
     
     render(<MemoryRouter><LoginPage /></MemoryRouter>);
     
-    fireEvent.change(screen.getByPlaceholderText('panic@thedis.co'), { target: { value: 'test@test.com' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByPlaceholderText('janedoe@email.com'), { target: { value: 'test@test.com' } });
+    fireEvent.change(screen.getByPlaceholderText('Enter your password'), { target: { value: 'password123' } });
     
     fireEvent.click(screen.getByText('Log in with email'));
     
@@ -63,8 +63,8 @@ describe('LoginPage', () => {
     
     render(<MemoryRouter><LoginPage /></MemoryRouter>);
     
-    fireEvent.change(screen.getByPlaceholderText('panic@thedis.co'), { target: { value: 'test@test.com' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'wrong' } });
+    fireEvent.change(screen.getByPlaceholderText('janedoe@email.com'), { target: { value: 'test@test.com' } });
+    fireEvent.change(screen.getByPlaceholderText('Enter your password'), { target: { value: 'wrong' } });
     
     fireEvent.click(screen.getByText('Log in with email'));
     
