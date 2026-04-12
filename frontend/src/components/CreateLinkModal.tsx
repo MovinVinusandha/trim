@@ -411,10 +411,10 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="bg-white dark:bg-[#1E1E21] rounded-2xl shadow-xl w-full max-w-5xl z-[101] overflow-hidden flex flex-col relative max-h-[95vh] border border-transparent dark:border-[#2B2B30]"
+            className="bg-white dark:bg-[#1E1E21] rounded-2xl shadow-xl w-full max-w-5xl z-[101] overflow-visible flex flex-col relative max-h-[95vh] min-h-[640px] border border-transparent dark:border-[#2B2B30]"
           >
         {/* Header */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#2B2B30] shrink-0">
+        <header className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#2B2B30] shrink-0 rounded-t-2xl">
           <div className="flex items-center gap-2 text-sm">
             <span className="text-gray-500 dark:text-[#A1A1AA] hover:text-gray-900 font-medium cursor-pointer transition-colors">Links</span>
             <span className="text-gray-400 dark:text-[#A1A1AA]">
@@ -433,7 +433,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
         </header>
 
         {/* Main Content Area */}
-        <div className="flex-1 overflow-y-auto p-6" style={{ scrollbarWidth: 'thin' }}>
+        <div className="flex-1 overflow-y-auto p-6 relative z-20" style={{ scrollbarWidth: 'thin' }}>
           <form id="create-link-form" onSubmit={handleShortenSubmit}>
             {error && (
               <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
@@ -443,7 +443,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
             
             <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr] gap-12">
               {/* Left Column */}
-              <div className="space-y-6">
+              <div className="flex flex-col gap-5 pb-16">
                 {/* Destination URL */}
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5">
@@ -494,7 +494,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 </div>
 
                 {/* Tags */}
-                <div className="space-y-1.5 relative" ref={tagRef}>
+                <div className="space-y-1.5 relative z-30" ref={tagRef}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <label className="text-sm font-medium text-gray-700 dark:text-[#EDEDED]">Tags</label>
@@ -529,17 +529,16 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                   </div>
                   
                   {isTagDropdownOpen && (
-                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg overflow-hidden flex flex-col">
-                      <div className="p-2 border-b border-gray-100">
-                        <input
-                          type="text"
-                          placeholder="Search or create tag..."
-                          value={tagSearchQuery}
-                          onChange={(e) => setTagSearchQuery(e.target.value)}
-                          className="w-full px-2 py-1 text-sm bg-gray-50 dark:bg-[#111113] rounded border border-gray-200 dark:border-[#2B2B30] focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors text-gray-900 dark:text-[#EDEDED]"
-                        />
-                      </div>
-                      <div className="max-h-60 overflow-y-auto p-1 space-y-1">
+                    <div className="absolute top-full mt-1 left-0 w-full z-40 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl shadow-xl p-1 flex flex-col">
+                      <input
+                        type="text"
+                        autoFocus={true}
+                        placeholder="Search or create tag..."
+                        value={tagSearchQuery}
+                        onChange={(e) => setTagSearchQuery(e.target.value)}
+                        className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-2 px-3 text-gray-900 dark:text-white placeholder-gray-400 border-b border-gray-100 dark:border-slate-800"
+                      />
+                      <div className="max-h-40 overflow-y-auto flex flex-col gap-1 p-1">
                         {filteredTags.map(tag => (
                           <motion.button
                             layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
@@ -805,7 +804,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
         </div>
 
         {/* Footer */}
-        <footer className="border-t border-gray-200 dark:border-[#2B2B30] bg-gray-50 dark:bg-[#111113] px-6 py-4 flex items-center justify-between gap-4 shrink-0">
+        <footer className="relative z-10 border-t border-gray-200 dark:border-[#2B2B30] bg-gray-50 dark:bg-[#111113] px-6 py-4 flex items-center justify-between gap-4 shrink-0 rounded-b-2xl">
           <div></div>
           <div>
             <button 
