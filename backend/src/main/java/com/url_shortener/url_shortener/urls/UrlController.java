@@ -72,6 +72,10 @@ public class UrlController {
             return ResponseEntity.status(HttpStatus.FOUND)
                     .location(java.net.URI.create(dashboardUrl + "/secure/" + hash))
                     .build();
+        } catch (UrlNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(java.net.URI.create(dashboardUrl + "/not-found"))
+                    .build();
         }
     }
 

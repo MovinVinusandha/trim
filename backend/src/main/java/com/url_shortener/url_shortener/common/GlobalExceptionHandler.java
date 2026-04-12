@@ -15,8 +15,14 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(UrlNotFoundException.class)
-    public ResponseEntity<String> urlNotFound() {
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<?> urlNotFound(jakarta.servlet.http.HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        if (uri != null && (uri.startsWith("/url/") || uri.startsWith("/api/"))) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.status(org.springframework.http.HttpStatus.FOUND)
+                .location(java.net.URI.create(dashboardUrl + "/not-found"))
+                .build();
     }
 
     @ExceptionHandler(UserNotFoundException.class)

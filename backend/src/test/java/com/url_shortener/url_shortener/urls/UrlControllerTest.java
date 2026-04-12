@@ -79,6 +79,15 @@ class UrlControllerTest {
     }
 
     @Test
+    void redirectToNewUrl_NotFound_RedirectsToCustomNotFoundPage() throws Exception {
+        when(urlService.getLongUrlForRedirect("nonexistent")).thenThrow(new UrlNotFoundException());
+
+        mockMvc.perform(get("/nonexistent"))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", org.hamcrest.Matchers.endsWith("/not-found")));
+    }
+
+    @Test
     void deleteUrl_Success() throws Exception {
         mockMvc.perform(delete("/url/hash123"))
                 .andExpect(status().isNoContent());
