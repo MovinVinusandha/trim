@@ -85,12 +85,17 @@ pipeline {
             steps {
                 dir('backend') {
                     sh '''
-                        ./mvnw clean org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent verify org.jacoco:jacoco-maven-plugin:0.8.12:report org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                        # 1. Run the tests to generate target/site/jacoco/jacoco.xml
+                        ./mvnw clean org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent verify org.jacoco:jacoco-maven-plugin:0.8.12:report
+                        
+                        # 2. Run the sonar scanner immediately after so it reads the generated metrics
+                        ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
                             -Dsonar.host.url=${SONAR_HOST_URL} \
                             -Dsonar.login=${SONAR_TOKEN} \
                             -Dsonar.projectKey="trim-backend" \
                             -Dsonar.projectName="Trim Backend" \
-                            -Dsonar.userHome="/tmp/.sonar"
+                            -Dsonar.userHome="/tmp/.sonar" \
+                            -Dsonar.qualitygate.wait=true
                     '''
                 }
             }
@@ -123,6 +128,7 @@ pipeline {
                             -Dsonar.tests=src \
                             -Dsonar.test.inclusions="**/*.test.tsx,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts" \
                             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+                            -Dsonar.qualitygate.wait=true
                     '''
                 }
             }
