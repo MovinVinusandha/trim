@@ -30,7 +30,7 @@ pipeline {
                 }
             }
             when { 
-                changeRequest target: 'sandbox-staging'
+                changeRequest(target: 'sandbox-staging')
             }
             steps {
                 echo "1. Running Backend Tests (JUnit + H2 In-Memory DB)..."
@@ -50,7 +50,7 @@ pipeline {
                 }
             }
             when { 
-                changeRequest target: 'sandbox-staging' 
+                changeRequest(target: 'sandbox-staging') 
             }
             steps {
                 echo "2. Running Frontend Tests (Vitest + JSDOM)..."
@@ -76,7 +76,7 @@ pipeline {
                 }
             }
             when { 
-                changeRequest target: 'sandbox-staging' 
+                changeRequest(target: 'sandbox-staging')
             }
             environment {
                 SONAR_TOKEN = credentials('SONARQUBE_TOKEN')
@@ -105,7 +105,7 @@ pipeline {
                 }
             }
             when { 
-                changeRequest target: 'sandbox-staging' 
+                changeRequest(target: 'sandbox-staging')
             }
             environment {
                 SONAR_TOKEN = credentials('SONARQUBE_TOKEN')
