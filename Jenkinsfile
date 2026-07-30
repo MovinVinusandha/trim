@@ -29,9 +29,9 @@ pipeline {
                     args '-e HOME=/tmp'
                 }
             }
-            when { 
-                changeRequest(target: 'sandbox-staging')
-            }
+            // when { 
+            //     changeRequest(target: 'sandbox-staging')
+            // }
             steps {
                 echo "1. Running Backend Tests (JUnit + H2 In-Memory DB)..."
                 dir('backend') {
@@ -49,9 +49,9 @@ pipeline {
                     args '-e HOME=/tmp'
                 }
             }
-            when { 
-                changeRequest(target: 'sandbox-staging') 
-            }
+            // when { 
+            //     changeRequest(target: 'sandbox-staging') 
+            // }
             steps {
                 echo "2. Running Frontend Tests (Vitest + JSDOM)..."
                 dir('frontend') {
@@ -75,9 +75,9 @@ pipeline {
                     args '-e HOME=/tmp'
                 }
             }
-            when { 
-                changeRequest(target: 'sandbox-staging')
-            }
+            // when { 
+            //     changeRequest(target: 'sandbox-staging')
+            // }
             environment {
                 SONAR_TOKEN = credentials('SONARQUBE_TOKEN')
                 SONAR_HOST_URL = credentials('SONARQUBE_HOST_URL')
@@ -104,9 +104,9 @@ pipeline {
                     args '-e HOME=/tmp'
                 }
             }
-            when { 
-                changeRequest(target: 'sandbox-staging')
-            }
+            // when { 
+            //     changeRequest(target: 'sandbox-staging')
+            // }
             environment {
                 SONAR_TOKEN = credentials('SONARQUBE_TOKEN')
                 SONAR_HOST_URL = credentials('SONARQUBE_HOST_URL')
