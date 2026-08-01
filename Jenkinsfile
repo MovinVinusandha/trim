@@ -72,7 +72,7 @@ pipeline {
                 docker {
                     image 'maven:3.9-eclipse-temurin-21-alpine'
                     reuseNode true
-                    args '-v $HOME/.m2:/root/.m2' // Cache maven packages!
+                    args '-e HOME=/tmp' // Fixes permission denied for .m2 creation
                 }
             }
             environment {
