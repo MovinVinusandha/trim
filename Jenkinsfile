@@ -72,17 +72,15 @@ pipeline {
                 docker {
                     image 'maven:3.9-eclipse-temurin-21-alpine'
                     reuseNode true
-                    args '-e HOME=/tmp' // Fixes permission denied for .m2 creation
+                    args '-e HOME=/tmp'
                 }
-            }
-            environment {
-                SONAR_TOKEN = credentials('SONARQUBE_TOKEN')
-                SONAR_HOST_URL = credentials('SONARQUBE_HOST_URL')
             }
             steps {
                 dir('backend') {
-                    // 1. Run tests and send report to SonarQube (Remove the wait=true flag here!)
-                    sh './mvnw clean verify org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent org.jacoco:jacoco-maven-plugin:0.8.12:report org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.projectKey=trim-backend'
+                    // MUST match the name configured in Jenkins -> Manage Jenkins -> System
+                    withSonarQubeEnv('SonarQube-Server') { 
+                        sh './mvnw clean verify org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent org.jacoco:jacoco-maven-plugin:0.8.12:report org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=trim-backend'
+                    }
                 }
             }
         }
