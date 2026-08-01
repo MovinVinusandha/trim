@@ -86,9 +86,9 @@ pipeline {
         }
 
         stage('CD: Build & Push Images') {
-            when { 
-                branch 'sandbox-staging' 
-            }
+            // when { 
+            //     branch 'sandbox-staging' 
+            // }
             parallel {
                 stage('Build Backend') {
                     steps {
@@ -122,9 +122,9 @@ pipeline {
         }
 
         stage('CD: Deploy to EC2') {
-            when { 
-                branch 'sandbox-staging' 
-            }
+            // when { 
+            //     branch 'sandbox-staging' 
+            // }
             steps {
                 echo "Deploying to EC2..."
                 
@@ -133,8 +133,8 @@ pipeline {
                     string(credentialsId: 'STAGING_IP', variable: 'SERVER_IP'),
                     file(credentialsId: 'STAGING_ENV_FILE', variable: 'ENV_FILE')
                 ]) {
-                    // 1. Create the directory on the EC2 server automatically (no error if it already exists)
-                    sh "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \$SSH_USER@\$SERVER_IP 'mkdir -p /opt/trim-staging'"
+                    // 1. Create the directory using sudo, then grant ownership to the SSH user so scp doesn't fail
+                    sh "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \$SSH_USER@\$SERVER_IP 'sudo mkdir -p /opt/trim-staging && sudo chown -R \$(whoami):\$(whoami) /opt/trim-staging'"
 
                     // 2. Securely copy the master .env file AND the staging docker-compose file
                     sh "scp -i \$SSH_KEY -o StrictHostKeyChecking=no \$ENV_FILE \$SSH_USER@\$SERVER_IP:/opt/trim-staging/.env"
