@@ -21,27 +21,30 @@ pipeline {
         // ===================================================================================
         // FLOW 1: THE PR GATEKEEPER (Runs when a PR is opened against 'staging')
         // ===================================================================================
-        stage('PR: Run Unit & Integration Tests for Backend') {
+        stage('Backend: Test & SonarQube Scan') {
             agent {
                 docker {
                     image 'maven:3.9-eclipse-temurin-21-alpine'
                     reuseNode true
-                    args '-e HOME=/tmp'
+                    args '-e HOME=/tmp -v $HOME/.m2:/tmp/.m2'
                 }
             }
             // when { 
             //     changeRequest(target: 'sandbox-staging')
             // }
             steps {
-                echo "1. Running Backend Tests (JUnit + H2 In-Memory DB)..."
+                echo "Running Backend Tests & SonarQube Scan in Docker..."
                 dir('backend') {
                     sh 'chmod +x mvnw'
-                    sh './mvnw clean test'
+                    withSonarQubeEnv('SonarQube-Server') {
+                        // Run tests, generate coverage, and scan in one single command
+                        sh './mvnw clean test jacoco:report org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=trim-backend -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml'
+                    }
                 }
             }
         }
 
-        stage('PR: Run Unit & Integration Tests for Frontend') {
+        stage('Frontend: Test') {
             agent {
                 docker {
                     image 'node:20-alpine'
@@ -53,34 +56,10 @@ pipeline {
             //     changeRequest(target: 'sandbox-staging') 
             // }
             steps {
-                echo "2. Running Frontend Tests (Vitest + JSDOM)..."
+                echo "Running Frontend Vitest in Docker..."
                 dir('frontend') {
-                    sh '''
-                        npm ci
-                        npm install --no-save @vitest/coverage-v8
-                        npx vitest run --coverage.enabled=true --coverage.reporter=lcov --coverage.reportsDirectory=./coverage
-                    '''
-                }
-            }
-        }
-
-        // ===================================================================================
-        // FLOW 2: SONARQUBE ANALYSIS
-        // ===================================================================================  
-        stage('SonarQube: Backend') {
-            agent {
-                docker {
-                    image 'maven:3.9-eclipse-temurin-21-alpine'
-                    reuseNode true
-                    args '-e HOME=/tmp'
-                }
-            }
-            steps {
-                dir('backend') {
-                    // MUST match the name configured in Jenkins -> Manage Jenkins -> System
-                    withSonarQubeEnv('SonarQube-Server') { 
-                        sh './mvnw clean verify org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent org.jacoco:jacoco-maven-plugin:0.8.12:report org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=trim-backend'
-                    }
+                    sh 'npm ci'
+                    sh 'npm run test'
                 }
             }
         }
