@@ -26,7 +26,7 @@ pipeline {
                 docker {
                     image 'maven:3.9-eclipse-temurin-21-alpine'
                     reuseNode true
-                    args '-e HOME=/tmp
+                    args '-e HOME=/tmp' // Strictly internal, no host volume mapping
                 }
             }
             // when { 
