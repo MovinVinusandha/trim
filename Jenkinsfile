@@ -134,8 +134,8 @@ pipeline {
                     file(credentialsId: 'STAGING_ENV_FILE', variable: 'ENV_FILE'),
                     usernamePassword(credentialsId: 'DOCKERHUB_CREDS', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')
                 ]) {
-                    // 1. Create directory using sudo
-                    sh "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \$SSH_USER@\$SERVER_IP 'sudo mkdir -p /opt/trim-staging && sudo chown -R \$(whoami):\$(whoami) /opt/trim-staging'"
+                    // 1. Create directory, aggressively assign ownership to the explicit SSH user, and ensure write permissions
+                    sh "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \$SSH_USER@\$SERVER_IP 'sudo mkdir -p /opt/trim-staging && sudo chown -R \$SSH_USER:\$SSH_USER /opt/trim-staging && sudo chmod -R 775 /opt/trim-staging'"
 
                     // 2. Securely copy files
                     sh "scp -i \$SSH_KEY -o StrictHostKeyChecking=no \$ENV_FILE \$SSH_USER@\$SERVER_IP:/opt/trim-staging/.env"
