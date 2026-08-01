@@ -26,7 +26,7 @@ pipeline {
                 docker {
                     image 'maven:3.9-eclipse-temurin-21-alpine'
                     reuseNode true
-                    args '-e HOME=/tmp -v $HOME/.m2:/tmp/.m2'
+                    args '-e HOME=/tmp
                 }
             }
             // when { 
