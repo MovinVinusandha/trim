@@ -72,32 +72,31 @@ pipeline {
                 docker {
                     image 'maven:3.9-eclipse-temurin-21-alpine'
                     reuseNode true
-                    args '-e HOME=/tmp'
+                    args '-v $HOME/.m2:/root/.m2' // Cache maven packages!
                 }
             }
-            // when { 
-            //     changeRequest(target: 'sandbox-staging')
-            // }
             environment {
                 SONAR_TOKEN = credentials('SONARQUBE_TOKEN')
                 SONAR_HOST_URL = credentials('SONARQUBE_HOST_URL')
             }
             steps {
                 dir('backend') {
-                    sh '''
-                        # 1. Run the tests to generate target/site/jacoco/jacoco.xml
-                        ./mvnw clean org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent verify org.jacoco:jacoco-maven-plugin:0.8.12:report
-                        
-                        # 2. Run the sonar scanner immediately after so it reads the generated metrics
-                        ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-                            -Dsonar.host.url=${SONAR_HOST_URL} \
-                            -Dsonar.login=${SONAR_TOKEN} \
-                            -Dsonar.projectKey="trim-backend" \
-                            -Dsonar.projectName="Trim Backend" \
-                            -Dsonar.userHome="/tmp/.sonar" \
-                            -Dsonar.qualitygate.wait=true
-                    '''
+                    // 1. Run tests and send report to SonarQube (Remove the wait=true flag here!)
+                    sh './mvnw clean verify org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent org.jacoco:jacoco-maven-plugin:0.8.12:report sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.projectKey=trim-backend'
                 }
+            }
+        }
+
+        // Add this BRAND NEW STAGE right after the SonarQube scan!
+        stage('Quality Gate Check') {
+            steps {
+                echo "Waiting for SonarQube to grade the code..."
+                timeout(time: 5, unit: 'MINUTES') {
+                    // This pauses the pipeline until SonarQube sends the webhook back
+                    // If coverage is < 80%, abortPipeline: true turns the pipeline RED!
+                    waitForQualityGate abortPipeline: true
+                }
+                echo "✅ Quality Gate Passed! Coverage is > 80%"
             }
         }
 
