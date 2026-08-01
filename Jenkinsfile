@@ -84,6 +84,7 @@ pipeline {
                                 -Dsonar.projectKey="trim-frontend" \
                                 -Dsonar.projectName="Trim Frontend" \
                                 -Dsonar.sources=src \
+                                -Dsonar.exclusions="**/*.test.tsx,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts,src/test/**,src/vite-env.d.ts,src/main.tsx" \
                                 -Dsonar.tests=src \
                                 -Dsonar.test.inclusions="**/*.test.tsx,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts" \
                                 -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
