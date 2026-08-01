@@ -131,18 +131,20 @@ pipeline {
                 withCredentials([
                     sshUserPrivateKey(credentialsId: 'STAGING_SSH_KEY', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER'),
                     string(credentialsId: 'STAGING_IP', variable: 'SERVER_IP'),
-                    file(credentialsId: 'STAGING_ENV_FILE', variable: 'ENV_FILE')
+                    file(credentialsId: 'STAGING_ENV_FILE', variable: 'ENV_FILE'),
+                    usernamePassword(credentialsId: 'DOCKERHUB_CREDS', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')
                 ]) {
-                    // 1. Create the directory using sudo, then grant ownership to the SSH user so scp doesn't fail
+                    // 1. Create directory using sudo
                     sh "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \$SSH_USER@\$SERVER_IP 'sudo mkdir -p /opt/trim-staging && sudo chown -R \$(whoami):\$(whoami) /opt/trim-staging'"
 
-                    // 2. Securely copy the master .env file AND the staging docker-compose file
+                    // 2. Securely copy files
                     sh "scp -i \$SSH_KEY -o StrictHostKeyChecking=no \$ENV_FILE \$SSH_USER@\$SERVER_IP:/opt/trim-staging/.env"
                     sh "scp -i \$SSH_KEY -o StrictHostKeyChecking=no docker-compose.staging.yml \$SSH_USER@\$SERVER_IP:/opt/trim-staging/docker-compose.yml"
 
-                    // 3. SSH in, pull fresh images, and restart
+                    // 3. SSH in, LOGIN TO DOCKER, pull fresh images, and restart
                     sh """
                     ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \$SSH_USER@\$SERVER_IP '
+                        echo "\$DOCKER_PASS" | docker login -u "\$DOCKER_USER" --password-stdin &&
                         cd /opt/trim-staging &&
                         docker compose pull &&
                         docker compose up -d
