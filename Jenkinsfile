@@ -82,7 +82,7 @@ pipeline {
             steps {
                 dir('backend') {
                     // 1. Run tests and send report to SonarQube (Remove the wait=true flag here!)
-                    sh './mvnw clean verify org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent org.jacoco:jacoco-maven-plugin:0.8.12:report sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.projectKey=trim-backend'
+                    sh './mvnw clean verify org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent org.jacoco:jacoco-maven-plugin:0.8.12:report org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.projectKey=trim-backend'
                 }
             }
         }
