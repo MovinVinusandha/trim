@@ -26,7 +26,7 @@ pipeline {
                 docker {
                     image 'maven:3.9-eclipse-temurin-21-alpine'
                     reuseNode true
-                    args '-e HOME=/tmp' // Strictly internal, no host volume mapping
+                    args '-e HOME=/tmp'
                 }
             }
             // when { 
@@ -37,14 +37,13 @@ pipeline {
                 dir('backend') {
                     sh 'chmod +x mvnw'
                     withSonarQubeEnv('SonarQube-Server') {
-                        // Run tests, generate coverage, and scan in one single command
                         sh './mvnw clean test jacoco:report org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=trim-backend -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml'
                     }
                 }
             }
         }
 
-        stage('Frontend: Test') {
+        stage('Frontend: Test & Coverage') {
             agent {
                 docker {
                     image 'node:20-alpine'
@@ -56,24 +55,12 @@ pipeline {
             //     changeRequest(target: 'sandbox-staging') 
             // }
             steps {
-                echo "Running Frontend Vitest in Docker..."
+                echo "Running Frontend Vitest with Coverage..."
                 dir('frontend') {
                     sh 'npm ci'
-                    sh 'npm run test'
+                    // IMPORTANT: Added --coverage to generate the lcov.info file!
+                    sh 'npm run test -- --coverage'
                 }
-            }
-        }
-
-        // Add this BRAND NEW STAGE right after the SonarQube scan!
-        stage('Quality Gate Check') {
-            steps {
-                echo "Waiting for SonarQube to grade the code..."
-                timeout(time: 5, unit: 'MINUTES') {
-                    // This pauses the pipeline until SonarQube sends the webhook back
-                    // If coverage is < 80%, abortPipeline: true turns the pipeline RED!
-                    waitForQualityGate abortPipeline: true
-                }
-                echo "✅ Quality Gate Passed! Coverage is > 80%"
             }
         }
 
@@ -88,25 +75,32 @@ pipeline {
             // when { 
             //     changeRequest(target: 'sandbox-staging')
             // }
-            environment {
-                SONAR_TOKEN = credentials('SONARQUBE_TOKEN')
-                SONAR_HOST_URL = credentials('SONARQUBE_HOST_URL')
-            }
             steps {
                 dir('frontend') {
-                    sh '''
-                        sonar-scanner \
-                            -Dsonar.host.url=${SONAR_HOST_URL} \
-                            -Dsonar.login=${SONAR_TOKEN} \
-                            -Dsonar.projectKey="trim-frontend" \
-                            -Dsonar.projectName="Trim Frontend" \
-                            -Dsonar.sources=src \
-                            -Dsonar.tests=src \
-                            -Dsonar.test.inclusions="**/*.test.tsx,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts" \
-                            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-                            -Dsonar.qualitygate.wait=true
-                    '''
+                    // Use the exact same wrapper as the backend so Jenkins tracks the webhook!
+                    withSonarQubeEnv('SonarQube-Server') {
+                        sh '''
+                            sonar-scanner \
+                                -Dsonar.projectKey="trim-frontend" \
+                                -Dsonar.projectName="Trim Frontend" \
+                                -Dsonar.sources=src \
+                                -Dsonar.tests=src \
+                                -Dsonar.test.inclusions="**/*.test.tsx,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts" \
+                                -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+                        '''
+                    }
                 }
+            }
+        }
+
+        stage('Quality Gate Check') {
+            steps {
+                echo "Waiting for SonarQube to grade both Backend and Frontend..."
+                timeout(time: 5, unit: 'MINUTES') {
+                    // This pauses and waits for the webhooks from BOTH scans above!
+                    waitForQualityGate abortPipeline: true
+                }
+                echo "✅ Quality Gate Passed! Coverage is > 80%"
             }
         }
 
