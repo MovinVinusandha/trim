@@ -142,14 +142,14 @@ pipeline {
                     sh "scp -i \$SSH_KEY -o StrictHostKeyChecking=no docker-compose.staging.yml \$SSH_USER@\$SERVER_IP:/opt/trim-staging/docker-compose.yml"
 
                     // 3. SSH in, LOGIN TO DOCKER, pull fresh images, and restart
-                    sh """
-                    ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \$SSH_USER@\$SERVER_IP '
-                        echo "\$DOCKER_PASS" | docker login -u "\$DOCKER_USER" --password-stdin &&
-                        cd /opt/trim-staging &&
-                        docker compose pull &&
+                    sh '''
+                    ssh -i $SSH_KEY -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP << EOF
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        cd /opt/trim-staging
+                        docker compose pull
                         docker compose up -d
-                    '
-                    """
+                    EOF
+                    '''
                 }
             }
         }
