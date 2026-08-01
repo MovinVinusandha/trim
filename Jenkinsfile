@@ -39,7 +39,7 @@ pipeline {
                     }
                 }
 
-                stage('Frontend: Test & Scan') {
+                stage('Frontend: Test & Coverage') {
                     agent {
                         docker {
                             image 'node:20-alpine'
@@ -51,10 +51,25 @@ pipeline {
                         dir('frontend') {
                             sh 'npm ci'
                             sh 'npm run test -- --coverage'
-                            withSonarQubeEnv('SonarQube-Server') {
-                                sh 'npx sonar-scanner -Dsonar.projectKey="trim-frontend" -Dsonar.projectName="Trim Frontend" -Dsonar.sources=src -Dsonar.exclusions="**/*.test.tsx,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts,src/test/**,src/vite-env.d.ts,src/main.tsx" -Dsonar.tests=src -Dsonar.test.inclusions="**/*.test.tsx,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts" -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info'
-                            }
                         }
+                    }
+                }
+            }
+        }
+
+        stage('CI: Frontend SonarQube Scan') {
+            // when { changeRequest(target: 'sandbox-staging') }
+            agent {
+                docker {
+                    image 'sonarsource/sonar-scanner-cli:latest'
+                    reuseNode true
+                    args '-e HOME=/tmp'
+                }
+            }
+            steps {
+                dir('frontend') {
+                    withSonarQubeEnv('SonarQube-Server') {
+                        sh 'sonar-scanner -Dsonar.projectKey="trim-frontend" -Dsonar.projectName="Trim Frontend" -Dsonar.sources=src -Dsonar.exclusions="**/*.test.tsx,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts,src/test/**,src/vite-env.d.ts,src/main.tsx" -Dsonar.tests=src -Dsonar.test.inclusions="**/*.test.tsx,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts" -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info'
                     }
                 }
             }
