@@ -133,15 +133,19 @@ pipeline {
                     string(credentialsId: 'STAGING_IP', variable: 'SERVER_IP'),
                     file(credentialsId: 'STAGING_ENV_FILE', variable: 'ENV_FILE')
                 ]) {
-                    // 1. Securely copy the master .env file to the EC2 server
-                    sh "scp -i \$SSH_KEY -o StrictHostKeyChecking=no \$ENV_FILE \$SSH_USER@\$SERVER_IP:/opt/trim-staging/.env"
+                    // 1. Create the directory on the EC2 server automatically (no error if it already exists)
+                    sh "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \$SSH_USER@\$SERVER_IP 'mkdir -p /opt/trim-staging'"
 
-                    // 2. SSH into the server, pull the fresh images, and restart Docker Compose
+                    // 2. Securely copy the master .env file AND the staging docker-compose file
+                    sh "scp -i \$SSH_KEY -o StrictHostKeyChecking=no \$ENV_FILE \$SSH_USER@\$SERVER_IP:/opt/trim-staging/.env"
+                    sh "scp -i \$SSH_KEY -o StrictHostKeyChecking=no docker-compose.staging.yml \$SSH_USER@\$SERVER_IP:/opt/trim-staging/docker-compose.yml"
+
+                    // 3. SSH in, pull fresh images, and restart
                     sh """
                     ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \$SSH_USER@\$SERVER_IP '
                         cd /opt/trim-staging &&
                         docker compose pull &&
-                        docker compose up -d --build
+                        docker compose up -d
                     '
                     """
                 }
