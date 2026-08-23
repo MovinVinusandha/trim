@@ -31,4 +31,4 @@ app:
   dashboard:
     url: ${APP_DASHBOARD_URL:http://app.localhost}
   cors:
-    allowed-origins: ${APP_DOMAIN_URL:http://localhost:5173,http://localhost}
+    allowed-origins: ${APP_DOMAIN_URL:http://localhost,http://localhost:5173}
