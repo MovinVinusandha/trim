@@ -29,6 +29,7 @@ pipeline {
             when { 
                 anyOf { 
                     // changeRequest() // Runs on all Pull Requests
+                    branch 'sandbox-feature'
                     branch 'sandbox-staging'
                     branch 'staging'
                     branch 'main'
@@ -75,7 +76,8 @@ pipeline {
             when { 
                 anyOf { 
                     // changeRequest(); 
-                    branch 'sandbox-staging'; 
+                    branch 'sandbox-staging';
+                    branch 'sandbox-feature';
                     branch 'staging'; 
                     branch 'main' 
                 }
@@ -100,7 +102,8 @@ pipeline {
             when { 
                 anyOf { 
                     // changeRequest(); 
-                    branch 'sandbox-staging'; 
+                    branch 'sandbox-staging';
+                    branch 'sandbox-feature';
                     branch 'staging'; 
                     branch 'main' 
                 }
