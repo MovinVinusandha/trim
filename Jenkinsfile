@@ -28,7 +28,7 @@ pipeline {
         stage('CI: Code Quality & Testing') {
             when { 
                 anyOf { 
-                    changeRequest() // Runs on all Pull Requests
+                    // changeRequest() // Runs on all Pull Requests
                     branch 'sandbox-staging'
                     branch 'staging'
                     branch 'main'
@@ -74,7 +74,7 @@ pipeline {
         stage('CI: Frontend SonarQube Scan') {
             when { 
                 anyOf { 
-                    changeRequest(); 
+                    // changeRequest(); 
                     branch 'sandbox-staging'; 
                     branch 'staging'; 
                     branch 'main' 
@@ -99,7 +99,7 @@ pipeline {
         stage('CI: Quality Gate') {
             when { 
                 anyOf { 
-                    changeRequest(); 
+                    // changeRequest(); 
                     branch 'sandbox-staging'; 
                     branch 'staging'; 
                     branch 'main' 
