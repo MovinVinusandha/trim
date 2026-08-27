@@ -122,8 +122,9 @@ pipeline {
         // ===================================================================================
         stage('CD STAGING: Build & Push Images') {
             when { 
-                anyOf { 
-                    branch 'sandbox-staging'; 
+                anyOf {
+                    branch 'sandbox-feature';
+                    branch 'sandbox-staging';
                     branch 'staging' 
                 } 
             }
@@ -158,7 +159,8 @@ pipeline {
 
         stage('CD STAGING: Deploy to EC2') {
             when { 
-                anyOf { 
+                anyOf {
+                    branch 'sandbox-feature';
                     branch 'sandbox-staging'; 
                     branch 'staging' 
                 } 
@@ -190,7 +192,13 @@ EOF
         // ===================================================================================
         
         stage('CD PROD: Build Backend & Push to ECR') {
-            when { branch 'main' }
+            when { 
+                anyOf {
+                    branch 'main';
+                    branch 'sandbox-feature';
+                    branch 'sandbox-staging'
+                }
+            }
             agent {
                 docker { 
                     image 'amazon/aws-cli:latest' // Use the official AWS CLI container
@@ -216,7 +224,13 @@ EOF
         }
 
         stage('CD PROD: Build Static Frontend') {
-            when { branch 'main' }
+            when { 
+                anyOf {
+                    branch 'main';
+                    branch 'sandbox-feature';
+                    branch 'sandbox-staging'
+                }
+            }
             agent {
                 docker { 
                     image 'node:20-alpine'
@@ -240,7 +254,13 @@ EOF
         }
 
         stage('CD PROD: Deploy to AWS') {
-            when { branch 'main' }
+            when { 
+                anyOf {
+                    branch 'main';
+                    branch 'sandbox-feature';
+                    branch 'sandbox-staging'
+                }
+            }
             agent {
                 docker { 
                     image 'amazon/aws-cli:latest' // Use the official AWS CLI container
