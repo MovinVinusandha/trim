@@ -100,7 +100,7 @@ pipeline {
             parallel {
                 stage('Build Backend') {
                     steps {
-                        sh "docker build -t ${BACKEND_IMAGE}:staging -t ${BACKEND_IMAGE}:${GIT_SHA} ./backend"
+                        sh "docker build --build-arg COMMIT_SHA=${GIT_SHA} -t ${BACKEND_IMAGE}:staging -t ${BACKEND_IMAGE}:${GIT_SHA} ./backend"
                         withCredentials([usernamePassword(credentialsId: 'DOCKERHUB_CREDS', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                             sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
                             sh "docker push ${BACKEND_IMAGE}:staging"
@@ -114,7 +114,7 @@ pipeline {
                             string(credentialsId: 'STAGING_VITE_API_URL', variable: 'VITE_API'),
                             string(credentialsId: 'STAGING_VITE_ROOT_DOMAIN', variable: 'VITE_ROOT')
                         ]) {
-                            sh "docker build --build-arg VITE_API_BASE_URL=${VITE_API} --build-arg VITE_ROOT_DOMAIN=${VITE_ROOT} -t ${FRONTEND_IMAGE}:staging -t ${FRONTEND_IMAGE}:${GIT_SHA} ./frontend"
+                            sh "docker build --build-arg COMMIT_SHA=${GIT_SHA} --build-arg VITE_API_BASE_URL=${VITE_API} --build-arg VITE_ROOT_DOMAIN=${VITE_ROOT} -t ${FRONTEND_IMAGE}:staging -t ${FRONTEND_IMAGE}:${GIT_SHA} ./frontend"
                         }
                         withCredentials([usernamePassword(credentialsId: 'DOCKERHUB_CREDS', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                             sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
@@ -161,7 +161,7 @@ EOF
         // Runs ONLY when a PR is merged into the 'main' branch.
         // ===================================================================================
         stage('CD PROD: Build Backend & Push to ECR') {
-            when { branch 'main' }
+            when { branch 'sandbox-main' }
             steps {
                 withCredentials([
                     string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
@@ -171,7 +171,7 @@ EOF
                     sh "docker run --rm -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} amazon/aws-cli ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
                     
                     echo "Building and Pushing Backend Image to ECR..."
-                    sh "docker build -t ${PROD_BACKEND_IMAGE}:latest -t ${PROD_BACKEND_IMAGE}:${GIT_SHA} ./backend"
+                    sh "docker build --build-arg COMMIT_SHA=${GIT_SHA} -t ${PROD_BACKEND_IMAGE}:latest -t ${PROD_BACKEND_IMAGE}:${GIT_SHA} ./backend"
                     sh "docker push ${PROD_BACKEND_IMAGE}:latest"
                     sh "docker push ${PROD_BACKEND_IMAGE}:${GIT_SHA}"
                 }
@@ -179,7 +179,7 @@ EOF
         }
 
         stage('CD PROD: Build Static Frontend') {
-            when { branch 'main' }
+            when { branch 'sandbox-main' }
             agent {
                 docker { image 'node:20-alpine'; reuseNode true; args '-e HOME=/tmp' }
             }
@@ -191,14 +191,14 @@ EOF
                         string(credentialsId: 'PROD_VITE_ROOT_DOMAIN', variable: 'VITE_ROOT')
                     ]) {
                         sh 'npm ci'
-                        sh 'VITE_API_BASE_URL=${VITE_API} VITE_ROOT_DOMAIN=${VITE_ROOT} npm run build'
+                        sh 'VITE_API_BASE_URL=${VITE_API} VITE_ROOT_DOMAIN=${VITE_ROOT} VITE_APP_VERSION=${GIT_SHA} npm run build'
                     }
                 }
             }
         }
 
         stage('CD PROD: Deploy to AWS') {
-            when { branch 'main' }
+            when { branch 'sandbox-main' }
             agent {
                 docker { image 'amazon/aws-cli:latest'; reuseNode true; args '--entrypoint="" -u 0:0 -e HOME=/tmp' }
             }
