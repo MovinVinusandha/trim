@@ -31,7 +31,7 @@ public class SecurityConfig {
     private final List<SecurityRules> featureSecurityRules;
 
     @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins}")
-    private String allowedOrigins;
+    private java.util.List<String> allowedOrigins;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -59,6 +59,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(c -> {
                             c.requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll();
+                            c.requestMatchers("/api/health", "/health").permitAll();
                             c.requestMatchers("/auth/**").permitAll();
                             c.requestMatchers(org.springframework.http.HttpMethod.POST, "/users", "/user").permitAll();
                             c.requestMatchers("/public/qr/preview").permitAll();
@@ -85,10 +86,11 @@ public class SecurityConfig {
     @Bean
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
         var configuration = new org.springframework.web.cors.CorsConfiguration();
-        configuration.setAllowedOrigins(java.util.Arrays.asList(allowedOrigins.split(",")));
+        // Use the injected allowedOrigins property (e.g., from APP_DOMAIN_URL)
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(java.util.Arrays.asList("Authorization", "Content-Type", "Accept", "X-Requested-With", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
-        configuration.setExposedHeaders(java.util.Arrays.asList("Authorization", "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
+        configuration.setAllowedHeaders(java.util.Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+        configuration.setExposedHeaders(java.util.Arrays.asList("Access-Control-Allow-Origin", "Access-Control-Allow-Credentials", "Authorization"));
         configuration.setAllowCredentials(true);
 
         var source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
