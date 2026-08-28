@@ -133,24 +133,25 @@ pipeline {
                 withCredentials([
                     sshUserPrivateKey(credentialsId: 'STAGING_SSH_KEY', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER'),
                     string(credentialsId: 'STAGING_IP', variable: 'SERVER_IP'),
-                    file(credentialsId: 'STAGING_ENV_FILE', variable: 'ENV_FILE')
+                    file(credentialsId: 'STAGING_ENV_FILE', variable: 'ENV_FILE'),
+                    usernamePassword(credentialsId: 'DOCKERHUB_CREDS', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')
                 ]) {
                     sh "scp -i \$SSH_KEY -o StrictHostKeyChecking=no \$ENV_FILE \$SSH_USER@\$SERVER_IP:~/.env"
                     sh "scp -i \$SSH_KEY -o StrictHostKeyChecking=no docker-compose.staging.yml \$SSH_USER@\$SERVER_IP:~/docker-compose.yml"
-                    sh '''
-                    ssh -i $SSH_KEY -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP << EOF
+                    sh """
+                    ssh -i \${SSH_KEY} -o StrictHostKeyChecking=no \${SSH_USER}@\${SERVER_IP} << EOF
 sudo mkdir -p /opt/trim-staging
 sudo mv ~/.env /opt/trim-staging/.env
 sudo mv ~/docker-compose.yml /opt/trim-staging/docker-compose.yml
-sudo chown -R $SSH_USER:$SSH_USER /opt/trim-staging
+sudo chown -R \${SSH_USER}:\${SSH_USER} /opt/trim-staging
 sudo chmod -R 775 /opt/trim-staging
 
-echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+echo "\${DOCKER_PASS}" | docker login -u "\${DOCKER_USER}" --password-stdin
 cd /opt/trim-staging
 docker compose pull
 docker compose up -d --build
 EOF
-                    '''
+                    """
                 }
             }
         }
