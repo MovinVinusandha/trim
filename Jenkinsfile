@@ -3,9 +3,11 @@ pipeline {
 
     environment {
         // --- GLOBAL CONFIGURATION ---
-        DOCKER_REGISTRY = "movinvinusandha" // Your DockerHub (for staging)
+        DOCKER_REGISTRY = "movinvinusandha" 
         BACKEND_IMAGE = "${DOCKER_REGISTRY}/trim-backend"
         FRONTEND_IMAGE = "${DOCKER_REGISTRY}/trim-frontend"
+        
+        // Generate a unique tag based on the Git commit hash
         GIT_SHA = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
         
         // --- AWS PRODUCTION CONFIGURATION ---
@@ -17,31 +19,28 @@ pipeline {
 
     stages {
         stage('Initialize') {
-            steps {
-                checkout scm
-            }
+            steps { checkout scm }
         }
 
         // ===================================================================================
-        // CI: CODE QUALITY & TESTING (Runs on PRs, Staging, and Main)
+        // 🛡️ CI: CODE QUALITY & TESTING 
+        // Runs on ANY Pull Request, AND when code is merged into staging or main.
         // ===================================================================================
         stage('CI: Code Quality & Testing') {
             when { 
                 anyOf { 
-                    // changeRequest() // Runs on all Pull Requests
-                    branch 'sandbox-feature'
+                    changeRequest() // Triggers when a PR is opened
                     branch 'sandbox-staging'
-                    branch 'staging'
-                    branch 'main'
+                    branch 'sandbox-feature'
                 }
             }
             parallel {
                 stage('Backend: Test & Scan') {
                     agent {
                         docker {
-                            image 'maven:3.9-eclipse-temurin-21-alpine'
-                            reuseNode true
-                            args '-e HOME=/tmp'
+                        image 'maven:3.9-eclipse-temurin-21-alpine';
+                        reuseNode true;
+                        args '-e HOME=/tmp'
                         }
                     }
                     steps {
@@ -53,14 +52,9 @@ pipeline {
                         }
                     }
                 }
-
                 stage('Frontend: Test & Coverage') {
                     agent {
-                        docker {
-                            image 'node:20-alpine'
-                            reuseNode true
-                            args '-e HOME=/tmp'
-                        }
+                        docker { image 'node:20-alpine'; reuseNode true; args '-e HOME=/tmp' }
                     }
                     steps {
                         dir('frontend') {
@@ -73,21 +67,9 @@ pipeline {
         }
 
         stage('CI: Frontend SonarQube Scan') {
-            when { 
-                anyOf { 
-                    // changeRequest(); 
-                    branch 'sandbox-staging';
-                    branch 'sandbox-feature';
-                    branch 'staging'; 
-                    branch 'main' 
-                }
-            }
+            when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
             agent {
-                docker {
-                    image 'sonarsource/sonar-scanner-cli:latest'
-                    reuseNode true
-                    args '-e HOME=/tmp'
-                }
+                docker { image 'sonarsource/sonar-scanner-cli:latest'; reuseNode true; args '-e HOME=/tmp' }
             }
             steps {
                 dir('frontend') {
@@ -99,35 +81,22 @@ pipeline {
         }
 
         stage('CI: Quality Gate') {
-            when { 
-                anyOf { 
-                    // changeRequest(); 
-                    branch 'sandbox-staging';
-                    branch 'sandbox-feature';
-                    branch 'staging'; 
-                    branch 'main' 
-                }
-            }
+            when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
             steps {
                 echo "Waiting for SonarQube to grade both Backend and Frontend..."
                 timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
-                echo "Quality Gate Passed!"
+                echo "✅ Quality Gate Passed!"
             }
         }
 
         // ===================================================================================
-        // CD: STAGING DEPLOYMENT (EC2 + Docker Compose)
+        // 🚀 CD: STAGING DEPLOYMENT 
+        // Runs ONLY when a PR is merged into the 'staging' branch.
         // ===================================================================================
         stage('CD STAGING: Build & Push Images') {
-            when { 
-                anyOf {
-                    branch 'sandbox-feature';
-                    branch 'sandbox-staging';
-                    branch 'staging' 
-                } 
-            }
+            when { branch 'sandbox-staging' }
             parallel {
                 stage('Build Backend') {
                     steps {
@@ -158,19 +127,13 @@ pipeline {
         }
 
         stage('CD STAGING: Deploy to EC2') {
-            when { 
-                anyOf {
-                    branch 'sandbox-feature';
-                    branch 'sandbox-staging'; 
-                    branch 'staging' 
-                } 
-            }
+            when { branch 'sandbox-staging' }
             steps {
+                echo "Deploying to EC2 Staging Server..."
                 withCredentials([
                     sshUserPrivateKey(credentialsId: 'STAGING_SSH_KEY', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER'),
                     string(credentialsId: 'STAGING_IP', variable: 'SERVER_IP'),
-                    file(credentialsId: 'STAGING_ENV_FILE', variable: 'ENV_FILE'),
-                    usernamePassword(credentialsId: 'DOCKERHUB_CREDS', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')
+                    file(credentialsId: 'STAGING_ENV_FILE', variable: 'ENV_FILE')
                 ]) {
                     sh "scp -i \$SSH_KEY -o StrictHostKeyChecking=no \$ENV_FILE \$SSH_USER@\$SERVER_IP:~/.env"
                     sh "scp -i \$SSH_KEY -o StrictHostKeyChecking=no docker-compose.staging.yml \$SSH_USER@\$SERVER_IP:~/docker-compose.yml"
@@ -193,17 +156,11 @@ EOF
         }
 
         // ===================================================================================
-        // CD: PRODUCTION DEPLOYMENT (AWS ECS Fargate + S3 + CloudFront)
+        // 🌍 CD: PRODUCTION DEPLOYMENT 
+        // Runs ONLY when a PR is merged into the 'main' branch.
         // ===================================================================================
-        
         stage('CD PROD: Build Backend & Push to ECR') {
-            when { 
-                anyOf {
-                    branch 'main';
-                    branch 'sandbox-feature';
-                    branch 'sandbox-staging'
-                }
-            }
+            when { branch 'main' }
             steps {
                 withCredentials([
                     string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
@@ -213,7 +170,6 @@ EOF
                     sh "docker run --rm -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} amazon/aws-cli ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
                     
                     echo "Building and Pushing Backend Image to ECR..."
-                    // Note: We use the local Docker engine on the Jenkins machine to build
                     sh "docker build -t ${PROD_BACKEND_IMAGE}:latest -t ${PROD_BACKEND_IMAGE}:${GIT_SHA} ./backend"
                     sh "docker push ${PROD_BACKEND_IMAGE}:latest"
                     sh "docker push ${PROD_BACKEND_IMAGE}:${GIT_SHA}"
@@ -222,29 +178,18 @@ EOF
         }
 
         stage('CD PROD: Build Static Frontend') {
-            when { 
-                anyOf {
-                    branch 'main';
-                    branch 'sandbox-feature';
-                    branch 'sandbox-staging'
-                }
-            }
+            when { branch 'main' }
             agent {
-                docker { 
-                    image 'node:20-alpine'
-                    reuseNode true 
-                    args '-e HOME=/tmp'
-                }
+                docker { image 'node:20-alpine'; reuseNode true; args '-e HOME=/tmp' }
             }
             steps {
                 echo "Building Production React App..."
-                dir('frontend') { // Make sure this matches your folder name (e.g., frontend-app)
+                dir('frontend') {
                     withCredentials([
                         string(credentialsId: 'PROD_VITE_API_URL', variable: 'VITE_API'),
                         string(credentialsId: 'PROD_VITE_ROOT_DOMAIN', variable: 'VITE_ROOT')
                     ]) {
                         sh 'npm ci'
-                        // Bake the real AWS domains into the production HTML/JS!
                         sh 'VITE_API_BASE_URL=${VITE_API} VITE_ROOT_DOMAIN=${VITE_ROOT} npm run build'
                     }
                 }
@@ -252,19 +197,9 @@ EOF
         }
 
         stage('CD PROD: Deploy to AWS') {
-            when { 
-                anyOf {
-                    branch 'main';
-                    branch 'sandbox-feature';
-                    branch 'sandbox-staging'
-                }
-            }
+            when { branch 'main' }
             agent {
-                docker { 
-                    image 'amazon/aws-cli:latest' // Use the official AWS CLI container
-                    reuseNode true 
-                    args '--entrypoint="" -u 0:0 -e HOME=/tmp'
-                }
+                docker { image 'amazon/aws-cli:latest'; reuseNode true; args '--entrypoint="" -u 0:0 -e HOME=/tmp' }
             }
             steps {
                 withCredentials([
@@ -274,7 +209,6 @@ EOF
                     string(credentialsId: 'CF_MARKETING_DIST_ID', variable: 'MARKETING_DIST_ID')
                 ]) {
                     echo "Deploying Frontend to S3..."
-                    // Sync the built code to BOTH buckets
                     sh "aws s3 sync frontend/dist s3://trim-app-spa-prod --delete --region ${AWS_REGION}"
                     sh "aws s3 sync frontend/dist s3://trim-marketing-web-prod --delete --region ${AWS_REGION}"
 
@@ -283,7 +217,6 @@ EOF
                     sh "aws cloudfront create-invalidation --distribution-id \${MARKETING_DIST_ID} --paths '/*'"
 
                     echo "Deploying Backend to ECS Fargate (Zero-Downtime Update)..."
-                    // Tell AWS to kill the old container and start the new one
                     sh "aws ecs update-service --cluster trim-prod-cluster --service trim-prod-service --force-new-deployment --region ${AWS_REGION}"
                 }
             }
@@ -295,10 +228,10 @@ EOF
             sh "docker system prune -f"
         }
         success {
-            echo "Pipeline Success!"
+            echo "✅ Pipeline completed successfully!"
         }
         failure {
-            echo "Pipeline Failed! Please check the logs."
+            echo "❌ Pipeline failed! Please check the logs."
         }
     }
 }
