@@ -204,20 +204,13 @@ EOF
                     branch 'sandbox-staging'
                 }
             }
-            agent {
-                docker { 
-                    image 'amazon/aws-cli:latest' // Use the official AWS CLI container
-                    reuseNode true 
-                    args '-e HOME=/tmp'
-                }
-            }
             steps {
                 withCredentials([
                     string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
                     string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY')
                 ]) {
                     echo "Logging into AWS ECR..."
-                    sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
+                    sh "docker run --rm -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} amazon/aws-cli ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
                     
                     echo "Building and Pushing Backend Image to ECR..."
                     // Note: We use the local Docker engine on the Jenkins machine to build
@@ -270,7 +263,7 @@ EOF
                 docker { 
                     image 'amazon/aws-cli:latest' // Use the official AWS CLI container
                     reuseNode true 
-                    args '-e HOME=/tmp'
+                    args '--entrypoint="" -u 0:0 -e HOME=/tmp'
                 }
             }
             steps {
