@@ -24,6 +24,9 @@ COPY --from=build --chown=springuser:springgroup /app/target/*.jar app.jar
 
 USER springuser
 
+ARG COMMIT_SHA=unknown
+ENV APP_VERSION=${COMMIT_SHA}
+
 EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
