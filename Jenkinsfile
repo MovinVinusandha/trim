@@ -163,6 +163,14 @@ EOF
         stage('CD PROD: Build Backend & Push to ECR') {
             when { branch 'sandbox-main' }
             steps {
+                // 1. Log into Docker Hub and pull the validated Staging image
+                withCredentials([usernamePassword(credentialsId: 'DOCKERHUB_CREDS', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                    echo "Downloading validated Staging image from Docker Hub..."
+                    sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
+                    sh "docker pull ${BACKEND_IMAGE}:staging"
+                }
+
+                // 2. Log into AWS ECR, retag the image, and push to Production
                 withCredentials([
                     string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
                     string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY')
@@ -170,8 +178,11 @@ EOF
                     echo "Logging into AWS ECR..."
                     sh "docker run --rm -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} amazon/aws-cli ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
                     
-                    echo "Building and Pushing Backend Image to ECR..."
-                    sh "docker build --build-arg COMMIT_SHA=${GIT_SHA} -t ${PROD_BACKEND_IMAGE}:latest -t ${PROD_BACKEND_IMAGE}:${GIT_SHA} ./backend"
+                    echo "Promoting Image: Retagging Staging -> Production..."
+                    sh "docker tag ${BACKEND_IMAGE}:staging ${PROD_BACKEND_IMAGE}:latest"
+                    sh "docker tag ${BACKEND_IMAGE}:staging ${PROD_BACKEND_IMAGE}:${GIT_SHA}"
+                    
+                    echo "Pushing Promoted Image to AWS ECR..."
                     sh "docker push ${PROD_BACKEND_IMAGE}:latest"
                     sh "docker push ${PROD_BACKEND_IMAGE}:${GIT_SHA}"
                 }
