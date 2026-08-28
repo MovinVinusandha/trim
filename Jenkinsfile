@@ -161,7 +161,7 @@ EOF
         // Runs ONLY when a PR is merged into the 'main' branch.
         // ===================================================================================
         stage('CD PROD: Build Backend & Push to ECR') {
-            when { branch 'main' }
+            when { branch 'sandbox-main' }
             steps {
                 withCredentials([
                     string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
@@ -179,7 +179,7 @@ EOF
         }
 
         stage('CD PROD: Build Static Frontend') {
-            when { branch 'main' }
+            when { branch 'sandbox-main' }
             agent {
                 docker { image 'node:20-alpine'; reuseNode true; args '-e HOME=/tmp' }
             }
@@ -198,7 +198,7 @@ EOF
         }
 
         stage('CD PROD: Deploy to AWS') {
-            when { branch 'main' }
+            when { branch 'sandbox-main' }
             agent {
                 docker { image 'amazon/aws-cli:latest'; reuseNode true; args '--entrypoint="" -u 0:0 -e HOME=/tmp' }
             }
