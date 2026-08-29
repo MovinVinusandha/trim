@@ -64,7 +64,7 @@ pipeline {
                         docker {
                             image 'maven:3.9-eclipse-temurin-21-alpine'
                             reuseNode true
-                            args '-e HOME=/tmp -v maven-repo-cache:/tmp/.m2'
+                            args '-u 0:0 -e HOME=/tmp -v maven-repo-cache:/tmp/.m2'
                         }
                     }
                     steps {
@@ -78,7 +78,7 @@ pipeline {
                 }
                 stage('Frontend: Test & Coverage') {
                     agent {
-                        docker { image 'node:20-alpine'; reuseNode true; args '-e HOME=/tmp -v npm-cache:/tmp/.npm' }
+                        docker { image 'node:20-alpine'; reuseNode true; args '-u 0:0 -e HOME=/tmp -v npm-cache:/tmp/.npm' }
                     }
                     steps {
                         dir('frontend') {
@@ -93,7 +93,7 @@ pipeline {
         stage('CI: Frontend SonarQube Scan') {
             when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
             agent {
-                docker { image 'sonarsource/sonar-scanner-cli:latest'; reuseNode true; args '-e HOME=/tmp -v sonar-cache:/tmp/.sonar' }
+                docker { image 'sonarsource/sonar-scanner-cli:latest'; reuseNode true; args '-u 0:0 -e HOME=/tmp -v sonar-cache:/tmp/.sonar' }
             }
             steps {
                 dir('frontend') {
@@ -198,7 +198,7 @@ EOF
                 docker {
                     image 'mcr.microsoft.com/playwright:v1.45.0-jammy'
                     reuseNode true
-                    args '-e HOME=/tmp -e PLAYWRIGHT_BROWSERS_PATH=/tmp'
+                    args '-u 0:0 -e HOME=/tmp -e PLAYWRIGHT_BROWSERS_PATH=/tmp -v npm-cache:/tmp/.npm'
                 }
             }
             steps {
@@ -250,7 +250,7 @@ EOF
         stage('CD PROD: Build Static Frontend') {
             when { branch 'sandbox-main' }
             agent {
-                docker { image 'node:20-alpine'; reuseNode true; args '-e HOME=/tmp -v npm-cache:/tmp/.npm' }
+                docker { image 'node:20-alpine'; reuseNode true; args '-u 0:0 -e HOME=/tmp -v npm-cache:/tmp/.npm' }
             }
             steps {
                 echo "Building Production React App..."
