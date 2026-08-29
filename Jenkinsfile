@@ -62,9 +62,9 @@ pipeline {
                 stage('Backend: Test & Scan') {
                     agent {
                         docker {
-                        image 'maven:3.9-eclipse-temurin-21-alpine';
-                        reuseNode true;
-                        args '-e HOME=/tmp'
+                            image 'maven:3.9-eclipse-temurin-21-alpine'
+                            reuseNode true
+                            args '-e HOME=/tmp -v maven-repo-cache:/tmp/.m2'
                         }
                     }
                     steps {
@@ -78,7 +78,7 @@ pipeline {
                 }
                 stage('Frontend: Test & Coverage') {
                     agent {
-                        docker { image 'node:20-alpine'; reuseNode true; args '-e HOME=/tmp' }
+                        docker { image 'node:20-alpine'; reuseNode true; args '-e HOME=/tmp -v npm-cache:/tmp/.npm' }
                     }
                     steps {
                         dir('frontend') {
@@ -93,7 +93,7 @@ pipeline {
         stage('CI: Frontend SonarQube Scan') {
             when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
             agent {
-                docker { image 'sonarsource/sonar-scanner-cli:latest'; reuseNode true; args '-e HOME=/tmp' }
+                docker { image 'sonarsource/sonar-scanner-cli:latest'; reuseNode true; args '-e HOME=/tmp -v sonar-cache:/tmp/.sonar' }
             }
             steps {
                 dir('frontend') {
@@ -250,7 +250,7 @@ EOF
         stage('CD PROD: Build Static Frontend') {
             when { branch 'sandbox-main' }
             agent {
-                docker { image 'node:20-alpine'; reuseNode true; args '-e HOME=/tmp' }
+                docker { image 'node:20-alpine'; reuseNode true; args '-e HOME=/tmp -v npm-cache:/tmp/.npm' }
             }
             steps {
                 echo "Building Production React App..."
