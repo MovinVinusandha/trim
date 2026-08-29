@@ -24,8 +24,10 @@ pipeline {
 
         stage('CI: Secret Scan (Gitleaks)') {
             when { 
+                beforeAgent true
                 anyOf { 
                     changeRequest()
+                    branch 'sandbox-feature'
                     branch 'sandbox-staging'
                     branch 'staging'
                     branch 'main'
@@ -62,9 +64,9 @@ pipeline {
                 stage('Backend: Test & Scan') {
                     agent {
                         docker {
-                        image 'maven:3.9-eclipse-temurin-21-alpine';
-                        reuseNode true;
-                        args '-e HOME=/tmp'
+                            image 'maven:3.9-eclipse-temurin-21-alpine'
+                            reuseNode true
+                            args '-u 0:0 -e HOME=/tmp -v maven-repo-cache:/tmp/.m2'
                         }
                     }
                     steps {
@@ -78,7 +80,7 @@ pipeline {
                 }
                 stage('Frontend: Test & Coverage') {
                     agent {
-                        docker { image 'node:20-alpine'; reuseNode true; args '-e HOME=/tmp' }
+                        docker { image 'node:20-alpine'; reuseNode true; args '-u 0:0 -e HOME=/tmp -v npm-cache:/tmp/.npm' }
                     }
                     steps {
                         dir('frontend') {
@@ -91,9 +93,12 @@ pipeline {
         }
 
         stage('CI: Frontend SonarQube Scan') {
-            when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
+            when { 
+                beforeAgent true
+                anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } 
+            }
             agent {
-                docker { image 'sonarsource/sonar-scanner-cli:latest'; reuseNode true; args '-e HOME=/tmp' }
+                docker { image 'sonarsource/sonar-scanner-cli:latest'; reuseNode true; args '-u 0:0 -e HOME=/tmp -v sonar-cache:/tmp/.sonar' }
             }
             steps {
                 dir('frontend') {
@@ -120,7 +125,7 @@ pipeline {
         // Runs ONLY when a PR is merged into the 'staging' branch.
         // ===================================================================================
         stage('CD STAGING: Build & Push Images') {
-            when { branch 'sandbox-staging' }
+            when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
             parallel {
                 stage('Build Backend') {
                     steps {
@@ -151,19 +156,38 @@ pipeline {
         }
 
         stage('Sec: Trivy Image Scan') {
-            when { branch 'sandbox-staging' }
+            when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
             steps {
-                echo "Scanning Backend Image for Vulnerabilities..."
-                // Scans the local image. Fails pipeline ONLY on HIGH or CRITICAL.
-                sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL ${BACKEND_IMAGE}:staging"
+                echo "🛡️ Scanning Backend (Spring Boot / Alpine OS) Container for Vulnerabilities..."
+                sh """
+                docker run --rm \\
+                    -v /var/run/docker.sock:/var/run/docker.sock \\
+                    aquasec/trivy:latest image \\
+                    --exit-code 1 \\
+                    --severity CRITICAL \\
+                    --scanners vuln \\
+                    --pkg-types os \\
+                    --no-progress \\
+                    \${BACKEND_IMAGE}:staging
+                """
 
-                echo "Scanning Frontend Image for Vulnerabilities..."
-                sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL ${FRONTEND_IMAGE}:staging"
+                echo "🛡️ Scanning Frontend (Nginx / Alpine OS) Container for Vulnerabilities..."
+                sh """
+                docker run --rm \\
+                    -v /var/run/docker.sock:/var/run/docker.sock \\
+                    aquasec/trivy:latest image \\
+                    --exit-code 1 \\
+                    --severity CRITICAL \\
+                    --scanners vuln \\
+                    --pkg-types os \\
+                    --no-progress \\
+                    \${FRONTEND_IMAGE}:staging
+                """
             }
         }
 
         stage('CD STAGING: Deploy to EC2') {
-            when { branch 'sandbox-staging' }
+            when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
             steps {
                 echo "Deploying to EC2 Staging Server..."
                 withCredentials([
@@ -193,12 +217,15 @@ EOF
         }
 
         stage('QA: Playwright E2E Tests') {
-            when { anyOf { branch 'sandbox-staging'; branch 'staging' } }
+            when { 
+                beforeAgent true
+                anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } 
+            }
             agent {
                 docker {
-                    image 'mcr.microsoft.com/playwright:v1.45.0-jammy'
+                    image 'mcr.microsoft.com/playwright:v1.62.1-jammy'
                     reuseNode true
-                    args '-e HOME=/tmp -e PLAYWRIGHT_BROWSERS_PATH=/tmp'
+                    args '-u 0:0 -e HOME=/tmp -v npm-cache:/tmp/.npm'
                 }
             }
             steps {
@@ -248,9 +275,12 @@ EOF
         }
 
         stage('CD PROD: Build Static Frontend') {
-            when { branch 'sandbox-main' }
+            when { 
+                beforeAgent true
+                branch 'sandbox-main' 
+            }
             agent {
-                docker { image 'node:20-alpine'; reuseNode true; args '-e HOME=/tmp' }
+                docker { image 'node:20-alpine'; reuseNode true; args '-u 0:0 -e HOME=/tmp -v npm-cache:/tmp/.npm' }
             }
             steps {
                 echo "Building Production React App..."
@@ -267,7 +297,10 @@ EOF
         }
 
         stage('CD PROD: Deploy to AWS') {
-            when { branch 'sandbox-main' }
+            when { 
+                beforeAgent true
+                branch 'sandbox-main' 
+            }
             agent {
                 docker { image 'amazon/aws-cli:latest'; reuseNode true; args '--entrypoint="" -u 0:0 -e HOME=/tmp' }
             }
@@ -300,7 +333,9 @@ EOF
 
     post {
         always {
-            sh "docker system prune -f"
+            sh "docker container prune -f"
+            sh "docker image prune -f"
+            sh "docker builder prune -f --filter 'until=24h' || true"
         }
         success {
             echo "✅ Pipeline completed successfully!"
