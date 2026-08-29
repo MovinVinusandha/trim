@@ -22,6 +22,30 @@ pipeline {
             steps { checkout scm }
         }
 
+        stage('CI: Secret Scan (Gitleaks)') {
+            when { 
+                anyOf { 
+                    changeRequest()
+                    branch 'sandbox-staging'
+                    branch 'staging'
+                    branch 'main'
+                }
+            }
+            agent {
+                docker {
+                    image 'zricethezav/gitleaks:latest'
+                    reuseNode true
+                    args '--entrypoint=""' // Required so Jenkins can run 'sh'
+                }
+            }
+            steps {
+                echo "Scanning repository for hardcoded secrets, AWS keys, and passwords..."
+                // --redact hides the actual secret in the Jenkins logs. -v gives verbose output.
+                sh 'gitleaks detect --source . -v --redact'
+                echo "No secrets found! Repository is clean."
+            }
+        }
+
         // ===================================================================================
         // 🛡️ CI: CODE QUALITY & TESTING 
         // Runs on ANY Pull Request, AND when code is merged into staging or main.
@@ -126,6 +150,18 @@ pipeline {
             }
         }
 
+        stage('Sec: Trivy Image Scan') {
+            when { branch 'sandbox-staging' }
+            steps {
+                echo "Scanning Backend Image for Vulnerabilities..."
+                // Scans the local image. Fails pipeline ONLY on HIGH or CRITICAL.
+                sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL ${BACKEND_IMAGE}:staging"
+
+                echo "Scanning Frontend Image for Vulnerabilities..."
+                sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL ${FRONTEND_IMAGE}:staging"
+            }
+        }
+
         stage('CD STAGING: Deploy to EC2') {
             when { branch 'sandbox-staging' }
             steps {
@@ -152,6 +188,28 @@ docker compose pull
 docker compose up -d --build
 EOF
                     """
+                }
+            }
+        }
+
+        stage('QA: Playwright E2E Tests') {
+            when { anyOf { branch 'sandbox-staging'; branch 'staging' } }
+            agent {
+                docker {
+                    image 'mcr.microsoft.com/playwright:v1.45.0-jammy'
+                    reuseNode true
+                    args '-e HOME=/tmp -e PLAYWRIGHT_BROWSERS_PATH=/tmp'
+                }
+            }
+            steps {
+                echo "Waiting 15 seconds for Staging EC2 Containers to boot up..."
+                sleep time: 15, unit: 'SECONDS'
+                
+                echo "Running Playwright E2E Robot against Staging URL..."
+                dir('frontend') { // Use your exact frontend folder name
+                    sh 'npm ci'
+                    // Pass the real Staging URL to the robot
+                    sh 'PLAYWRIGHT_BASE_URL=http://trim-s.movinvinusandha.me npx playwright test'
                 }
             }
         }
@@ -229,7 +287,12 @@ EOF
                     sh "aws cloudfront create-invalidation --distribution-id \${MARKETING_DIST_ID} --paths '/*'"
 
                     echo "Deploying Backend to ECS Fargate (Zero-Downtime Update)..."
+                    // 1. Tell AWS to start the deployment
                     sh "aws ecs update-service --cluster trim-prod-cluster --service trim-prod-service --force-new-deployment --region ${AWS_REGION}"
+
+                    echo "Waiting for AWS Health Checks to pass and old containers to drain..."
+                    // 2. FORCE JENKINS TO WAIT. If the container crashes, this command fails, and Jenkins turns RED!
+                    sh "aws ecs wait services-stable --cluster trim-prod-cluster --services trim-prod-service --region ${AWS_REGION}"
                 }
             }
         }
