@@ -153,14 +153,20 @@ pipeline {
         stage('Sec: Trivy Image Scan') {
             when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
             steps {
+                echo "Pruning build cache to free up disk space on root volume..."
+                sh "docker builder prune -af --filter 'until=1h' || true"
+                sh "docker image prune -f || true"
+
+                // Create dedicated on-disk volumes for cache & temp
                 sh 'docker volume create trivy-cache || true'
+                sh 'docker volume create trivy-tmp || true'
 
                 echo "Scanning Backend (Spring Boot) Image for Vulnerabilities..."
                 sh """
                 docker run --rm \\
                     -v /var/run/docker.sock:/var/run/docker.sock \\
                     -v trivy-cache:/root/.cache \\
-                    -v /tmp:/tmp \\
+                    -v trivy-tmp:/tmp \\
                     aquasec/trivy:latest image \\
                     --exit-code 1 \\
                     --severity HIGH,CRITICAL \\
@@ -175,7 +181,7 @@ pipeline {
                 docker run --rm \\
                     -v /var/run/docker.sock:/var/run/docker.sock \\
                     -v trivy-cache:/root/.cache \\
-                    -v /tmp:/tmp \\
+                    -v trivy-tmp:/tmp \\
                     aquasec/trivy:latest image \\
                     --exit-code 1 \\
                     --severity HIGH,CRITICAL \\
