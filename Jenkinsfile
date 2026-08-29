@@ -287,7 +287,12 @@ EOF
                     sh "aws cloudfront create-invalidation --distribution-id \${MARKETING_DIST_ID} --paths '/*'"
 
                     echo "Deploying Backend to ECS Fargate (Zero-Downtime Update)..."
+                    // 1. Tell AWS to start the deployment
                     sh "aws ecs update-service --cluster trim-prod-cluster --service trim-prod-service --force-new-deployment --region ${AWS_REGION}"
+
+                    echo "Waiting for AWS Health Checks to pass and old containers to drain..."
+                    // 2. FORCE JENKINS TO WAIT. If the container crashes, this command fails, and Jenkins turns RED!
+                    sh "aws ecs wait services-stable --cluster trim-prod-cluster --services trim-prod-service --region ${AWS_REGION}"
                 }
             }
         }
