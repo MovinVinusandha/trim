@@ -126,6 +126,18 @@ pipeline {
             }
         }
 
+        stage('Sec: Trivy Image Scan') {
+            when { branch 'sandbox-staging' }
+            steps {
+                echo "Scanning Backend Image for Vulnerabilities..."
+                // Scans the local image. Fails pipeline ONLY on HIGH or CRITICAL.
+                sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL ${BACKEND_IMAGE}:staging"
+
+                echo "Scanning Frontend Image for Vulnerabilities..."
+                sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL ${FRONTEND_IMAGE}:staging"
+            }
+        }
+
         stage('CD STAGING: Deploy to EC2') {
             when { branch 'sandbox-staging' }
             steps {
@@ -152,6 +164,28 @@ docker compose pull
 docker compose up -d --build
 EOF
                     """
+                }
+            }
+        }
+
+        stage('QA: Playwright E2E Tests') {
+            when { anyOf { branch 'sandbox-staging'; branch 'staging' } }
+            agent {
+                docker {
+                    image 'mcr.microsoft.com/playwright:v1.45.0-jammy'
+                    reuseNode true
+                    args '-e HOME=/tmp -e PLAYWRIGHT_BROWSERS_PATH=/tmp'
+                }
+            }
+            steps {
+                echo "Waiting 15 seconds for Staging EC2 Containers to boot up..."
+                sleep time: 15, unit: 'SECONDS'
+                
+                echo "Running Playwright E2E Robot against Staging URL..."
+                dir('frontend') { // Use your exact frontend folder name
+                    sh 'npm ci'
+                    // Pass the real Staging URL to the robot
+                    sh 'PLAYWRIGHT_BASE_URL=http://trim-s.movinvinusandha.me npx playwright test'
                 }
             }
         }
