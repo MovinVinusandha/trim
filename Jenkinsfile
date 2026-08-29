@@ -120,7 +120,7 @@ pipeline {
         // Runs ONLY when a PR is merged into the 'staging' branch.
         // ===================================================================================
         stage('CD STAGING: Build & Push Images') {
-            when { branch 'sandbox-staging' }
+            when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
             parallel {
                 stage('Build Backend') {
                     steps {
@@ -151,7 +151,7 @@ pipeline {
         }
 
         stage('Sec: Trivy Image Scan') {
-            when { branch 'sandbox-staging' }
+            when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
             steps {
                 echo "Scanning Backend Image for Vulnerabilities..."
                 // Scans the local image. Fails pipeline ONLY on HIGH or CRITICAL.
@@ -163,7 +163,7 @@ pipeline {
         }
 
         stage('CD STAGING: Deploy to EC2') {
-            when { branch 'sandbox-staging' }
+            when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
             steps {
                 echo "Deploying to EC2 Staging Server..."
                 withCredentials([
@@ -193,7 +193,7 @@ EOF
         }
 
         stage('QA: Playwright E2E Tests') {
-            when { anyOf { branch 'sandbox-staging'; branch 'staging' } }
+            when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
             agent {
                 docker {
                     image 'mcr.microsoft.com/playwright:v1.45.0-jammy'
