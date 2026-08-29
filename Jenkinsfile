@@ -153,12 +153,37 @@ pipeline {
         stage('Sec: Trivy Image Scan') {
             when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
             steps {
-                echo "Scanning Backend Image for Vulnerabilities..."
-                // Scans the local image. Fails pipeline ONLY on HIGH or CRITICAL.
-                sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL ${BACKEND_IMAGE}:staging"
+                sh 'docker volume create trivy-cache || true'
 
-                echo "Scanning Frontend Image for Vulnerabilities..."
-                sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL ${FRONTEND_IMAGE}:staging"
+                echo "Scanning Backend (Spring Boot) Image for Vulnerabilities..."
+                sh """
+                docker run --rm \\
+                    -v /var/run/docker.sock:/var/run/docker.sock \\
+                    -v trivy-cache:/root/.cache \\
+                    -v /tmp:/tmp \\
+                    aquasec/trivy:latest image \\
+                    --exit-code 1 \\
+                    --severity HIGH,CRITICAL \\
+                    --scanners vuln \\
+                    --pkg-types os,library \\
+                    --no-progress \\
+                    \${BACKEND_IMAGE}:staging
+                """
+
+                echo "Scanning Frontend (Nginx/React) Image for Vulnerabilities..."
+                sh """
+                docker run --rm \\
+                    -v /var/run/docker.sock:/var/run/docker.sock \\
+                    -v trivy-cache:/root/.cache \\
+                    -v /tmp:/tmp \\
+                    aquasec/trivy:latest image \\
+                    --exit-code 1 \\
+                    --severity HIGH,CRITICAL \\
+                    --scanners vuln \\
+                    --pkg-types os \\
+                    --no-progress \\
+                    \${FRONTEND_IMAGE}:staging
+                """
             }
         }
 
@@ -300,7 +325,9 @@ EOF
 
     post {
         always {
-            sh "docker system prune -f"
+            sh "docker container prune -f"
+            sh "docker image prune -f"
+            sh "docker builder prune -f --filter 'until=24h' || true"
         }
         success {
             echo "✅ Pipeline completed successfully!"
