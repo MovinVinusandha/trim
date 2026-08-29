@@ -215,9 +215,9 @@ EOF
             when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
             agent {
                 docker {
-                    image 'mcr.microsoft.com/playwright:v1.45.0-jammy'
+                    image 'mcr.microsoft.com/playwright:v1.62.1-jammy'
                     reuseNode true
-                    args '-u 0:0 -e HOME=/tmp -e PLAYWRIGHT_BROWSERS_PATH=/tmp -v npm-cache:/tmp/.npm'
+                    args '-u 0:0 -e HOME=/tmp -v npm-cache:/tmp/.npm'
                 }
             }
             steps {
