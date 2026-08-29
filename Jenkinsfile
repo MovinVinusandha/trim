@@ -22,6 +22,30 @@ pipeline {
             steps { checkout scm }
         }
 
+        stage('CI: Secret Scan (Gitleaks)') {
+            when { 
+                anyOf { 
+                    changeRequest()
+                    branch 'sandbox-staging'
+                    branch 'staging'
+                    branch 'main'
+                }
+            }
+            agent {
+                docker {
+                    image 'zricethezav/gitleaks:latest'
+                    reuseNode true
+                    args '--entrypoint=""' // Required so Jenkins can run 'sh'
+                }
+            }
+            steps {
+                echo "Scanning repository for hardcoded secrets, AWS keys, and passwords..."
+                // --redact hides the actual secret in the Jenkins logs. -v gives verbose output.
+                sh 'gitleaks detect --source . -v --redact'
+                echo "No secrets found! Repository is clean."
+            }
+        }
+
         // ===================================================================================
         // 🛡️ CI: CODE QUALITY & TESTING 
         // Runs on ANY Pull Request, AND when code is merged into staging or main.
