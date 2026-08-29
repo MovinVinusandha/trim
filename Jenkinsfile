@@ -24,8 +24,10 @@ pipeline {
 
         stage('CI: Secret Scan (Gitleaks)') {
             when { 
+                beforeAgent true
                 anyOf { 
                     changeRequest()
+                    branch 'sandbox-feature'
                     branch 'sandbox-staging'
                     branch 'staging'
                     branch 'main'
@@ -91,7 +93,10 @@ pipeline {
         }
 
         stage('CI: Frontend SonarQube Scan') {
-            when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
+            when { 
+                beforeAgent true
+                anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } 
+            }
             agent {
                 docker { image 'sonarsource/sonar-scanner-cli:latest'; reuseNode true; args '-u 0:0 -e HOME=/tmp -v sonar-cache:/tmp/.sonar' }
             }
@@ -212,7 +217,10 @@ EOF
         }
 
         stage('QA: Playwright E2E Tests') {
-            when { anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } }
+            when { 
+                beforeAgent true
+                anyOf { changeRequest(); branch 'sandbox-staging'; branch 'sandbox-feature' } 
+            }
             agent {
                 docker {
                     image 'mcr.microsoft.com/playwright:v1.62.1-jammy'
@@ -267,7 +275,10 @@ EOF
         }
 
         stage('CD PROD: Build Static Frontend') {
-            when { branch 'sandbox-main' }
+            when { 
+                beforeAgent true
+                branch 'sandbox-main' 
+            }
             agent {
                 docker { image 'node:20-alpine'; reuseNode true; args '-u 0:0 -e HOME=/tmp -v npm-cache:/tmp/.npm' }
             }
@@ -286,7 +297,10 @@ EOF
         }
 
         stage('CD PROD: Deploy to AWS') {
-            when { branch 'sandbox-main' }
+            when { 
+                beforeAgent true
+                branch 'sandbox-main' 
+            }
             agent {
                 docker { image 'amazon/aws-cli:latest'; reuseNode true; args '--entrypoint="" -u 0:0 -e HOME=/tmp' }
             }
