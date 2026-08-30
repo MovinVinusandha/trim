@@ -28,7 +28,7 @@ interface AnalyticsData {
   clicksByBrowser: { browser: string; count: number }[];
 }
 
-const COLORS = ['#8b5cf6', '#a78bfa', '#c4b5fd', '#6d28d9', '#4c1d95'];
+const COLORS = ['#0099ff', '#38bdf8', '#0ea5e9', '#0284c7', '#0369a1'];
 
 const extractHash = (shortUrl: string): string =>
   shortUrl.split('/').pop() ?? shortUrl;
@@ -954,11 +954,11 @@ const AnalyticsPage: React.FC = () => {
                     <Area 
                       type="monotone" 
                       dataKey="count" 
-                      stroke="#8b5cf6" 
+                      stroke="#0099ff" 
                       strokeWidth={2} 
                       fillOpacity={1} 
                       fill="url(#colorClicks)" 
-                      activeDot={{ r: 5, fill: '#ffffff', stroke: '#8b5cf6', strokeWidth: 2 }} 
+                      activeDot={{ r: 5, fill: '#ffffff', stroke: '#0099ff', strokeWidth: 2 }} 
                     />
                   </AreaChart>
                 </ResponsiveContainer>

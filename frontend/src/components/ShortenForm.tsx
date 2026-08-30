@@ -33,12 +33,12 @@ const ShortenForm: React.FC<Props> = ({ onShorten }) => {
   return (
     <div className="card p-6 animate-slide-up">
       <div className="flex items-center gap-3 mb-5">
-        <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+        <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+          <Sparkles className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h2 className="text-slate-900 dark:text-white font-semibold">Shorten a URL</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
+          <h2 className="text-foreground font-semibold">Shorten a URL</h2>
+          <p className="text-muted-foreground text-xs mt-0.5">
             Paste a long URL and get a short link instantly
           </p>
         </div>

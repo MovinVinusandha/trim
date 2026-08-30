@@ -67,7 +67,7 @@ const formatExpiration = (expiresAt: string | null | undefined, isActive: boolea
     timeStr = `In ${diffMins} min${diffMins > 1 ? 's' : ''}`;
   }
   
-  return <span className="text-violet-600 bg-violet-100 dark:text-violet-300 dark:bg-violet-500/20 px-2 py-1 rounded-md text-xs font-medium">{timeStr}</span>;
+  return <span className="text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md text-xs font-medium">{timeStr}</span>;
 };
 
 const UrlTable: React.FC<Props> = ({ urls, onDeleted,  onOpenQr,
@@ -113,11 +113,11 @@ const UrlTable: React.FC<Props> = ({ urls, onDeleted,  onOpenQr,
   if (!urls || urls.length === 0) {
     return (
       <div className="card p-12 flex flex-col items-center justify-center animate-slide-up">
-        <div className="w-16 h-16 bg-slate-100 dark:bg-[#2B2B30] rounded-full flex items-center justify-center mb-4">
-          <Link2 className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+        <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mb-4">
+          <Link2 className="w-8 h-8 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No links yet</h3>
-        <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm text-center">
+        <h3 className="text-lg font-semibold text-foreground mb-2">No links yet</h3>
+        <p className="text-muted-foreground text-sm max-w-sm text-center">
           Shorten your first URL above and it will appear here automatically.
         </p>
       </div>
@@ -128,32 +128,32 @@ const UrlTable: React.FC<Props> = ({ urls, onDeleted,  onOpenQr,
     <div className="w-full">
       {/* Table header controls are now managed by DashboardPage natively, but we keep error display */}
       {deleteError && (
-        <div className="mb-4 flex items-start gap-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-3 animate-fade-in">
-          <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400 mt-0.5 flex-shrink-0" />
-          <p className="text-red-600 dark:text-red-400 text-sm">{deleteError}</p>
+        <div className="mb-4 flex items-start gap-3 bg-rose-500/10 border border-rose-500/30 rounded-xl p-3 animate-fade-in">
+          <AlertCircle className="w-4 h-4 text-rose-500 mt-0.5 flex-shrink-0" />
+          <p className="text-rose-500 text-sm">{deleteError}</p>
         </div>
       )}
 
-      <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm overflow-hidden flex flex-col gap-0 divide-y divide-gray-200 dark:divide-slate-800">
+      <div className="bg-card border border-border rounded-lg shadow-sm overflow-hidden flex flex-col gap-0 divide-y divide-border">
         {sortedWithIndex.map(({ entry, originalIndex }) => (
-          <div key={`${entry.shortUrl}-${originalIndex}`} className="px-3 py-2 hover:bg-gray-50 dark:hover:bg-[#2B2B30]/50 transition-colors group flex items-center justify-between">
+          <div key={`${entry.shortUrl}-${originalIndex}`} className="px-3 py-2 hover:bg-secondary/40 transition-colors group flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-6 h-6 rounded-full border border-gray-200 dark:border-[#2B2B30] flex items-center justify-center bg-white shrink-0 overflow-hidden shadow-sm">
+              <div className="w-6 h-6 rounded-full border border-border flex items-center justify-center bg-card shrink-0 overflow-hidden shadow-sm">
                 {/* Fallback globe icon for generic URLs */}
-                <Globe className="w-3.5 h-3.5 text-slate-400" />
+                <Globe className="w-3.5 h-3.5 text-muted-foreground" />
               </div>
               <div className="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
                 <div className="flex items-center gap-2">
-                  <a href={`${window.location.origin}/${extractHash(entry.shortUrl)}`} target="_blank" rel="noreferrer" className="font-medium text-sm text-gray-900 dark:text-slate-100 hover:underline truncate">
+                  <a href={`${window.location.origin}/${extractHash(entry.shortUrl)}`} target="_blank" rel="noreferrer" className="font-medium text-sm text-foreground hover:underline truncate">
                     {`${window.location.host}/${extractHash(entry.shortUrl)}`}
                   </a>
-                  <button onClick={() => copyToClipboard(`${window.location.origin}/${extractHash(entry.shortUrl)}`, originalIndex)} className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" title="Copy">
+                  <button onClick={() => copyToClipboard(`${window.location.origin}/${extractHash(entry.shortUrl)}`, originalIndex)} className="text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity" title="Copy">
                     {copied === originalIndex ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
                   </button>
-                  {entry.hasPassword && <Lock className="w-3 h-3 text-violet-500 shrink-0" title="Password Protected" />}
+                  {entry.hasPassword && <Lock className="w-3 h-3 text-primary shrink-0" title="Password Protected" />}
                 </div>
                 
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400 truncate flex-1">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground truncate flex-1">
                   <ArrowRight className="w-3 h-3 shrink-0 hidden sm:block" />
                   <span className="truncate" title={entry.longUrl}>{entry.longUrl}</span>
                   
@@ -179,28 +179,28 @@ const UrlTable: React.FC<Props> = ({ urls, onDeleted,  onOpenQr,
             </div>
             
             <div className="flex items-center gap-2 shrink-0 ml-3">
-              <Link to={`/analytics/${extractHash(entry.shortUrl)}`} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-50 dark:bg-[#2B2B30] border border-gray-200 dark:border-[#2B2B30] text-xs font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors shadow-sm">
-                <BarChart2 className="w-3 h-3 text-violet-500" />
+              <Link to={`/analytics/${extractHash(entry.shortUrl)}`} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-secondary border border-border text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors shadow-sm">
+                <BarChart2 className="w-3 h-3 text-primary" />
                 {entry.accessed_times ?? 0} clicks
               </Link>
               
               <div className="flex items-center lg:opacity-0 lg:group-hover:opacity-100 transition-opacity gap-1">
                 {deleteConfirm === originalIndex ? (
                   <div className="flex items-center gap-1">
-                    <button onClick={() => handleDelete(originalIndex)} disabled={deleting === originalIndex} className="px-2 py-1 bg-red-100 text-red-600 rounded text-xs font-medium hover:bg-red-200">
+                    <button onClick={() => handleDelete(originalIndex)} disabled={deleting === originalIndex} className="px-2 py-1 bg-red-100 dark:bg-rose-500/20 text-red-600 dark:text-rose-400 rounded text-xs font-medium hover:bg-red-200">
                       {deleting === originalIndex ? '...' : 'Yes'}
                     </button>
-                    <button onClick={() => setDeleteConfirm(null)} className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-medium hover:bg-slate-200">No</button>
+                    <button onClick={() => setDeleteConfirm(null)} className="px-2 py-1 bg-secondary text-foreground rounded text-xs font-medium hover:bg-secondary/80">No</button>
                   </div>
                 ) : (
                   <>
-                    <button onClick={() => onOpenQr && onOpenQr(extractHash(entry.shortUrl))} className="p-1 text-gray-400 hover:text-gray-900 dark:hover:text-slate-300 rounded hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors" title="QR Code">
+                    <button onClick={() => onOpenQr && onOpenQr(extractHash(entry.shortUrl))} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-secondary transition-colors" title="QR Code">
                       <QrCode className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => { if (onEdit) onEdit(originalIndex); }} className="p-1 text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 rounded hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors" title="Edit">
+                    <button onClick={() => { if (onEdit) onEdit(originalIndex); }} className="p-1 text-muted-foreground hover:text-primary rounded hover:bg-secondary transition-colors" title="Edit">
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => setDeleteConfirm(originalIndex)} className="p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors" title="Delete">
+                    <button onClick={() => setDeleteConfirm(originalIndex)} className="p-1 text-muted-foreground hover:text-rose-500 rounded hover:bg-secondary transition-colors" title="Delete">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </>

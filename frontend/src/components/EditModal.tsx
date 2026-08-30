@@ -56,14 +56,14 @@ const EditModal: React.FC<Props> = ({ entry, onClose, onUpdated }) => {
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 flex items-center justify-center">
-              <Link2 className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+            <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <Link2 className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-slate-900 dark:text-white font-semibold">Edit URL</h2>
-              <p className="text-slate-400 dark:text-slate-400 text-xs mt-0.5">
+              <h2 className="text-foreground font-semibold">Edit URL</h2>
+              <p className="text-muted-foreground text-xs mt-0.5">
                 Hash:{' '}
-                <code className="text-violet-600 dark:text-violet-400 font-mono">
+                <code className="text-primary font-mono">
                   {extractHash(entry.shortUrl)}
                 </code>
               </p>
@@ -72,20 +72,20 @@ const EditModal: React.FC<Props> = ({ entry, onClose, onUpdated }) => {
           <button
             id="edit-modal-close"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2B2B30]"
+            className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-secondary"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Current short URL reference */}
-        <div className="mb-5 p-3 bg-slate-50 dark:bg-[#2B2B30]/60 border border-slate-200 dark:border-[#2B2B30]/60 rounded-xl">
-          <p className="text-slate-400 text-xs mb-1 font-medium">Short URL</p>
+        <div className="mb-5 p-3 bg-secondary/50 border border-border rounded-xl">
+          <p className="text-muted-foreground text-xs mb-1 font-medium">Short URL</p>
           <a
             href={`${window.location.origin}/${extractHash(entry.shortUrl)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 text-sm break-all transition-colors"
+            className="text-primary hover:underline text-sm break-all transition-colors"
           >
             {`${window.location.host}/${extractHash(entry.shortUrl)}`}
           </a>
