@@ -5,8 +5,8 @@ import com.url_shortener.url_shortener.users.User;
 import com.url_shortener.url_shortener.users.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.web.servlet.MockMvc;
@@ -83,6 +83,20 @@ class AnalyticsControllerTest {
     }
 
     @Test
+    void getFolderAnalytics_Success() throws Exception {
+        User currentUser = User.builder().id(1L).build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(currentUser));
+
+        AnalyticsResponseDto responseDto = new AnalyticsResponseDto(80L, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        when(analyticsService.getFolderAnalytics(eq(10L), eq(currentUser), eq("all"), eq(null), eq(null))).thenReturn(responseDto);
+
+        mockMvc.perform(get("/analytics/folder/10")
+                .principal(new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalClicks").value(80));
+    }
+
+    @Test
     void getFolderAnalyticsBySlug_Success() throws Exception {
         User currentUser = User.builder().id(1L).build();
         when(userRepository.findById(1L)).thenReturn(Optional.of(currentUser));
@@ -94,5 +108,20 @@ class AnalyticsControllerTest {
                 .principal(new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalClicks").value(120));
+    }
+
+    @Test
+    void getUserUsageStats_Success() throws Exception {
+        User currentUser = User.builder().id(1L).build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(currentUser));
+
+        UserUsageStatsDto statsDto = UserUsageStatsDto.builder().totalLinks(5L).totalClicks(100L).build();
+        when(analyticsService.getUserUsageStats(eq(currentUser))).thenReturn(statsDto);
+
+        mockMvc.perform(get("/analytics/usage")
+                .principal(new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalLinks").value(5))
+                .andExpect(jsonPath("$.totalClicks").value(100));
     }
 }

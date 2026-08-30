@@ -3,6 +3,7 @@ package com.url_shortener.url_shortener.analytics;
 import nl.basjes.parse.useragent.UserAgentAnalyzer;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -56,5 +57,39 @@ class UserAgentParserServiceTest {
 
         var botResult = parserService.parse("Googlebot/2.1 (+http://www.google.com/bot.html)");
         assertThat(botResult.device()).isEqualTo("Bot");
+    }
+
+    @Test
+    void normalizeDevice_AllBranches() {
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeDevice", (Object) null)).isEqualTo("Unknown");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeDevice", "Laptop")).isEqualTo("Desktop");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeDevice", "Desktop")).isEqualTo("Desktop");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeDevice", "Phone")).isEqualTo("Mobile");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeDevice", "Mobile")).isEqualTo("Mobile");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeDevice", "Tablet")).isEqualTo("Tablet");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeDevice", "Robot")).isEqualTo("Bot");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeDevice", "Robot Mobile")).isEqualTo("Bot");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeDevice", "Robot Tablet")).isEqualTo("Bot");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeDevice", "Spy")).isEqualTo("Bot");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeDevice", "Hacker")).isEqualTo("Bot");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeDevice", "Anonymized")).isEqualTo("Bot");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeDevice", "Unknown")).isEqualTo("Unknown");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeDevice", "???")).isEqualTo("Unknown");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeDevice", "Watch")).isEqualTo("Watch");
+    }
+
+    @Test
+    void normalizeField_AllBranches() {
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeField", (Object) null)).isEqualTo("Unknown");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeField", "???")).isEqualTo("Unknown");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "normalizeField", "Chrome")).isEqualTo("Chrome");
+    }
+
+    @Test
+    void abbreviate_AllBranches() {
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "abbreviate", (Object) null)).isEqualTo("null");
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "abbreviate", "short")).isEqualTo("short");
+        String longStr = "a".repeat(100);
+        assertThat((String) ReflectionTestUtils.invokeMethod(parserService, "abbreviate", longStr)).isEqualTo("a".repeat(80) + "...");
     }
 }

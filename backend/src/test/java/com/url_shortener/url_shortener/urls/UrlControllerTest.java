@@ -4,20 +4,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.url_shortener.url_shortener.analytics.AnalyticsService;
 import com.url_shortener.url_shortener.users.User;
 import com.url_shortener.url_shortener.users.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigInteger;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -47,8 +51,16 @@ class UrlControllerTest {
     @MockBean
     private com.url_shortener.url_shortener.auth.JwtService jwtService;
 
+    @Autowired
+    private UrlController urlController;
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
-    void generateShortUrl_Success() throws Exception {
+    void generateShortUrl_Success_Anonymous() throws Exception {
         UrlRequest request = new UrlRequest("https://example.com", null, null, null, null, null);
         UrlSend urlSend = new UrlSend("https://example.com", "hash123", null, null, true, false, null, null, null);
         when(urlService.generateShortUrl(any(UrlRequest.class))).thenReturn(urlSend);
@@ -59,6 +71,41 @@ class UrlControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.shortUrl").value("hash123"))
                 .andExpect(jsonPath("$.longUrl").value("https://example.com"));
+    }
+
+    @Test
+    void generateShortUrl_WithCustomAlias_Unauthenticated_ThrowsAccessDenied() {
+        UrlRequest request = new UrlRequest("https://example.com", "my-alias", null, null, null, null);
+
+        assertThatThrownBy(() -> urlController.generateShortUrl(request))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("You must be logged in to use a custom alias");
+    }
+
+    @Test
+    void generateShortUrl_WithExpiresAt_Unauthenticated_ThrowsAccessDenied() {
+        UrlRequest request = new UrlRequest("https://example.com", null, LocalDateTime.now().plusDays(1), null, null, null);
+
+        assertThatThrownBy(() -> urlController.generateShortUrl(request))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("You must be logged in to set an expiration date");
+    }
+
+    @Test
+    void generateShortUrl_WithCustomAliasAndExpiresAt_Authenticated_Success() throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())
+        );
+
+        UrlRequest request = new UrlRequest("https://example.com", "my-alias", null, null, null, null);
+        UrlSend urlSend = new UrlSend("https://example.com", "my-alias", null, null, true, false, null, null, null);
+        when(urlService.generateShortUrl(any(UrlRequest.class))).thenReturn(urlSend);
+
+        mockMvc.perform(post("/shorten")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.shortUrl").value("my-alias"));
     }
 
     @Test
@@ -85,6 +132,18 @@ class UrlControllerTest {
                 .andExpect(header().string("Location", "https://example.com"));
 
         verify(analyticsService).trackClick("hash123", "Mozilla/5.0", "198.51.100.1");
+    }
+
+    @Test
+    void redirectToNewUrl_Success_DirectRemoteAddr() throws Exception {
+        when(urlService.getLongUrlForRedirect("hash123")).thenReturn("https://example.com");
+
+        mockMvc.perform(get("/hash123")
+                .header("User-Agent", "Mozilla/5.0"))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", "https://example.com"));
+
+        verify(analyticsService).trackClick(eq("hash123"), eq("Mozilla/5.0"), any());
     }
 
     @Test
@@ -140,6 +199,16 @@ class UrlControllerTest {
                 .andExpect(status().isOk());
 
         verify(urlService).getAllUrls(eq(""), eq(2L), isNull(), eq("marketing-2026"), eq("example"));
+    }
+
+    @Test
+    void updateUrl_Unauthenticated_ThrowsAccessDenied() {
+        UrlUpdateRequestDto updateDto = new UrlUpdateRequestDto();
+        updateDto.setLongUrl("https://new.com");
+
+        assertThatThrownBy(() -> urlController.updateUrl("hash123", updateDto))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("You must be logged in to update a URL");
     }
 
     @Test

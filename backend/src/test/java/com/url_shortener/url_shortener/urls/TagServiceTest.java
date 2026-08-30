@@ -75,6 +75,16 @@ class TagServiceTest {
     }
 
     @Test
+    void getAllTagsForUser_AnonymousUser_ThrowsAccessDenied() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("anonymousUser", null, List.of())
+        );
+
+        assertThatThrownBy(() -> tagService.getAllTagsForUser())
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
     void getAllTagsForUser_UserNotFound_ThrowsException() {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -102,8 +112,38 @@ class TagServiceTest {
     }
 
     @Test
+    void createTag_NullColor_Success() {
+        TagRequest request = new TagRequest();
+        request.setName("PlainTag");
+        request.setColor(null);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(tagRepository.existsByNameIgnoreCaseAndUserId("PlainTag", 1L)).thenReturn(false);
+
+        Tag savedTag = Tag.builder().id(101L).name("PlainTag").color(null).user(user).build();
+        when(tagRepository.save(any(Tag.class))).thenReturn(savedTag);
+
+        TagDto dto = tagService.createTag(request);
+
+        assertThat(dto.getName()).isEqualTo("PlainTag");
+        assertThat(dto.getColor()).isNull();
+    }
+
+    @Test
     void createTag_Unauthenticated_ThrowsAccessDenied() {
         SecurityContextHolder.clearContext();
+        TagRequest request = new TagRequest();
+        request.setName("Important");
+
+        assertThatThrownBy(() -> tagService.createTag(request))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void createTag_AnonymousUser_ThrowsAccessDenied() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("anonymousUser", null, List.of())
+        );
         TagRequest request = new TagRequest();
         request.setName("Important");
 
@@ -143,6 +183,23 @@ class TagServiceTest {
     }
 
     @Test
+    void updateTag_NullColor_Success() {
+        Tag tag = Tag.builder().id(100L).name("Old Name").color("#111111").user(user).build();
+        TagRequest request = new TagRequest();
+        request.setName("Old Name");
+        request.setColor(null);
+
+        when(tagRepository.findById(100L)).thenReturn(Optional.of(tag));
+        when(tagRepository.save(tag)).thenReturn(tag);
+        when(urlRepository.countByTagsId(100L)).thenReturn(1);
+
+        TagDto result = tagService.updateTag(100L, request);
+
+        assertThat(result.getName()).isEqualTo("Old Name");
+        assertThat(result.getColor()).isNull();
+    }
+
+    @Test
     void updateTag_SameName_Success() {
         Tag tag = Tag.builder().id(100L).name("Same Name").color("#111111").user(user).build();
         TagRequest request = new TagRequest();
@@ -162,6 +219,18 @@ class TagServiceTest {
     @Test
     void updateTag_Unauthenticated_ThrowsAccessDenied() {
         SecurityContextHolder.clearContext();
+        TagRequest request = new TagRequest();
+        request.setName("New");
+
+        assertThatThrownBy(() -> tagService.updateTag(100L, request))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void updateTag_AnonymousUser_ThrowsAccessDenied() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("anonymousUser", null, List.of())
+        );
         TagRequest request = new TagRequest();
         request.setName("New");
 
@@ -220,6 +289,16 @@ class TagServiceTest {
     @Test
     void deleteTag_Unauthenticated_ThrowsAccessDenied() {
         SecurityContextHolder.clearContext();
+
+        assertThatThrownBy(() -> tagService.deleteTag(100L))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void deleteTag_AnonymousUser_ThrowsAccessDenied() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("anonymousUser", null, List.of())
+        );
 
         assertThatThrownBy(() -> tagService.deleteTag(100L))
                 .isInstanceOf(AccessDeniedException.class);

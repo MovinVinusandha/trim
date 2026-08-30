@@ -37,18 +37,21 @@ class FolderServiceTest {
         User user = User.builder().id(1L).build();
         Folder linksFolder = Folder.builder().id(10L).name("Links").slug("links").user(user).build();
         Folder workFolder = Folder.builder().id(20L).name("Work").slug("work").user(user).build();
+        Folder alphaFolder = Folder.builder().id(30L).name("Alpha").slug("alpha").user(user).build();
         Url unassignedUrl = Url.builder().id(100L).longUrl("https://unassigned.com").build();
 
-        when(folderRepository.findByUserId(1L)).thenReturn(List.of(workFolder, linksFolder));
+        when(folderRepository.findByUserId(1L)).thenReturn(List.of(workFolder, alphaFolder, linksFolder));
         when(urlRepository.findByUserIdAndFolderIsNull(1L)).thenReturn(List.of(unassignedUrl));
         when(urlRepository.countByFolderId(10L)).thenReturn(1);
         when(urlRepository.countByFolderId(20L)).thenReturn(0);
+        when(urlRepository.countByFolderId(30L)).thenReturn(0);
 
         List<FolderDto> result = folderService.getUserFolders(1L);
 
-        assertThat(result).hasSize(2);
+        assertThat(result).hasSize(3);
         assertThat(result.get(0).getName()).isEqualTo("Links");
-        assertThat(result.get(1).getName()).isEqualTo("Work");
+        assertThat(result.get(1).getName()).isEqualTo("Alpha");
+        assertThat(result.get(2).getName()).isEqualTo("Work");
         assertThat(unassignedUrl.getFolder()).isEqualTo(linksFolder);
         verify(urlRepository).saveAll(List.of(unassignedUrl));
     }
@@ -71,6 +74,19 @@ class FolderServiceTest {
         assertThat(result).hasSize(2);
         assertThat(result.get(0).getName()).isEqualTo("Links");
         verify(folderRepository).save(any(Folder.class));
+    }
+
+    @Test
+    void getUserFolders_LinksFolderMissing_UserNotFound_ReturnsEmptyLinks() {
+        Folder otherFolder = Folder.builder().id(20L).name("Archived").slug("archived").build();
+        when(folderRepository.findByUserId(1L)).thenReturn(new ArrayList<>(List.of(otherFolder)));
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+        when(urlRepository.countByFolderId(20L)).thenReturn(0);
+
+        List<FolderDto> result = folderService.getUserFolders(1L);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getName()).isEqualTo("Archived");
     }
 
     @Test

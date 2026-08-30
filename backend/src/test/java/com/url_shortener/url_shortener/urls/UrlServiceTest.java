@@ -216,6 +216,51 @@ class UrlServiceTest {
     }
 
     @Test
+    void shortenUrl_DefaultFolder_FallbackByNameAndCreation() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))
+        );
+        User user = User.builder().id(1L).build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        when(folderRepository.findByUserIdAndSlug(1L, "links")).thenReturn(Optional.empty());
+        when(folderRepository.findByNameIgnoreCaseAndUserId("Links", 1L)).thenReturn(Optional.empty());
+
+        Folder createdDefault = Folder.builder().id(20L).name("Links").slug("links").user(user).build();
+        when(folderRepository.save(any(Folder.class))).thenReturn(createdDefault);
+
+        UrlRequest request = new UrlRequest("https://example.com", null, null, null, null, null);
+        Url url = new Url();
+        url.setLongUrl("https://example.com");
+
+        when(urlMapper.toEntity(any())).thenReturn(url);
+        when(urlRepository.save(any(Url.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UrlSend expectedSend = new UrlSend("https://example.com", "HASH1", null, null, true, false, null, null, null);
+        when(urlMapper.toSendDto(any(Url.class))).thenReturn(expectedSend);
+
+        UrlSend result = urlService.generateShortUrl(request);
+
+        assertThat(result).isNotNull();
+        assertThat(url.getFolder()).isEqualTo(createdDefault);
+    }
+
+    @Test
+    void shortenUrl_ExpiredDateInPast_SetsInactive() {
+        UrlRequest request = new UrlRequest("https://example.com", null, LocalDateTime.now().minusDays(1), null, null, null);
+        Url url = new Url();
+        when(urlMapper.toEntity(any())).thenReturn(url);
+        when(urlRepository.save(any(Url.class))).thenAnswer(inv -> inv.getArgument(0));
+        UrlSend expectedSend = new UrlSend("https://example.com", "HASH1", null, null, false, false, null, null, null);
+        when(urlMapper.toSendDto(any(Url.class))).thenReturn(expectedSend);
+
+        UrlSend result = urlService.generateShortUrl(request);
+
+        assertThat(result).isNotNull();
+        assertThat(url.isActive()).isFalse();
+    }
+
+    @Test
     void getLongUrlForRedirect_Expired_ThrowsLinkExpiredException() {
         Url url = Url.builder().id(1L).shortUrl("expHash").isActive(true).expiresAt(LocalDateTime.now().minusMinutes(5)).build();
         when(urlRepository.findByShortUrl("expHash")).thenReturn(url);
@@ -395,6 +440,31 @@ class UrlServiceTest {
     }
 
     @Test
+    void updateUrl_ByUrlRequest_ExpiredInPast_SetsInactive() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(1L, null, List.of())
+        );
+        User user = User.builder().id(1L).build();
+        Url url = Url.builder().id(1L).shortUrl("oldHash").user(user).build();
+
+        when(urlRepository.findByShortUrl("oldHash")).thenReturn(url);
+        when(cacheManager.getCache("urls")).thenReturn(cache);
+
+        UrlRequest request = new UrlRequest("https://new.com", null, LocalDateTime.now().minusDays(1), null, null, null);
+        doAnswer(inv -> {
+            url.setExpiresAt(request.getExpiresAt());
+            return null;
+        }).when(urlMapper).updateUrl(any(), any());
+        UrlUpdateDto updateDto = new UrlUpdateDto("https://new.com", "oldHash", LocalDateTime.now(), null);
+        when(urlMapper.toUpdateDto(url)).thenReturn(updateDto);
+
+        UrlUpdateDto result = urlService.updateUrl(request, "oldHash");
+
+        assertThat(result).isNotNull();
+        assertThat(url.isActive()).isFalse();
+    }
+
+    @Test
     void updateUrl_ByUpdateRequestDto_Success() {
         User user = User.builder().id(1L).role(Role.USER).build();
         Url url = Url.builder().id(1L).shortUrl("hash123").user(user).isActive(true).build();
@@ -427,6 +497,45 @@ class UrlServiceTest {
     }
 
     @Test
+    void updateUrl_ByUpdateRequestDto_ClearPassword_AdminOwner() {
+        User admin = User.builder().id(99L).role(Role.ROOT).build();
+        User owner = User.builder().id(1L).role(Role.USER).build();
+        Url url = Url.builder().id(1L).shortUrl("hash123").user(owner).passwordHash("existingSecret").build();
+
+        when(urlRepository.findByShortUrl("hash123")).thenReturn(url);
+        when(urlRepository.save(any(Url.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(cacheManager.getCache("urls")).thenReturn(cache);
+
+        UrlUpdateRequestDto req = new UrlUpdateRequestDto();
+        req.setPassword(""); // Clear password
+        req.setExpiresAt(LocalDateTime.now().minusDays(1)); // In past
+
+        UrlDto mockDto = new UrlDto(BigInteger.ONE, "https://updated.com", "hash123", BigInteger.ZERO, null, null, null, false, false, null, null, null);
+        when(urlMapper.toDto(url)).thenReturn(mockDto);
+        when(clickEventRepository.countByUrl_Id(eq(1L), any(), any())).thenReturn(0L);
+
+        UrlDto result = urlService.updateUrl("hash123", req, admin);
+
+        assertThat(result).isNotNull();
+        assertThat(url.getPasswordHash()).isNull();
+        assertThat(url.isActive()).isFalse();
+    }
+
+    @Test
+    void updateUrl_ByUpdateRequestDto_Unauthorized_ThrowsAccessDenied() {
+        User user = User.builder().id(1L).role(Role.USER).build();
+        User otherUser = User.builder().id(2L).role(Role.USER).build();
+        Url url = Url.builder().id(1L).shortUrl("hash123").user(otherUser).build();
+
+        when(urlRepository.findByShortUrl("hash123")).thenReturn(url);
+
+        UrlUpdateRequestDto req = new UrlUpdateRequestDto();
+
+        assertThatThrownBy(() -> urlService.updateUrl("hash123", req, user))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
     void deleteUrl_Success() {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(1L, null, List.of())
@@ -438,5 +547,55 @@ class UrlServiceTest {
         urlService.deleteUrl("delHash");
 
         verify(urlRepository).delete(url);
+    }
+
+    @Test
+    void toDtoWithClickCountSafe_Exception_ReturnsNull() {
+        Url url = Url.builder().id(999L).build();
+        when(urlMapper.toDto(url)).thenThrow(new RuntimeException("Mapping error"));
+
+        UrlDto result = ReflectionTestUtils.invokeMethod(urlService, "toDtoWithClickCountSafe", url);
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void isUserCorrect_RootRoleAuthority_Passes() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(99L, null, List.of(new SimpleGrantedAuthority("ROLE_ROOT")))
+        );
+        User owner = User.builder().id(1L).build();
+        Url url = Url.builder().id(10L).user(owner).build();
+
+        // Should not throw
+        ReflectionTestUtils.invokeMethod(UrlService.class, "isUserCorrect", url);
+    }
+
+    @Test
+    void isUserCorrect_RootAuthorityWithoutPrefix_Passes() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(99L, null, List.of(new SimpleGrantedAuthority("ROOT")))
+        );
+        User owner = User.builder().id(1L).build();
+        Url url = Url.builder().id(10L).user(owner).build();
+
+        // Should not throw
+        ReflectionTestUtils.invokeMethod(UrlService.class, "isUserCorrect", url);
+    }
+
+    @Test
+    void isExistsShortUrl_ActiveAndExpired_Deactivates() {
+        Url url = Url.builder()
+                .id(10L)
+                .shortUrl("expiredHash")
+                .isActive(true)
+                .expiresAt(LocalDateTime.now().minusHours(2))
+                .build();
+        when(urlRepository.findByShortUrl("expiredHash")).thenReturn(url);
+
+        Url result = ReflectionTestUtils.invokeMethod(urlService, "isExistsShortUrl", "expiredHash");
+
+        assertThat(result).isNotNull();
+        assertThat(result.isActive()).isFalse();
+        verify(urlRepository).save(url);
     }
 }
