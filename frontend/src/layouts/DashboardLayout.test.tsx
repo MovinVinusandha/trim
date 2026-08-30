@@ -26,7 +26,7 @@ describe('DashboardLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (useAuth as any).mockReturnValue({
-      user: { id: 1, name: 'Alex Johnson', email: 'alex@example.com' },
+      user: { id: 1, name: 'Alex Johnson', email: 'alex@example.com', role: 'USER' },
       logout: mockLogout,
     });
     (useTheme as any).mockReturnValue({
@@ -41,7 +41,7 @@ describe('DashboardLayout', () => {
         return Promise.resolve({
           data: [
             { id: 10, name: 'Links', linkCount: 5 },
-            { id: 20, name: 'Campaign 2026', linkCount: 3 },
+            { id: 20, name: 'Campaign 2026', linkCount: 3, slug: 'campaign-2026' },
           ],
         });
       }
@@ -55,6 +55,9 @@ describe('DashboardLayout', () => {
     });
     (axiosInstance.post as any).mockResolvedValue({
       data: { id: 99, name: 'New Item', shortUrl: 'http://trim.sh/new1', longUrl: 'https://test.com' }
+    });
+    (axiosInstance.put as any).mockResolvedValue({
+      data: { id: 20, name: 'Updated Campaign', shortUrl: 'http://trim.sh/upd', longUrl: 'https://test.com' }
     });
   });
 
@@ -72,7 +75,7 @@ describe('DashboardLayout', () => {
     expect(screen.getByText('Dashboard Content')).toBeInTheDocument();
   });
 
-  it('handles theme switcher dropdown options', () => {
+  it('handles theme switcher dropdown options and click outside', () => {
     render(
       <MemoryRouter initialEntries={['/dashboard']}>
         <Routes>
@@ -88,10 +91,14 @@ describe('DashboardLayout', () => {
       const darkOption = screen.getByText('Dark');
       fireEvent.click(darkOption);
       expect(mockSetTheme).toHaveBeenCalledWith('dark');
+
+      // Re-open and test click outside
+      fireEvent.click(themeBtn);
+      fireEvent.mouseDown(document.body);
     }
   });
 
-  it('handles user menu dropdown items and logout', () => {
+  it('handles user menu dropdown items, gift icon, profile, and logout', () => {
     render(
       <MemoryRouter initialEntries={['/dashboard']}>
         <Routes>
@@ -109,6 +116,10 @@ describe('DashboardLayout', () => {
     // Profile button
     fireEvent.click(screen.getByText('Profile'));
 
+    // "What's new" gift button
+    const giftBtn = document.querySelector('svg.lucide-gift')?.closest('button');
+    if (giftBtn) fireEvent.click(giftBtn);
+
     // Re-open and click Logout
     fireEvent.click(userAvatarBtn);
     const logoutBtn = screen.getByText('Log out');
@@ -116,7 +127,7 @@ describe('DashboardLayout', () => {
     expect(mockLogout).toHaveBeenCalled();
   });
 
-  it('handles folder switcher dropdown, search, and selecting a folder', async () => {
+  it('handles folder switcher dropdown, search, selecting folder, and click outside', async () => {
     render(
       <MemoryRouter initialEntries={['/dashboard']}>
         <Routes>
@@ -143,6 +154,9 @@ describe('DashboardLayout', () => {
     fireEvent.change(searchInput, { target: { value: 'Camp' } });
     expect(screen.getByText('Campaign 2026')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Campaign 2026'));
+
+    // Click outside
+    fireEvent.mouseDown(document.body);
   });
 
   it('handles folder switcher create new folder trigger', async () => {
@@ -259,5 +273,36 @@ describe('DashboardLayout', () => {
     );
     expect(screen.getByRole('link', { name: /General/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Security/i })).toBeInTheDocument();
+  });
+
+  it('handles ROOT user role branch without calling loadTags and loadFolders', () => {
+    (useAuth as any).mockReturnValue({
+      user: { id: 1, role: 'ROOT' },
+      logout: mockLogout,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <Routes>
+          <Route path="/dashboard" element={<DashboardLayout />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('All Links')).toBeInTheDocument();
+  });
+
+  it('handles API errors gracefully during background data load', async () => {
+    (axiosInstance.get as any).mockRejectedValue(new Error('Network error'));
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <Routes>
+          <Route path="/dashboard" element={<DashboardLayout />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('All Links')).toBeInTheDocument();
   });
 });

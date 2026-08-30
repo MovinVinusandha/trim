@@ -49,6 +49,16 @@ vi.mock('recharts', async () => {
     ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
     AreaChart: ({ children }: any) => <div data-testid="area-chart">{children}</div>,
     PieChart: ({ children }: any) => <div data-testid="pie-chart">{children}</div>,
+    Tooltip: ({ content }: any) => {
+      if (typeof content === 'function') {
+        return content({
+          active: true,
+          payload: [{ value: 450 }],
+          label: '2026-08-01T00:00:00Z',
+        });
+      }
+      return <div>Tooltip</div>;
+    },
   };
 });
 
@@ -61,7 +71,7 @@ describe('AnalyticsPage', () => {
       if (url === '/url/all') {
         return Promise.resolve({
           data: [
-            { id: 1, shortUrl: 'http://localhost:8080/xyz789', longUrl: 'https://example.com/target', accessed_times: 15 },
+            { id: 1, shortUrl: 'http://localhost:8080/xyz789', longUrl: 'https://example.com/target', accessed_times: 15, tags: [{ id: 10, name: 'Campaign' }], folderId: 1 },
           ],
         });
       }
@@ -93,8 +103,8 @@ describe('AnalyticsPage', () => {
     });
   });
 
-  it('handles /analytics/:hash specific analytics route', async () => {
-    vi.spyOn(routerDom, 'useParams').mockReturnValue({ hash: 'xyz789' });
+  it('handles /analytics/:hash specific analytics route and /analytics/folder/slug/:folderSlug', async () => {
+    vi.spyOn(routerDom, 'useParams').mockReturnValue({ hash: 'xyz789', folderSlug: 'main' });
 
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
     
@@ -103,7 +113,17 @@ describe('AnalyticsPage', () => {
     });
   });
 
-  it('handles Link filter dropdown, search, and selection', async () => {
+  it('handles /analytics/folder/slug/:folderSlug route when no hash is present', async () => {
+    vi.spyOn(routerDom, 'useParams').mockReturnValue({ folderSlug: 'main' });
+
+    render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
+    
+    await waitFor(() => {
+      expect(axiosInstance.get).toHaveBeenCalledWith('/analytics/folder/slug/main', expect.any(Object));
+    });
+  });
+
+  it('handles Link filter dropdown, back button, search, and selection', async () => {
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
 
     await waitFor(() => {
@@ -118,6 +138,13 @@ describe('AnalyticsPage', () => {
       expect(screen.getByText('/xyz789')).toBeInTheDocument();
     });
 
+    // Test back button
+    const backBtn = document.querySelector('svg.lucide-chevron-left')?.closest('button');
+    if (backBtn) fireEvent.click(backBtn);
+
+    // Re-enter Link filter
+    fireEvent.click(screen.getByText('Link'));
+
     // Search links
     const searchInput = screen.getByPlaceholderText('Search links...');
     fireEvent.change(searchInput, { target: { value: 'xyz' } });
@@ -126,7 +153,7 @@ describe('AnalyticsPage', () => {
     fireEvent.click(screen.getByText('/xyz789'));
   });
 
-  it('handles Tag filter dropdown, search, and checkbox toggling', async () => {
+  it('handles Tag filter dropdown, back button, search, and checkbox toggling', async () => {
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
 
     await waitFor(() => {
@@ -141,6 +168,13 @@ describe('AnalyticsPage', () => {
       expect(screen.getByText('Campaign')).toBeInTheDocument();
     });
 
+    // Test back button
+    const backBtn = document.querySelector('svg.lucide-chevron-left')?.closest('button');
+    if (backBtn) fireEvent.click(backBtn);
+
+    // Re-enter Tag filter
+    fireEvent.click(screen.getByText('Tag'));
+
     const searchInput = screen.getByPlaceholderText('Tag...');
     fireEvent.change(searchInput, { target: { value: 'Camp' } });
 
@@ -148,7 +182,7 @@ describe('AnalyticsPage', () => {
     if (checkbox) fireEvent.click(checkbox);
   });
 
-  it('handles Folder filter dropdown, search, and selection', async () => {
+  it('handles Folder filter dropdown, back button, search, and selection', async () => {
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
 
     await waitFor(() => {
@@ -162,6 +196,13 @@ describe('AnalyticsPage', () => {
       expect(screen.getByPlaceholderText('Search folders...')).toBeInTheDocument();
       expect(screen.getByText('Main Folder')).toBeInTheDocument();
     });
+
+    // Test back button
+    const backBtn = document.querySelector('svg.lucide-chevron-left')?.closest('button');
+    if (backBtn) fireEvent.click(backBtn);
+
+    // Re-enter Folder filter
+    fireEvent.click(screen.getByText('Folder'));
 
     const searchInput = screen.getByPlaceholderText('Search folders...');
     fireEvent.change(searchInput, { target: { value: 'Main' } });
@@ -179,7 +220,16 @@ describe('AnalyticsPage', () => {
     await waitFor(() => {
       expect(screen.getByText('2 Tags')).toBeInTheDocument();
       expect(screen.getByText('Main Folder')).toBeInTheDocument();
+      expect(screen.getByText('/xyz789')).toBeInTheDocument();
     });
+
+    // Click Link pill trigger to open popover
+    fireEvent.click(screen.getByText('/xyz789'));
+    expect(screen.getByPlaceholderText('Search links...')).toBeInTheDocument();
+
+    const linkSearchInput = screen.getByPlaceholderText('Search links...');
+    fireEvent.change(linkSearchInput, { target: { value: 'xyz' } });
+    fireEvent.click(screen.getAllByText('/xyz789')[1]);
 
     // Click Tag pill trigger to open popover
     fireEvent.click(screen.getByText('2 Tags'));
@@ -218,6 +268,43 @@ describe('AnalyticsPage', () => {
     expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/analytics/f/marketing'));
   });
 
+  it('handles mousedown click outside closing all open popovers', async () => {
+    render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /filter/i })).toBeInTheDocument();
+    });
+
+    // Open filter
+    fireEvent.click(screen.getByRole('button', { name: /filter/i }));
+    expect(screen.getByText('Link')).toBeInTheDocument();
+
+    // Trigger click outside on document
+    fireEvent.mouseDown(document.body);
+    await waitFor(() => {
+      expect(screen.queryByText('Link')).not.toBeInTheDocument();
+    });
+  });
+
+  it('handles date presets (24h, 7d, 30d)', async () => {
+    render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByText('Last 30 days')).toBeInTheDocument();
+    });
+
+    // Open date picker
+    fireEvent.click(screen.getByText('Last 30 days'));
+    expect(screen.getByText('Last 24 hours')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Last 24 hours'));
+
+    await waitFor(() => {
+      expect(axiosInstance.get).toHaveBeenCalledWith('/analytics', expect.objectContaining({
+        params: expect.objectContaining({ period: '24h' })
+      }));
+    });
+  });
+
   it('renders single active tag pill correctly', async () => {
     mockSearchParams = new URLSearchParams('tagId=10');
 
@@ -228,13 +315,29 @@ describe('AnalyticsPage', () => {
     });
   });
 
-  it('displays API error states gracefully', async () => {
+  it('displays API error states gracefully and allows Back to Dashboard navigation', async () => {
     (axiosInstance.get as any).mockRejectedValue(new Error('Network Error'));
 
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
 
     await waitFor(() => {
       expect(screen.getByText(/Network Error|Failed to load/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Back to Dashboard/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Back to Dashboard/i }));
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+  });
+
+  it('handles 404 API error state gracefully', async () => {
+    const error404 = new Error('Not Found') as any;
+    error404.response = { status: 404 };
+    (axiosInstance.get as any).mockRejectedValue(error404);
+
+    render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByText('Analytics not found or unauthorized.')).toBeInTheDocument();
     });
   });
 });

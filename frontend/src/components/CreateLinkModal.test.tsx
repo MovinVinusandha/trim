@@ -281,6 +281,31 @@ describe('CreateLinkModal', () => {
         longUrl: 'https://example.com/updated',
       }));
     });
+
+    it('handles password removal toggle and cancelation in edit mode', () => {
+      render(
+        <CreateLinkModal 
+          isOpen={true} 
+          onClose={vi.fn()} 
+          onSuccess={vi.fn()} 
+          folders={[]} 
+          tags={[]} 
+          urlToEdit={mockUrlToEdit}
+        />
+      );
+
+      const removeBtn = screen.getByText('Remove current password');
+      expect(removeBtn).toBeInTheDocument();
+
+      // Click to mark password for removal
+      fireEvent.click(removeBtn);
+      expect(screen.getByText('Cancel password removal')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Password will be removed')).toBeInTheDocument();
+
+      // Click to cancel removal
+      fireEvent.click(screen.getByText('Cancel password removal'));
+      expect(screen.getByText('Remove current password')).toBeInTheDocument();
+    });
   });
 
   describe('Default Folder Selection', () => {
