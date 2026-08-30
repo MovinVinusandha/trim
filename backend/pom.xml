@@ -218,9 +218,9 @@
                 <artifactId>flyway-maven-plugin</artifactId>
                 <version>11.11.0</version>
                 <configuration>
-                    <url>jdbc:mysql://localhost:3306/url_shortener?createDatabaseIfNotExist=true</url>
-                    <user>root</user>
-                    <password>password</password>
+                    <url>${env.DB_URL:jdbc:mysql://localhost:3306/url_shortener?createDatabaseIfNotExist=true}</url>
+                    <user>${env.DB_USER:root}</user>
+                    <password>${env.DB_PASSWORD:}</password>
                 </configuration>
             </plugin>
             <plugin>
