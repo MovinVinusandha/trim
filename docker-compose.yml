@@ -1,0 +1,84 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: url_shortener_db
+    env_file:
+      - .env
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - db_network
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: url_shortener_redis
+    command: redis-server --appendonly yes
+    env_file:
+      - .env
+    volumes:
+      - redis_data:/data
+    networks:
+      - db_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        COMMIT_SHA: ${COMMIT_SHA:-local-dev-build}
+    container_name: url_shortener_backend
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    networks:
+      - db_network
+      - web_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+        COMMIT_SHA: ${COMMIT_SHA:-local-dev-build}
+    container_name: url_shortener_frontend
+    env_file:
+      - .env
+    environment:
+      - API_DOMAIN_NAME=${API_DOMAIN_NAME:-api.localhost}
+      - APP_DOMAIN_NAME=${APP_DOMAIN_NAME:-app.localhost}
+      - ROOT_DOMAIN_NAME=${ROOT_DOMAIN_NAME:-localhost}
+    ports:
+      - "80:8080"
+    networks:
+      - web_network
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  db_network:
+    driver: bridge
+  web_network:
+    driver: bridge

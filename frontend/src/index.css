@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
+html {
+  scroll-behavior: smooth;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,6 +11,15 @@
 @layer base {
   * {
     box-sizing: border-box;
+  }
+
+  :root {
+    --skeleton-base-color: #f1f5f9;
+    --skeleton-highlight-color: #f8fafc;
+  }
+  .dark {
+    --skeleton-base-color: #1e293b;
+    --skeleton-highlight-color: #334155;
   }
 
   html {

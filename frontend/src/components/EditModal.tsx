@@ -72,22 +72,22 @@ const EditModal: React.FC<Props> = ({ entry, onClose, onUpdated }) => {
           <button
             id="edit-modal-close"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2B2B30]"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Current short URL reference */}
-        <div className="mb-5 p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-xl">
+        <div className="mb-5 p-3 bg-slate-50 dark:bg-[#2B2B30]/60 border border-slate-200 dark:border-[#2B2B30]/60 rounded-xl">
           <p className="text-slate-400 text-xs mb-1 font-medium">Short URL</p>
           <a
-            href={entry.shortUrl}
+            href={`${window.location.origin}/${extractHash(entry.shortUrl)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 text-sm break-all transition-colors"
           >
-            {entry.shortUrl}
+            {`${window.location.host}/${extractHash(entry.shortUrl)}`}
           </a>
         </div>
 

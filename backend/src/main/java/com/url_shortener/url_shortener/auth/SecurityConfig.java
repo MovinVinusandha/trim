@@ -1,7 +1,7 @@
 package com.url_shortener.url_shortener.auth;
 
 import com.url_shortener.url_shortener.common.SecurityRules;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -24,11 +24,14 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class SecurityConfig {
     private final UserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final List<SecurityRules> featureSecurityRules;
+
+    @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins}")
+    private java.util.List<String> allowedOrigins;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -55,6 +58,13 @@ public class SecurityConfig {
                         c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(c -> {
+                            c.requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll();
+                            c.requestMatchers("/api/health", "/health").permitAll();
+                            c.requestMatchers("/auth/**").permitAll();
+                            c.requestMatchers(org.springframework.http.HttpMethod.POST, "/users", "/user").permitAll();
+                            c.requestMatchers("/public/qr/preview").permitAll();
+                            c.requestMatchers(org.springframework.http.HttpMethod.POST, "/unlock/**").permitAll();
+                            c.requestMatchers(org.springframework.http.HttpMethod.GET, "/{hash:[a-zA-Z0-9-_]+}").permitAll();
                             featureSecurityRules.forEach(r -> r.configure(c));
                             c.anyRequest().authenticated();
                         }
@@ -76,9 +86,11 @@ public class SecurityConfig {
     @Bean
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
         var configuration = new org.springframework.web.cors.CorsConfiguration();
-        configuration.setAllowedOriginPatterns(java.util.List.of("http://localhost:*", "http://127.0.0.1:*"));
-        configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
-        configuration.setAllowedHeaders(java.util.List.of("*"));
+        // Use the injected allowedOrigins property (e.g., from APP_DOMAIN_URL)
+        configuration.setAllowedOrigins(allowedOrigins);
+        configuration.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(java.util.Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+        configuration.setExposedHeaders(java.util.Arrays.asList("Access-Control-Allow-Origin", "Access-Control-Allow-Credentials", "Authorization"));
         configuration.setAllowCredentials(true);
 
         var source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();

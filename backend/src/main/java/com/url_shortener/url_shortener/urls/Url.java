@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Builder
@@ -32,12 +34,31 @@ public class Url {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
+
+    @Column(name = "is_active")
+    @Builder.Default
+    private boolean isActive = true;
+
+    @Column(name = "password_hash")
+    private String passwordHash;
+
     @OneToOne(mappedBy = "urls", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private Statistic statistic;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "url_tags", joinColumns = @JoinColumn(name = "url_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    @Builder.Default
+    private Set<Tag> tags = new HashSet<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "folder_id")
+    private Folder folder;
 
     public void addStatistic(Statistic statistic){
         this.statistic = statistic;
@@ -53,5 +74,9 @@ public class Url {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public boolean isHasPassword() {
+        return this.passwordHash != null && !this.passwordHash.isEmpty();
     }
 }

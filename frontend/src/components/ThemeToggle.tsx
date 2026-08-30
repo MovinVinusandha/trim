@@ -3,20 +3,20 @@ import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 const ThemeToggle: React.FC = () => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   return (
     <button
       id="theme-toggle"
-      onClick={toggleTheme}
+      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
       title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
       className="
         relative flex items-center justify-center
         w-9 h-9 rounded-xl
-        border border-slate-700 dark:border-slate-700
-        bg-slate-100 dark:bg-slate-800
-        hover:bg-slate-200 dark:hover:bg-slate-700
+        border border-slate-700 dark:border-[#2B2B30]
+        bg-slate-100 dark:bg-[#2B2B30]
+        hover:bg-slate-200 dark:hover:bg-[#2B2B30]
         text-slate-600 dark:text-slate-300
         hover:text-slate-900 dark:hover:text-white
         transition-all duration-200

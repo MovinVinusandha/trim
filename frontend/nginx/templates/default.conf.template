@@ -1,0 +1,82 @@
+# 1. THE API PILLAR (api.domain.com) - Direct to Spring Boot
+server {
+    listen 8080;
+    server_name ${API_DOMAIN_NAME};
+
+    location / {
+        # Handle CORS Preflight directly in Nginx
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '$http_origin' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE, PATCH' always;
+            add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, Accept, Origin, X-Requested-With' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            add_header 'Content-Type' 'text/plain charset=UTF-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+
+        # Direct proxy pass (no variable assignment)
+        proxy_pass http://backend:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Pass the Origin header so Spring Boot knows where the request came from
+        proxy_set_header Origin $http_origin;
+    }
+}
+
+# 2. THE APP PILLAR (app.domain.com) - React Dashboard
+server {
+    listen 8080;
+    server_name ${APP_DOMAIN_NAME};
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Static assets
+    location ~ ^/(assets|images|.*\.(svg|png|jpg|jpeg|ico|css|js))$ {
+        try_files $uri =404;
+    }
+
+    # SPA Fallback: Never send React routes to backend
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+
+# 3. THE ROOT PILLAR (domain.com) - Landing Page & Short Links
+server {
+    listen 8080;
+    server_name ${ROOT_DOMAIN_NAME} localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Exact Root (Landing Page)
+    location = / {
+        try_files /index.html =404;
+    }
+
+    # Redirect frontend paths typed on the root domain to the app subdomain
+    location ~ ^/(dashboard|analytics|folders|tags|settings|login|register|expired|secure)(/.*)?$ {
+        return 301 $scheme://${APP_DOMAIN_NAME}$request_uri;
+    }
+
+    # Static assets
+    location ~ ^/(assets|images|.*\.(svg|png|jpg|jpeg|ico|css|js))$ {
+        try_files $uri =404;
+    }
+
+    # Everything else is assumed to be a Short Link -> Proxy to Backend
+    location / {
+        proxy_pass http://backend:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # If backend returns 404 (short link not found), fallback to React
+        proxy_intercept_errors on;
+        error_page 404 = /index.html;
+    }
+}

@@ -6,9 +6,11 @@ import lombok.Getter;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @AllArgsConstructor
 @Getter
+@lombok.Setter
 public class UrlDto {
     private BigInteger id;
     private String longUrl;
@@ -20,4 +22,16 @@ public class UrlDto {
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime expiresAt;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isActive")
+    private boolean isActive;
+    
+    @com.fasterxml.jackson.annotation.JsonProperty("hasPassword")
+    private boolean hasPassword;
+    private List<TagDto> tags;
+    private Long folderId;
+    private String folderName;
 }

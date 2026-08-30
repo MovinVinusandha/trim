@@ -1,0 +1,82 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: url_shortener_db
+    env_file:
+      - .env
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - db_network
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: url_shortener_redis
+    command: redis-server --appendonly yes
+    env_file:
+      - .env
+    volumes:
+      - redis_data:/data
+    networks:
+      - db_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: 878311410498.dkr.ecr.us-east-1.amazonaws.com/trim-backend:staging
+    container_name: url_shortener_backend
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    networks:
+      - db_network
+      - web_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    image: 878311410498.dkr.ecr.us-east-1.amazonaws.com/trim-frontend:staging
+    container_name: url_shortener_frontend
+    env_file:
+      - .env
+    environment:
+      - API_DOMAIN_NAME=${API_DOMAIN_NAME:-api.localhost}
+      - APP_DOMAIN_NAME=${APP_DOMAIN_NAME:-app.localhost}
+      - ROOT_DOMAIN_NAME=${ROOT_DOMAIN_NAME:-localhost}
+    ports:
+      - "80:8080"
+    networks:
+      - web_network
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  db_network:
+    driver: bridge
+  web_network:
+    driver: bridge

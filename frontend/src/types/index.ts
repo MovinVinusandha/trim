@@ -19,7 +19,26 @@ export interface User {
   id: number;
   name: string;
   email: string;
+  role?: string;
   createdAt: string;
+}
+
+// ─── Folders ──────────────────────────────────────────────────────────────────
+
+export interface Folder {
+  id: number;
+  name: string;
+  slug?: string;
+  linkCount?: number;
+}
+
+// ─── Tags ─────────────────────────────────────────────────────────────────────
+
+export interface Tag {
+  id: number;
+  name: string;
+  color?: string;
+  linkCount?: number;
 }
 
 // ─── URLs ─────────────────────────────────────────────────────────────────────
@@ -29,6 +48,12 @@ export interface UrlSend {
   longUrl: string;
   shortUrl: string;
   createdAt: string;
+  expiresAt?: string | null;
+  isActive?: boolean;
+  hasPassword?: boolean;
+  tags?: Tag[];
+  folderId?: number | null;
+  folderName?: string | null;
 }
 
 /** Returned by GET /url/{hash} and GET /url/all */
@@ -39,6 +64,12 @@ export interface UrlDto {
   accessed_times: number;
   createdAt: string;
   updatedAt: string;
+  expiresAt?: string | null;
+  isActive?: boolean;
+  hasPassword?: boolean;
+  tags?: Tag[];
+  folderId?: number | null;
+  folderName?: string | null;
 }
 
 /** Returned by PUT /url/{hash} */
@@ -56,4 +87,10 @@ export interface UrlEntry {
   accessed_times?: number;
   createdAt: string;
   updatedAt?: string;
+  expiresAt?: string | null;
+  isActive?: boolean;
+  hasPassword?: boolean;
+  tags?: Tag[];
+  folderId?: number | null;
+  folderName?: string | null;
 }

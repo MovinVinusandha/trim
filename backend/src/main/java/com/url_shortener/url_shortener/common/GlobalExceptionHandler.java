@@ -15,13 +15,45 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(UrlNotFoundException.class)
-    public ResponseEntity<String> urlNotFound() {
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<?> urlNotFound(jakarta.servlet.http.HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        if (uri != null && (uri.startsWith("/url/") || uri.startsWith("/api/"))) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.status(org.springframework.http.HttpStatus.FOUND)
+                .location(java.net.URI.create(dashboardUrl + "/not-found"))
+                .build();
     }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<String> userNotFound() {
         return ResponseEntity.notFound().build();
+    }
+
+    @org.springframework.beans.factory.annotation.Value("${app.frontend.url:http://localhost}")
+    private String frontendUrl;
+    
+    @org.springframework.beans.factory.annotation.Value("${app.domain.app:http://app.localhost}")
+    private String appDomainUrl;
+
+    @org.springframework.beans.factory.annotation.Value("${app.dashboard.url:http://app.localhost}")
+    private String dashboardUrl;
+
+    @ExceptionHandler(com.url_shortener.url_shortener.urls.LinkExpiredException.class)
+    public void linkExpired(com.url_shortener.url_shortener.urls.LinkExpiredException ex, jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
+        response.sendRedirect(dashboardUrl + "/expired");
+    }
+
+    @ExceptionHandler(com.url_shortener.url_shortener.urls.PasswordProtectedException.class)
+    public void passwordProtected(com.url_shortener.url_shortener.urls.PasswordProtectedException ex, jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
+        response.sendRedirect(dashboardUrl + "/secure/" + ex.getHash());
+    }
+
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ResponseEntity<Map<String, String>> handleBadCredentials(org.springframework.security.authentication.BadCredentialsException ex) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).body(
+                Map.of("message", ex.getMessage())
+        );
     }
 
     @ExceptionHandler(UrlExistInDataBaseException.class)
