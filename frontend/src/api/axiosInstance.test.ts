@@ -1,4 +1,4 @@
-import axiosInstance from './axiosInstance';
+import axiosInstance, { extractBackendError } from './axiosInstance';
 import axios from 'axios';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -9,7 +9,7 @@ vi.mock('axios', async (importOriginal) => {
     default: {
       ...actual.default,
       create: actual.default.create,
-      isAxiosError: actual.default.isAxiosError,
+      isAxiosError: (err: any) => err?.isAxiosError === true,
       post: vi.fn(),
     },
   };
@@ -51,15 +51,10 @@ describe('axiosInstance interceptors', () => {
   });
 
   it('triggers silent refresh on 401 response', async () => {
-    // We expect the original request to fail with 401, then interceptor catches it,
-    // calls axios.post('/auth/refresh'), then retries the original request.
-    
     (axios.post as any).mockResolvedValue({
       data: { token: 'new-refreshed-token' }
     });
 
-    // To prevent the retry from failing with 401 again and throwing,
-    // let's change the adapter to return 200 on the retry (it will have the new token).
     let callCount = 0;
     axiosInstance.defaults.adapter = async (config) => {
       callCount++;
@@ -84,5 +79,59 @@ describe('axiosInstance interceptors', () => {
     expect(localStorage.getItem('token')).toBe('new-refreshed-token');
     expect(response.config.headers['Authorization']).toBe('Bearer new-refreshed-token');
     expect(response.data).toBe('retry ok');
+  });
+
+  it('clears token on refresh token failure', async () => {
+    localStorage.setItem('token', 'old-token');
+    (axios.post as any).mockRejectedValue(new Error('Refresh failed'));
+
+    await expect(axiosInstance.get('/test-401')).rejects.toThrow();
+    expect(localStorage.getItem('token')).toBeNull();
+  });
+});
+
+describe('extractBackendError', () => {
+  it('returns raw string data if response data is string', () => {
+    const err = {
+      isAxiosError: true,
+      response: { data: 'Custom backend error string' },
+    };
+    expect(extractBackendError(err)).toBe('Custom backend error string');
+  });
+
+  it('extracts message property from JSON response', () => {
+    const err = {
+      isAxiosError: true,
+      response: { data: { message: 'Invalid credentials' } },
+    };
+    expect(extractBackendError(err)).toBe('Invalid credentials');
+  });
+
+  it('extracts error property from JSON response', () => {
+    const err = {
+      isAxiosError: true,
+      response: { data: { error: 'Bad Request' } },
+    };
+    expect(extractBackendError(err)).toBe('Bad Request');
+  });
+
+  it('extracts validation field errors (longUrl, email, password)', () => {
+    expect(extractBackendError({ isAxiosError: true, response: { data: { longUrl: 'Invalid URL format' } } })).toBe('Invalid URL format');
+    expect(extractBackendError({ isAxiosError: true, response: { data: { email: 'Email required' } } })).toBe('Email required');
+    expect(extractBackendError({ isAxiosError: true, response: { data: { password: 'Password too short' } } })).toBe('Password too short');
+  });
+
+  it('extracts values from generic validation error maps', () => {
+    const err = {
+      isAxiosError: true,
+      response: { data: { fieldA: 'Field A error', fieldB: 'Field B error' } },
+    };
+    expect(extractBackendError(err)).toBe('Field A error. Field B error');
+  });
+
+  it('returns fallback string when error is not an axios error or empty', () => {
+    expect(extractBackendError(null)).toBe('An unexpected error occurred. Please try again.');
+    expect(extractBackendError(new Error('Generic'), 'Default fallback')).toBe('Default fallback');
+    expect(extractBackendError({ isAxiosError: true, response: {} }, 'Default fallback')).toBe('Default fallback');
   });
 });

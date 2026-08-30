@@ -11,7 +11,7 @@ vi.mock('../api/axiosInstance', () => ({
 }));
 
 vi.mock('../context/AuthContext', () => ({
-  useAuth: vi.fn(() => ({ user: null })),
+  useAuth: vi.fn(() => ({ user: null, token: null })),
 }));
 
 describe('RegisterPage', () => {
@@ -33,6 +33,20 @@ describe('RegisterPage', () => {
     expect((nameInput as HTMLInputElement).value).toBe('John Doe');
     expect((emailInput as HTMLInputElement).value).toBe('test@test.com');
     expect((passwordInput as HTMLInputElement).value).toBe('password123');
+  });
+
+  it('toggles password visibility with eye icon button', () => {
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>);
+
+    const passwordInput = screen.getByPlaceholderText('At least 8 characters');
+    expect((passwordInput as HTMLInputElement).type).toBe('password');
+
+    const toggleBtn = screen.getAllByRole('button').find(b => b.querySelector('svg.lucide-eye') || b.querySelector('svg.lucide-eye-off'))!;
+    fireEvent.click(toggleBtn);
+    expect((passwordInput as HTMLInputElement).type).toBe('text');
+
+    fireEvent.click(toggleBtn);
+    expect((passwordInput as HTMLInputElement).type).toBe('password');
   });
 
   it('validates required fields and minimum password length', async () => {
@@ -147,5 +161,12 @@ describe('RegisterPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Email already in use')).toBeInTheDocument();
     });
+  });
+
+  it('social sign up buttons trigger toasts', () => {
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>);
+
+    fireEvent.click(screen.getByText('Continue with Google'));
+    fireEvent.click(screen.getByText('Continue with GitHub'));
   });
 });

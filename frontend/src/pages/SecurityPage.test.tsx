@@ -54,4 +54,42 @@ describe('SecurityPage', () => {
       expect(screen.getByText('Password updated successfully!')).toBeInTheDocument();
     });
   });
+
+  it('handles backend error when password update fails', async () => {
+    (axiosInstance.put as any).mockRejectedValue({
+      response: { data: { message: 'Current password is incorrect' } },
+    });
+    render(<MemoryRouter><SecurityPage /></MemoryRouter>);
+
+    const currentInput = screen.getByLabelText(/Current Password/i);
+    const newInput = screen.getByLabelText(/^New Password/i);
+    const confirmInput = screen.getByLabelText(/Confirm New Password/i);
+
+    fireEvent.change(currentInput, { target: { value: 'wrongpass' } });
+    fireEvent.change(newInput, { target: { value: 'newpassword123' } });
+    fireEvent.change(confirmInput, { target: { value: 'newpassword123' } });
+
+    fireEvent.click(screen.getByText('Save Changes'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Current password is incorrect')).toBeInTheDocument();
+    });
+  });
+
+  it('handles form submission when passwords do not match', async () => {
+    render(<MemoryRouter><SecurityPage /></MemoryRouter>);
+
+    const form = document.querySelector('form')!;
+    const currentInput = screen.getByLabelText(/Current Password/i);
+    const newInput = screen.getByLabelText(/^New Password/i);
+    const confirmInput = screen.getByLabelText(/Confirm New Password/i);
+
+    fireEvent.change(currentInput, { target: { value: 'currentpass' } });
+    fireEvent.change(newInput, { target: { value: 'newpassword123' } });
+    fireEvent.change(confirmInput, { target: { value: 'mismatch123' } });
+
+    fireEvent.submit(form);
+
+    expect(screen.getByText('New passwords do not match.')).toBeInTheDocument();
+  });
 });

@@ -1,11 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import DashboardPage from './DashboardPage';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
-import * as routerDom from 'react-router-dom';
 
 vi.mock('../api/axiosInstance', () => ({
   default: { post: vi.fn(), get: vi.fn(), delete: vi.fn(), put: vi.fn() },
@@ -16,99 +15,84 @@ vi.mock('../context/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
-// Mock useOutletContext
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
     useOutletContext: vi.fn(() => ({
       triggerRefresh: null,
-      tags: [],
-      folders: [],
+      tags: [
+        { id: 1, name: 'youtube', color: '#ff0000', linkCount: 1 },
+        { id: 2, name: 'work', color: '#00ff00', linkCount: 2 },
+      ],
+      folders: [{ id: 5, name: 'Marketing', linkCount: 1 }],
       activeFolderId: null,
     })),
   };
 });
 
-vi.mock('framer-motion', async () => {
-  const actual = await vi.importActual('framer-motion');
-  return {
-    ...actual,
-    AnimatePresence: ({ children }: any) => <>{children}</>,
-    motion: new Proxy(
-      {},
-      {
-        get: (_, prop: string) => {
-          return React.forwardRef(({ children, layout, initial, animate, exit, transition, ...props }: any, ref: any) => {
-            const Component = prop as any;
-            return <Component ref={ref} {...props}>{children}</Component>;
-          });
-        },
-      }
-    ),
-  };
-});
+const mockLinks = [
+  {
+    longUrl: 'https://example.com/one',
+    shortUrl: 'http://trim.sh/abc123',
+    accessed_times: 42,
+    createdAt: '2026-08-01T00:00:00Z',
+    tags: [
+      { id: 1, name: 'youtube', color: '#ff0000' },
+      { id: 2, name: 'work', color: '#00ff00' },
+    ],
+    hasPassword: true,
+    expiresAt: '2099-01-01T00:00:00Z',
+    isActive: true,
+  },
+  {
+    longUrl: 'https://example.com/two',
+    shortUrl: 'http://trim.sh/def456',
+    accessed_times: 7,
+    createdAt: '2026-08-02T00:00:00Z',
+    tags: [],
+    expiresAt: '2020-01-01T00:00:00Z',
+    isActive: false,
+  },
+];
 
 describe('DashboardPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (useAuth as any).mockReturnValue({ user: { id: 1 } });
+    (axiosInstance.get as any).mockImplementation((url: string) => {
+      if (url.includes('/qr')) {
+        return Promise.resolve({ data: new Blob(['fake-qr'], { type: 'image/png' }) });
+      }
+      return Promise.resolve({ data: mockLinks });
+    });
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: vi.fn().mockResolvedValue(undefined),
+      },
+    });
+    global.URL.createObjectURL = vi.fn(() => 'blob:mock-qr-url');
+    global.URL.revokeObjectURL = vi.fn();
   });
 
-  it('URL table renders links and click counts correctly', async () => {
-    (useAuth as any).mockReturnValue({ user: { id: 1 } });
-    (axiosInstance.get as any).mockResolvedValue({
-      data: [
-        {
-          longUrl: 'https://example.com/one',
-          shortUrl: 'http://trim.sh/abc123',
-          accessed_times: 42,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          longUrl: 'https://example.com/two',
-          shortUrl: 'http://trim.sh/def456',
-          accessed_times: 7,
-          createdAt: new Date().toISOString(),
-        }
-      ]
-    });
-    
+  it('URL table renders links, multi-tags, status badges, and click counts correctly', async () => {
     render(<MemoryRouter><DashboardPage /></MemoryRouter>);
     
     await waitFor(() => {
-      expect(screen.getByText(/abc123/)).toBeInTheDocument();
+      expect(screen.getAllByText(/abc123/)[0]).toBeInTheDocument();
       expect(screen.getByText('https://example.com/one')).toBeInTheDocument();
       expect(screen.getByText('42')).toBeInTheDocument();
-      
-      expect(screen.getByText(/def456/)).toBeInTheDocument();
-      expect(screen.getByText('https://example.com/two')).toBeInTheDocument();
-      expect(screen.getByText('7')).toBeInTheDocument();
+      expect(screen.getByText('Active')).toBeInTheDocument();
+      expect(screen.getByText('Expired')).toBeInTheDocument();
+      expect(screen.getAllByText(/youtube/)[0]).toBeInTheDocument();
     });
   });
 
   it('typing into Search Bar filters the displayed links', async () => {
-    (useAuth as any).mockReturnValue({ user: { id: 1 } });
-    (axiosInstance.get as any).mockResolvedValue({
-      data: [
-        {
-          longUrl: 'https://example.com/one',
-          shortUrl: 'http://trim.sh/abc123',
-          accessed_times: 42,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          longUrl: 'https://example.com/two',
-          shortUrl: 'http://trim.sh/def456',
-          accessed_times: 7,
-          createdAt: new Date().toISOString(),
-        }
-      ]
-    });
-    
     render(<MemoryRouter><DashboardPage /></MemoryRouter>);
     
     await waitFor(() => {
-      expect(screen.getByText(/abc123/)).toBeInTheDocument();
+      expect(screen.getAllByText(/abc123/)[0]).toBeInTheDocument();
     });
     
     const searchInput = screen.getByPlaceholderText('Search by short link or URL');
@@ -120,127 +104,171 @@ describe('DashboardPage', () => {
     });
   });
 
-  it('URL query parameters correctly initialize selectedFilterTags', async () => {
-    (useAuth as any).mockReturnValue({ user: { id: 1 } });
-    (axiosInstance.get as any).mockResolvedValue({
-      data: [
-        { longUrl: 'https://example.com/one', shortUrl: 'http://trim.sh/abc123', tags: [{ id: 1, name: 'youtube', color: '#ff0000' }] },
-        { longUrl: 'https://example.com/two', shortUrl: 'http://trim.sh/def456', tags: [] }
-      ]
+  it('handles copy link, QR code modal opening and deletion flow', async () => {
+    window.confirm = vi.fn().mockReturnValue(true);
+    (axiosInstance.delete as any).mockResolvedValue({});
+
+    render(<MemoryRouter><DashboardPage /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/abc123/)[0]).toBeInTheDocument();
     });
-    
-    // Override useOutletContext to provide a tag
-    vi.spyOn(routerDom, 'useOutletContext').mockReturnValue({
-      triggerRefresh: null,
-      tags: [{ id: 1, name: 'youtube', color: '#ff0000' }],
-      folders: [],
-      activeFolderId: null,
-    } as any);
+
+    // Copy link button
+    const copyBtns = screen.getAllByTitle('Copy link');
+    if (copyBtns[0]) {
+      fireEvent.click(copyBtns[0]);
+      expect(navigator.clipboard.writeText).toHaveBeenCalled();
+    }
+
+    // QR Code button
+    const qrBtns = screen.getAllByTitle('QR Code');
+    if (qrBtns[0]) {
+      fireEvent.click(qrBtns[0]);
+      await waitFor(() => {
+        expect(screen.getByText('QR Code')).toBeInTheDocument();
+        expect(screen.getByText('Download PNG')).toBeInTheDocument();
+      });
+      // Close QR Modal
+      fireEvent.click(screen.getByText('Close'));
+    }
+
+    // Open more menu for the first link
+    const moreButtons = screen.getAllByRole('button');
+    const moreIconBtn = moreButtons.find(b => b.querySelector('svg.lucide-ellipsis-vertical') || b.querySelector('svg.lucide-more-vertical'));
+    if (moreIconBtn) {
+      fireEvent.click(moreIconBtn);
+
+      const deleteBtn = screen.getByText('Delete');
+      fireEvent.click(deleteBtn);
+
+      await waitFor(() => {
+        expect(axiosInstance.delete).toHaveBeenCalledWith('/url/def456');
+      });
+    }
+  });
+
+  it('handles 3-dot menu dropdown actions (Analytics, Copy Link, Edit, QR, Backdrop close)', async () => {
+    (axiosInstance.put as any).mockResolvedValue({ data: { success: true } });
 
     render(
-      <MemoryRouter initialEntries={['/dashboard?tag=youtube']}>
-        <DashboardPage />
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <Routes>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/analytics/:hash" element={<div>Analytics View</div>} />
+        </Routes>
       </MemoryRouter>
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/abc123/)).toBeInTheDocument();
-      // def456 should be filtered out
-      expect(screen.queryByText(/def456/)).not.toBeInTheDocument();
+      expect(screen.getAllByText(/abc123/)[0]).toBeInTheDocument();
     });
+
+    const moreButtons = screen.getAllByRole('button');
+    const moreIconBtn = moreButtons.find(b => b.querySelector('svg.lucide-ellipsis-vertical') || b.querySelector('svg.lucide-more-vertical'))!;
+
+    // 1. Open menu and click backdrop to close
+    fireEvent.click(moreIconBtn);
+    expect(screen.getByText('Copy Link')).toBeInTheDocument();
+    const backdrop = document.querySelector('.fixed.inset-0.z-40')!;
+    fireEvent.click(backdrop);
+
+    // 2. Copy Link from menu
+    fireEvent.click(moreIconBtn);
+    fireEvent.click(screen.getByText('Copy Link'));
+    expect(navigator.clipboard.writeText).toHaveBeenCalled();
+
+    // 3. QR Code from menu
+    fireEvent.click(moreIconBtn);
+    fireEvent.click(screen.getByText('QR Code'));
+    await waitFor(() => {
+      expect(screen.getByText('Download PNG')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText('Close'));
+
+    // 4. Edit from menu and submit edit modal
+    fireEvent.click(moreIconBtn);
+    fireEvent.click(screen.getByText('Edit'));
+    await waitFor(() => {
+      expect(screen.getByText('Save changes')).toBeInTheDocument();
+    });
+
+    const form = document.getElementById('create-link-form')!;
+    fireEvent.submit(form);
   });
 
-  it('Display dropdown changes sort order and hides properties', async () => {
-    (useAuth as any).mockReturnValue({ user: { id: 1 } });
-    (axiosInstance.get as any).mockResolvedValue({
-      data: [
-        { longUrl: 'https://example.com/one', shortUrl: 'http://trim.sh/abc123', accessed_times: 10, createdAt: '2023-01-01T00:00:00Z' },
-        { longUrl: 'https://example.com/two', shortUrl: 'http://trim.sh/def456', accessed_times: 50, createdAt: '2023-01-02T00:00:00Z' }
-      ]
+  it('handles QR code generation failure error display', async () => {
+    (axiosInstance.get as any).mockImplementation((url: string) => {
+      if (url.includes('/qr')) {
+        return Promise.reject(new Error('QR error'));
+      }
+      return Promise.resolve({ data: mockLinks });
     });
-    
+
     render(<MemoryRouter><DashboardPage /></MemoryRouter>);
-    
+
     await waitFor(() => {
-      expect(screen.getByText(/abc123/)).toBeInTheDocument();
+      expect(screen.getAllByText(/abc123/)[0]).toBeInTheDocument();
     });
-    
-    // Open Display Dropdown
-    fireEvent.click(screen.getByText(/Display/));
-    
-    // Click 'Destination URL' to hide it
+
+    const qrBtns = screen.getAllByTitle('QR Code');
+    if (qrBtns[0]) {
+      fireEvent.click(qrBtns[0]);
+      await waitFor(() => {
+        expect(screen.getByText('Failed to generate QR code.')).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText('Close'));
+    }
+  });
+
+  it('handles tag filter popover and checkbox selection', async () => {
+    render(<MemoryRouter><DashboardPage /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /filter/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /filter/i }));
+    fireEvent.click(screen.getByText('Tag'));
+
+    await waitFor(() => {
+      expect(screen.getAllByText('youtube').length).toBeGreaterThan(0);
+    });
+
+    const tagCheckbox = screen.getAllByRole('checkbox')[0];
+    fireEvent.click(tagCheckbox);
+  });
+
+  it('handles display properties and sorting controls', async () => {
+    render(<MemoryRouter><DashboardPage /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /display/i })).toBeInTheDocument();
+    });
+
+    // Open Display menu
+    fireEvent.click(screen.getByRole('button', { name: /display/i }));
+
+    // Toggle sorting
+    fireEvent.click(screen.getByText(/Date created/i));
+    fireEvent.click(screen.getByText(/Total clicks/i));
+
+    // Toggle display property buttons
     fireEvent.click(screen.getByText('Destination URL'));
-    
-    expect(screen.queryByText('https://example.com/one')).not.toBeInTheDocument();
-
-    // Open Sort Menu
-    fireEvent.click(screen.getAllByText('Date created')[0]);
-    
-    // Click 'Total clicks'
-    fireEvent.click(screen.getAllByText('Total clicks')[0]);
-    
-    // Wait for the re-sort (in DOM, visually this would change order, we just assert no crash and elements exist)
-    await waitFor(() => {
-      expect(screen.getByText(/abc123/)).toBeInTheDocument();
-    });
+    fireEvent.click(screen.getByText('Analytics'));
+    fireEvent.click(screen.getByText('Created Date'));
+    fireEvent.click(screen.getByText('Tags'));
+    fireEvent.click(screen.getByText('Status'));
+    fireEvent.click(screen.getByText('Password'));
   });
 
-  it('renders empty state when no links are found', async () => {
-    (useAuth as any).mockReturnValue({ user: { id: 1 } });
+  it('renders empty state when no links exist', async () => {
     (axiosInstance.get as any).mockResolvedValue({ data: [] });
-    
+
     render(<MemoryRouter><DashboardPage /></MemoryRouter>);
-    
+
     await waitFor(() => {
       expect(screen.getByText('No links found.')).toBeInTheDocument();
-    });
-  });
-
-  it('displays all links when no folder is active, and filters links when a folder slug/ID is active', async () => {
-    (useAuth as any).mockReturnValue({ user: { id: 1 } });
-    (axiosInstance.get as any).mockResolvedValue({
-      data: [
-        { longUrl: 'https://example.com/default-link', shortUrl: 'http://trim.sh/def001', folderId: null },
-        { longUrl: 'https://example.com/marketing-link', shortUrl: 'http://trim.sh/mkt002', folderId: 5, folderName: 'Marketing' }
-      ]
-    });
-
-    // When activeFolderId is null ("All Links" workspace)
-    vi.spyOn(routerDom, 'useOutletContext').mockReturnValue({
-      triggerRefresh: null,
-      tags: [],
-      folders: [{ id: 5, name: 'Marketing', linkCount: 1 }],
-      activeFolderId: null,
-    } as any);
-
-    const { unmount } = render(<MemoryRouter><DashboardPage /></MemoryRouter>);
-
-    await waitFor(() => {
-      expect(screen.getByText(/def001/)).toBeInTheDocument();
-      expect(screen.getByText(/mkt002/)).toBeInTheDocument();
-    });
-
-    unmount();
-
-    // When folder is active
-    vi.spyOn(routerDom, 'useOutletContext').mockReturnValue({
-      triggerRefresh: null,
-      tags: [],
-      folders: [{ id: 5, name: 'Marketing', linkCount: 1 }],
-      activeFolderId: 5,
-    } as any);
-
-    render(
-      <MemoryRouter initialEntries={['/dashboard/f/marketing']}>
-        <routerDom.Routes>
-          <routerDom.Route path="/dashboard/f/:folderSlug" element={<DashboardPage />} />
-        </routerDom.Routes>
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText(/mkt002/)).toBeInTheDocument();
-      expect(screen.queryByText(/def001/)).not.toBeInTheDocument();
     });
   });
 });

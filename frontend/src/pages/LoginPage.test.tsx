@@ -21,7 +21,7 @@ describe('LoginPage', () => {
   });
 
   it('Email and Password inputs accept user typing', () => {
-    (useAuth as any).mockReturnValue({ login: vi.fn() });
+    (useAuth as any).mockReturnValue({ login: vi.fn(), token: null });
     render(<MemoryRouter><LoginPage /></MemoryRouter>);
     
     const emailInput = screen.getByPlaceholderText('janedoe@email.com');
@@ -34,9 +34,24 @@ describe('LoginPage', () => {
     expect((passwordInput as HTMLInputElement).value).toBe('password123');
   });
 
+  it('password visibility toggle changes input type from password to text and back', () => {
+    (useAuth as any).mockReturnValue({ login: vi.fn(), token: null });
+    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+
+    const passwordInput = screen.getByPlaceholderText('Enter your password');
+    expect((passwordInput as HTMLInputElement).type).toBe('password');
+
+    const toggleBtn = screen.getAllByRole('button').find(b => b.querySelector('svg.lucide-eye') || b.querySelector('svg.lucide-eye-off'))!;
+    fireEvent.click(toggleBtn);
+    expect((passwordInput as HTMLInputElement).type).toBe('text');
+
+    fireEvent.click(toggleBtn);
+    expect((passwordInput as HTMLInputElement).type).toBe('password');
+  });
+
   it('submitting the form triggers the API call', async () => {
     const loginMock = vi.fn();
-    (useAuth as any).mockReturnValue({ login: loginMock });
+    (useAuth as any).mockReturnValue({ login: loginMock, token: null });
     (axiosInstance.post as any).mockResolvedValue({ data: { token: 'mock-token' } });
     
     render(<MemoryRouter><LoginPage /></MemoryRouter>);
@@ -56,7 +71,7 @@ describe('LoginPage', () => {
   });
 
   it('API errors display red error text on the screen', async () => {
-    (useAuth as any).mockReturnValue({ login: vi.fn() });
+    (useAuth as any).mockReturnValue({ login: vi.fn(), token: null });
     (axiosInstance.post as any).mockRejectedValue({
       response: { data: { message: 'Incorrect password' } }
     });
@@ -71,5 +86,20 @@ describe('LoginPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Incorrect password')).toBeInTheDocument();
     });
+  });
+
+  it('social login buttons trigger social alerts', () => {
+    (useAuth as any).mockReturnValue({ login: vi.fn(), token: null });
+    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+
+    fireEvent.click(screen.getByText('Continue with Google'));
+    fireEvent.click(screen.getByText('Continue with GitHub'));
+  });
+
+  it('navbar displays dashboard link if token exists', () => {
+    (useAuth as any).mockReturnValue({ login: vi.fn(), token: 'valid-token' });
+    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument();
   });
 });
