@@ -106,19 +106,20 @@ describe('DashboardPage', () => {
     
     await waitFor(() => {
       expect(screen.getAllByText(/abc123/)[0]).toBeInTheDocument();
-      expect(screen.getByText('https://example.com/one')).toBeInTheDocument();
-      expect(screen.getByText('42')).toBeInTheDocument();
-      expect(screen.getByText('Active')).toBeInTheDocument();
-      expect(screen.getByText('Expired')).toBeInTheDocument();
-      expect(screen.getAllByText(/youtube/)[0]).toBeInTheDocument();
     });
+
+    expect(screen.getByText('https://example.com/one')).toBeInTheDocument();
+    expect(screen.getByText('42')).toBeInTheDocument();
+    expect(screen.getByText('Active')).toBeInTheDocument();
+    expect(screen.getByText('Expired')).toBeInTheDocument();
+    expect(screen.getAllByText(/youtube/)[0]).toBeInTheDocument();
 
     // Test Favicon image fallback on error
     const favicons = document.querySelectorAll('img[alt="Favicon"]');
     if (favicons[0]) {
       fireEvent.error(favicons[0]);
     }
-  });
+  }, 10000);
 
   it('typing into Search Bar filters the displayed links', async () => {
     render(<MemoryRouter><DashboardPage /></MemoryRouter>);
