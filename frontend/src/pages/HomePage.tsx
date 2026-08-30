@@ -248,7 +248,7 @@ const HomePage: React.FC = () => {
     >
       {/* ── Navbar ────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 h-14 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 h-14 flex items-center justify-between relative">
           {/* Logo */}
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center gap-2">
@@ -256,8 +256,8 @@ const HomePage: React.FC = () => {
             </Link>
           </div>
 
-          {/* Nav links (desktop) */}
-          <nav className="hidden md:flex items-center gap-8 text-xs font-medium text-muted-foreground">
+          {/* Nav links (desktop - exactly centered) */}
+          <nav className="hidden md:flex items-center gap-8 text-xs font-medium text-muted-foreground absolute left-1/2 -translate-x-1/2">
             <a href="#features" className="hover:text-foreground transition-colors">
               Features
             </a>
@@ -319,13 +319,14 @@ const HomePage: React.FC = () => {
           {/* 1. Badge */}
           <motion.div
             variants={fadeUpVariant}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border bg-card/80 backdrop-blur-sm text-xs font-medium text-muted-foreground shadow-sm"
+            className="group inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border bg-card/80 backdrop-blur-sm text-xs font-medium text-muted-foreground shadow-sm hover:border-border/80 hover:text-foreground transition-colors cursor-pointer"
           >
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
             </span>
-            Fast · Free · No signup needed →
+            <span>Fast · Free · No signup needed</span>
+            <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 ease-out group-hover:translate-x-1 text-muted-foreground group-hover:text-foreground" />
           </motion.div>
 
           {/* 2. Trim Logo */}
@@ -383,16 +384,17 @@ const HomePage: React.FC = () => {
                 id="home-shorten-submit"
                 type="submit"
                 disabled={loading}
-                className="btn-solid px-5 py-2.5 text-xs font-semibold flex items-center justify-center gap-2 flex-shrink-0 disabled:opacity-60"
+                className="group btn-solid px-5 py-2.5 text-xs font-semibold flex items-center justify-center gap-2 flex-shrink-0 disabled:opacity-60 transition-all active:scale-[0.98]"
               >
                 {loading ? (
                   <>
                     <span className="w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                    Shortening…
+                    <span>Shortening…</span>
                   </>
                 ) : (
                   <>
-                    <Zap className="w-3.5 h-3.5" /> Shorten it
+                    <Zap className="w-3.5 h-3.5 transition-transform duration-200 ease-out group-hover:scale-125 group-hover:-rotate-12 group-hover:fill-current" />
+                    <span>Shorten it</span>
                   </>
                 )}
               </button>
@@ -573,9 +575,10 @@ const HomePage: React.FC = () => {
             </ul>
             <Link
               to="/register"
-              className="btn-solid inline-flex items-center gap-2"
+              className="group btn-solid inline-flex items-center gap-2"
             >
-              Sign up for free <ArrowRight className="w-3.5 h-3.5" />
+              <span>Sign up for free</span>
+              <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 ease-out group-hover:translate-x-1" />
             </Link>
           </div>
         </div>
@@ -622,9 +625,10 @@ const HomePage: React.FC = () => {
             </ul>
             <Link
               to="/register"
-              className="btn-solid inline-flex items-center gap-2"
+              className="group btn-solid inline-flex items-center gap-2"
             >
-              Create your first link <ArrowRight className="w-3.5 h-3.5" />
+              <span>Create your first link</span>
+              <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 ease-out group-hover:translate-x-1" />
             </Link>
           </div>
 
@@ -829,9 +833,10 @@ const HomePage: React.FC = () => {
           </p>
           <Link
             to="/register"
-            className="btn-solid px-8 py-3 text-xs font-semibold shadow-lg mt-2"
+            className="group btn-solid px-8 py-3 text-xs font-semibold shadow-lg mt-2 inline-flex items-center gap-2"
           >
-            Get Started
+            <span>Get Started</span>
+            <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 ease-out group-hover:translate-x-1" />
           </Link>
         </div>
 
