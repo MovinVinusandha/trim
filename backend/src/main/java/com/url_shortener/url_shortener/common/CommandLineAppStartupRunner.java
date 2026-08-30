@@ -34,7 +34,7 @@ public class CommandLineAppStartupRunner implements CommandLineRunner {
             rootAdmin = new User();
             rootAdmin.setName("Root");
             rootAdmin.setEmail(rootUserEmail);
-            rootAdmin.setPublicId("root_" + org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric(16));
+            rootAdmin.setPublicId("root_" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 16));
             rootAdmin.setPassword(passwordEncoder.encode(rootUserPassword));
             rootAdmin.setRole(Role.ROOT);
             rootAdmin = userRepository.save(rootAdmin);

@@ -134,7 +134,7 @@ public class FolderService {
     }
 
     private String generateSlug(String name, Long userId) {
-        String baseSlug = name.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
+        String baseSlug = name.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-)|(-$)", "");
         if (folderRepository.existsByUserIdAndSlug(userId, baseSlug)) {
              throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.CONFLICT, "A folder with a similar name already exists");
         }

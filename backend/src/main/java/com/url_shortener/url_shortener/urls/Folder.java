@@ -43,7 +43,7 @@ public class Folder {
         this.createdAt = LocalDateTime.now();
         if (this.slug == null || this.slug.isBlank()) {
             if (this.name != null) {
-                this.slug = this.name.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
+                this.slug = this.name.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-)|(-$)", "");
             }
         }
     }
