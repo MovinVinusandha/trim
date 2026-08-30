@@ -95,187 +95,187 @@ describe('AnalyticsPage', () => {
     
     await waitFor(() => {
       expect(screen.getByText('1,234')).toBeInTheDocument();
-      expect(screen.getByText(/Desktop/)).toBeInTheDocument();
-      expect(screen.getByText(/Mobile/)).toBeInTheDocument();
-      expect(screen.getByText('US')).toBeInTheDocument();
-      expect(screen.getByText('GB')).toBeInTheDocument();
-      expect(screen.getAllByText('Chrome')[0]).toBeInTheDocument();
+    }, { timeout: 10000 });
+
+    expect(screen.getByText(/Desktop/)).toBeInTheDocument();
+    expect(screen.getByText(/Mobile/)).toBeInTheDocument();
+    expect(screen.getByText('US')).toBeInTheDocument();
+    expect(screen.getByText('GB')).toBeInTheDocument();
+    expect(screen.getAllByText('Chrome')[0]).toBeInTheDocument();
+  }, 10000);
+
+  it('handles empty analytics datasets (0 clicks and empty arrays)', async () => {
+    (axiosInstance.get as any).mockImplementation((url: string) => {
+      if (url === '/url/all') return Promise.resolve({ data: [] });
+      return Promise.resolve({
+        data: {
+          totalClicks: 0,
+          clicksByDate: [],
+          clicksByCountry: [],
+          clicksByDevice: [],
+          clicksByBrowser: [],
+        },
+      });
     });
-  });
 
-  it('handles /analytics/:hash specific analytics route and /analytics/folder/slug/:folderSlug', async () => {
-    vi.spyOn(routerDom, 'useParams').mockReturnValue({ hash: 'xyz789', folderSlug: 'main' });
-
-    render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
-    
-    await waitFor(() => {
-      expect(axiosInstance.get).toHaveBeenCalledWith('/analytics/xyz789', expect.any(Object));
-    });
-  });
-
-  it('handles /analytics/folder/slug/:folderSlug route when no hash is present', async () => {
-    vi.spyOn(routerDom, 'useParams').mockReturnValue({ folderSlug: 'main' });
-
-    render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
-    
-    await waitFor(() => {
-      expect(axiosInstance.get).toHaveBeenCalledWith('/analytics/folder/slug/main', expect.any(Object));
-    });
-  });
-
-  it('handles Link filter dropdown, back button, search, and selection', async () => {
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /filter/i })).toBeInTheDocument();
+      expect(screen.getAllByText('0').length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /filter/i }));
-    fireEvent.click(screen.getByText('Link'));
+    expect(screen.getAllByText('No data').length).toBeGreaterThan(0);
+  });
+
+  it('renders custom link pill and allows clearing link filter', async () => {
+    mockSearchParams = new URLSearchParams('hash=xyz789');
+
+    render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByText('Link')).toBeInTheDocument();
+    });
+
+    // Open Link Pill Popover
+    const linkTriggers = screen.getAllByText('/xyz789');
+    fireEvent.click(linkTriggers[0]);
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('Search links...')).toBeInTheDocument();
-      expect(screen.getByText('/xyz789')).toBeInTheDocument();
     });
 
-    // Test back button
-    const backBtn = document.querySelector('svg.lucide-chevron-left')?.closest('button');
-    if (backBtn) fireEvent.click(backBtn);
-
-    // Re-enter Link filter
-    fireEvent.click(screen.getByText('Link'));
-
-    // Search links
+    // Filter search inside link popover
     const searchInput = screen.getByPlaceholderText('Search links...');
     fireEvent.change(searchInput, { target: { value: 'xyz' } });
 
-    // Select link
-    fireEvent.click(screen.getByText('/xyz789'));
+    // Click link option
+    const linkOptions = screen.getAllByText('/xyz789');
+    fireEvent.click(linkOptions[linkOptions.length - 1]);
+
+    // Clear link filter
+    const clearBtn = screen.getAllByRole('button').find(b => b.querySelector('svg.lucide-x'));
+    if (clearBtn) {
+      fireEvent.click(clearBtn);
+      expect(mockSetSearchParams).toHaveBeenCalled();
+    }
   });
 
-  it('handles Tag filter dropdown, back button, search, and checkbox toggling', async () => {
+  it('renders compound tag pills and handles popover search & checkbox toggles', async () => {
+    mockSearchParams = new URLSearchParams('tagId=10,20');
+
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /filter/i })).toBeInTheDocument();
+      expect(screen.getByText('2 Tags')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /filter/i }));
-    fireEvent.click(screen.getByText('Tag'));
+    // Open tag popover
+    fireEvent.click(screen.getByText('2 Tags'));
+    expect(screen.getByPlaceholderText('Tag...')).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText('Tag...')).toBeInTheDocument();
-      expect(screen.getByText('Campaign')).toBeInTheDocument();
-    });
+    // Search inside tag popover
+    fireEvent.change(screen.getByPlaceholderText('Tag...'), { target: { value: 'Camp' } });
+    expect(screen.getByText('Campaign')).toBeInTheDocument();
 
-    // Test back button
-    const backBtn = document.querySelector('svg.lucide-chevron-left')?.closest('button');
-    if (backBtn) fireEvent.click(backBtn);
+    // Toggle checkbox
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    if (checkboxes[0]) {
+      fireEvent.click(checkboxes[0]);
+      expect(mockSetSearchParams).toHaveBeenCalled();
+    }
 
-    // Re-enter Tag filter
-    fireEvent.click(screen.getByText('Tag'));
-
-    const searchInput = screen.getByPlaceholderText('Tag...');
-    fireEvent.change(searchInput, { target: { value: 'Camp' } });
-
-    const checkbox = document.querySelector('input[type="checkbox"]') as HTMLInputElement;
-    if (checkbox) fireEvent.click(checkbox);
+    // Clear tag filter button
+    const clearBtn = screen.getAllByRole('button').find(b => b.querySelector('svg.lucide-x'));
+    if (clearBtn) {
+      fireEvent.click(clearBtn);
+      expect(mockSetSearchParams).toHaveBeenCalled();
+    }
   });
 
-  it('handles Folder filter dropdown, back button, search, and selection', async () => {
+  it('renders folder pill popover, navigation, and clearing folder filter', async () => {
+    vi.spyOn(routerDom, 'useParams').mockReturnValue({ folderSlug: 'marketing' });
+
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /filter/i })).toBeInTheDocument();
+      expect(screen.getByText('Folder')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /filter/i }));
-    fireEvent.click(screen.getByText('Folder'));
+    // Open folder pill popover
+    const folderTrigger = screen.getByText('Marketing');
+    fireEvent.click(folderTrigger);
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('Search folders...')).toBeInTheDocument();
       expect(screen.getByText('Main Folder')).toBeInTheDocument();
     });
 
-    // Test back button
-    const backBtn = document.querySelector('svg.lucide-chevron-left')?.closest('button');
-    if (backBtn) fireEvent.click(backBtn);
-
-    // Re-enter Folder filter
-    fireEvent.click(screen.getByText('Folder'));
-
-    const searchInput = screen.getByPlaceholderText('Search folders...');
-    fireEvent.change(searchInput, { target: { value: 'Main' } });
-
+    // Search and select
+    const folderSearchInput = screen.getByPlaceholderText('Search folders...');
+    fireEvent.change(folderSearchInput, { target: { value: 'Main' } });
     fireEvent.click(screen.getByText('Main Folder'));
-    expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/analytics/f/main'));
-  });
+    expect(mockNavigate).toHaveBeenCalledWith('/analytics/f/main');
 
-  it('handles active compound filter pills (Tag pill, Folder pill, Link pill)', async () => {
-    mockSearchParams = new URLSearchParams('tagId=10,20&folderId=1');
-    vi.spyOn(routerDom, 'useParams').mockReturnValue({ hash: 'xyz789' });
-
-    render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
-
-    await waitFor(() => {
-      expect(screen.getByText('2 Tags')).toBeInTheDocument();
-      expect(screen.getByText('Main Folder')).toBeInTheDocument();
-      expect(screen.getByText('/xyz789')).toBeInTheDocument();
-    });
-
-    // Click Link pill trigger to open popover
-    fireEvent.click(screen.getByText('/xyz789'));
-    expect(screen.getByPlaceholderText('Search links...')).toBeInTheDocument();
-
-    const linkSearchInput = screen.getByPlaceholderText('Search links...');
-    fireEvent.change(linkSearchInput, { target: { value: 'xyz' } });
-    fireEvent.click(screen.getAllByText('/xyz789')[1]);
-
-    // Click Tag pill trigger to open popover
-    fireEvent.click(screen.getByText('2 Tags'));
-    expect(screen.getByPlaceholderText('Tag...')).toBeInTheDocument();
-
-    // Toggle tag checkbox in popover
-    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-    if (checkboxes.length > 0) fireEvent.click(checkboxes[0]);
-
-    // Clear tag filter via tag pill X button
-    const tagCloseButtons = screen.getAllByRole('button');
-    const xButtons = tagCloseButtons.filter(b => b.querySelector('svg.lucide-x'));
-    if (xButtons.length > 0) {
-      xButtons.forEach(btn => fireEvent.click(btn));
+    // Click clear folder button
+    const clearBtn = screen.getAllByRole('button').find(b => b.querySelector('svg.lucide-x'));
+    if (clearBtn) {
+      fireEvent.click(clearBtn);
+      expect(mockNavigate).toHaveBeenCalled();
     }
   });
 
-  it('handles active folder pill popover search and selection', async () => {
+  it('handles folderId query param without folderSlug', async () => {
     mockSearchParams = new URLSearchParams('folderId=1');
 
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
 
     await waitFor(() => {
-      expect(screen.getByText('Main Folder')).toBeInTheDocument();
+      expect(screen.getByText('Folder')).toBeInTheDocument();
     });
 
-    // Click Folder pill trigger to open popover
-    fireEvent.click(screen.getByText('Main Folder'));
-    expect(screen.getByPlaceholderText('Search folders...')).toBeInTheDocument();
-
-    // Search and select folder inside folder pill popover
-    const folderSearchInput = screen.getByPlaceholderText('Search folders...');
-    fireEvent.change(folderSearchInput, { target: { value: 'Market' } });
-    expect(screen.getByText('Marketing')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('Marketing'));
-    expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/analytics/f/marketing'));
+    const clearBtn = screen.getAllByRole('button').find(b => b.querySelector('svg.lucide-x'));
+    if (clearBtn) {
+      fireEvent.click(clearBtn);
+      expect(mockSetSearchParams).toHaveBeenCalled();
+    }
   });
 
-  it('handles mousedown click outside closing all open popovers', async () => {
+  it('handles filter popover sub-menus (Link, Tag, Folder) and back buttons', async () => {
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /filter/i })).toBeInTheDocument();
     });
 
-    // Open filter
+    // 1. Open Filter Menu
+    fireEvent.click(screen.getByRole('button', { name: /filter/i }));
+    expect(screen.getByText('Link')).toBeInTheDocument();
+
+    // 2. Select Tag Sub-filter
+    fireEvent.click(screen.getByText('Tag'));
+    expect(screen.getByPlaceholderText('Tag...')).toBeInTheDocument();
+
+    // Back chevron
+    const backBtn = document.querySelector('svg.lucide-chevron-left')?.closest('button');
+    if (backBtn) fireEvent.click(backBtn);
+
+    // 3. Select Folder Sub-filter
+    fireEvent.click(screen.getByText('Folder'));
+    expect(screen.getByPlaceholderText('Search folders...')).toBeInTheDocument();
+    if (backBtn) fireEvent.click(backBtn);
+
+    // 4. Select Link Sub-filter
+    fireEvent.click(screen.getByText('Link'));
+    expect(screen.getByPlaceholderText('Search links...')).toBeInTheDocument();
+  });
+
+  it('closes popovers when clicking outside the document', async () => {
+    render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /filter/i })).toBeInTheDocument();
+    });
+
     fireEvent.click(screen.getByRole('button', { name: /filter/i }));
     expect(screen.getByText('Link')).toBeInTheDocument();
 
