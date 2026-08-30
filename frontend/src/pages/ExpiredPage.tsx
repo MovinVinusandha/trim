@@ -7,24 +7,20 @@ const ExpiredPage: React.FC = () => {
   const { token } = useAuth();
 
   return (
-    <div className="antialiased min-h-screen flex flex-col bg-gray-50 dark:bg-[#111113] text-black dark:text-[#EDEDED] font-sans relative">
-      {/* Background Dot Mesh */}
+    <div className="antialiased min-h-screen flex flex-col bg-background text-foreground font-sans relative">
+      {/* Background subtle mesh */}
       <div 
-        className="absolute inset-0 z-0 dark:hidden"
-        style={{ backgroundImage: 'radial-gradient(#e5e7eb 1px, transparent 1px)', backgroundSize: '24px 24px' }}
-      />
-      <div 
-        className="absolute inset-0 z-0 hidden dark:block"
-        style={{ backgroundImage: 'radial-gradient(#2B2B30 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+        className="absolute inset-0 z-0 opacity-40"
+        style={{ backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)', backgroundSize: '24px 24px' }}
       />
       
       {/* BEGIN: Navigation Bar */}
-      <header className="sticky top-0 z-50 bg-white/90 dark:bg-[#111113]/90 backdrop-blur-sm border-b border-gray-100 dark:border-[#2B2B30]">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 h-14 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center gap-2">
-              <BrandLogo className="h-9 w-auto text-[#12141D] dark:text-white" />
+              <BrandLogo className="h-8 w-auto text-foreground" />
             </Link>
           </div>
 
@@ -33,7 +29,7 @@ const ExpiredPage: React.FC = () => {
             {token ? (
               <Link 
                 to="/dashboard" 
-                className="px-4 py-2 bg-[#12141D] dark:bg-white text-white dark:text-black text-sm font-semibold rounded-xl hover:bg-[#201F22] dark:hover:bg-gray-200 transition-colors"
+                className="btn-solid"
               >
                 Dashboard
               </Link>
@@ -41,13 +37,13 @@ const ExpiredPage: React.FC = () => {
               <>
                 <Link 
                   to="/login" 
-                  className="text-sm font-medium text-gray-600 dark:text-[#A1A1AA] hover:text-[#12141D] dark:hover:text-white transition-colors"
+                  className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Login
                 </Link>
                 <Link 
                   to="/register" 
-                  className="px-4 py-2 bg-[#12141D] dark:bg-white text-white dark:text-black text-sm font-semibold rounded-xl hover:bg-[#201F22] dark:hover:bg-gray-200 transition-colors"
+                  className="btn-solid"
                 >
                   Get Started
                 </Link>
@@ -62,23 +58,23 @@ const ExpiredPage: React.FC = () => {
       <main className="flex-grow flex flex-col items-center justify-center pt-24 pb-16 px-4 z-10 relative">
         <section className="flex flex-col items-center text-center px-4 max-w-2xl">
           {/* Logo */}
-          <BrandLogo className="mb-8 sm:mb-10 mx-auto w-16 h-auto block text-gray-900 dark:text-white" />
+          <BrandLogo className="mb-8 sm:mb-10 mx-auto w-14 h-auto block text-foreground" />
           
           {/* Heading */}
-          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-gray-900 dark:text-[#EDEDED] mb-4">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-3">
             Expired link
           </h1>
           
           {/* Subtext */}
-          <p className="text-lg md:text-xl text-gray-600 dark:text-[#A1A1AA] mb-10 max-w-lg mx-auto leading-relaxed">
+          <p className="text-base text-muted-foreground mb-8 max-w-md mx-auto leading-relaxed">
             This link has expired. Please contact the owner of this link to get a new one.
           </p>
           
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-3">
             <Link 
               to="/register"
-              className="px-6 py-3 bg-black dark:bg-[#EDEDED] text-white dark:text-[#111113] rounded-lg font-medium hover:bg-gray-900 dark:hover:bg-white transition-colors w-full sm:w-auto text-center shadow-md"
+              className="btn-solid px-6 py-2.5 w-full sm:w-auto text-center"
             >
               Try trim today
             </Link>
@@ -86,7 +82,7 @@ const ExpiredPage: React.FC = () => {
               href="#"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-6 py-3 bg-white dark:bg-[#1E1E21] text-gray-800 dark:text-[#EDEDED] border border-gray-200 dark:border-[#2B2B30] rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-[#2B2B30] transition-colors w-full sm:w-auto text-center shadow-sm"
+              className="px-6 py-2 bg-background text-foreground border border-border rounded-lg font-medium hover:bg-secondary transition-colors w-full sm:w-auto text-center text-sm"
             >
               Learn more
             </a>

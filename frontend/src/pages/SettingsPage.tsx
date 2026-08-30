@@ -23,18 +23,14 @@ const SettingsPage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // Fallback id logic if publicId is missing
   const userIdDisplay = (user as any)?.publicId || user?.id || 'Unknown ID';
 
   const handleUpdateName = async () => {
     setIsUpdatingName(true);
     setNameMessage(null);
     try {
-      // Endpoint requires both name and email, or we just send name and keep current email
-      // Let's send the current email state so it doesn't try to change it to null
       await axiosInstance.put('/users/me', { name, email: user?.email });
       setNameMessage({ type: 'success', text: 'Name updated successfully.' });
-      // In a real app we'd update AuthContext here, but often a reload or login fetch is needed
     } catch (error: any) {
       setNameMessage({ type: 'error', text: error.response?.data?.message || 'Failed to update name.' });
     } finally {
@@ -82,35 +78,35 @@ const SettingsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-8 max-w-4xl mx-auto space-y-6">
-        <div className="mb-8">
-          <Skeleton width={200} height={32} />
-          <div className="mt-1"><Skeleton width={300} height={20} /></div>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-4 max-w-4xl mx-auto space-y-6">
+        <div className="mb-6">
+          <Skeleton width={200} height={28} />
+          <div className="mt-1"><Skeleton width={300} height={18} /></div>
         </div>
 
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl overflow-hidden shadow-sm">
+          <div key={i} className="bg-card border border-border rounded-xl overflow-hidden">
             <div className="p-6">
-              <Skeleton width={120} height={24} />
-              <div className="mt-1 mb-4"><Skeleton width="60%" height={20} /></div>
+              <Skeleton width={120} height={20} />
+              <div className="mt-1 mb-4"><Skeleton width="60%" height={16} /></div>
               <div className="max-w-md">
-                <Skeleton height={40} borderRadius={6} />
+                <Skeleton height={38} borderRadius={6} />
               </div>
             </div>
-            <div className="px-6 py-4 bg-gray-50 dark:bg-[#2B2B30]/50 border-t border-gray-200 dark:border-[#2B2B30] flex items-center justify-between">
-              <Skeleton width={200} height={16} />
-              <Skeleton width={120} height={36} borderRadius={6} />
+            <div className="px-6 py-4 bg-secondary/30 border-t border-border flex items-center justify-between">
+              <Skeleton width={200} height={14} />
+              <Skeleton width={120} height={32} borderRadius={6} />
             </div>
           </div>
         ))}
         
-        <div className="bg-white dark:bg-[#1E1E21] border border-red-200 dark:border-red-900/30 rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-card border border-rose-500/20 rounded-xl overflow-hidden">
           <div className="p-6">
-            <Skeleton width={160} height={24} />
-            <div className="mt-2 mb-4"><Skeleton width="100%" height={40} /></div>
+            <Skeleton width={160} height={20} />
+            <div className="mt-2 mb-4"><Skeleton width="100%" height={32} /></div>
           </div>
-          <div className="px-6 py-4 bg-red-50 dark:bg-red-900/10 border-t border-red-100 dark:border-red-900/30 flex items-center justify-end">
-            <Skeleton width={140} height={36} borderRadius={6} />
+          <div className="px-6 py-4 bg-rose-500/5 border-t border-rose-500/20 flex items-center justify-end">
+            <Skeleton width={140} height={32} borderRadius={6} />
           </div>
         </div>
       </motion.div>
@@ -118,17 +114,17 @@ const SettingsPage: React.FC = () => {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-8 max-w-4xl mx-auto space-y-6">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Account Settings</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your account settings and preferences.</p>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-4 max-w-4xl mx-auto space-y-6">
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-foreground">Account Settings</h1>
+        <p className="text-sm text-muted-foreground mt-1">Manage your account settings and preferences.</p>
       </div>
 
       {/* Your Name Card */}
-      <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div className="p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Your Name</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-4">
+          <h3 className="text-base font-medium text-foreground">Your Name</h3>
+          <p className="text-sm text-muted-foreground mt-1 mb-4">
             Please enter your full name, or a display name you are comfortable with.
           </p>
           <div className="max-w-md">
@@ -136,22 +132,22 @@ const SettingsPage: React.FC = () => {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-[#2B2B30] rounded-md focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-[#2B2B30] text-gray-900 dark:text-white"
+              className="w-full px-3.5 py-2 border border-input rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-background text-foreground transition-colors text-sm"
             />
           </div>
           {nameMessage && (
-            <div className={`mt-3 text-sm flex items-center gap-1.5 ${nameMessage.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+            <div className={`mt-3 text-sm flex items-center gap-1.5 ${nameMessage.type === 'success' ? 'text-emerald-500' : 'text-rose-500'}`}>
               {nameMessage.type === 'success' ? <Check className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
               {nameMessage.text}
             </div>
           )}
         </div>
-        <div className="px-6 py-4 bg-gray-50 dark:bg-[#2B2B30]/50 border-t border-gray-200 dark:border-[#2B2B30] flex items-center justify-between">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Please use 32 characters at maximum.</p>
+        <div className="px-6 py-3.5 bg-secondary/30 border-t border-border flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">Please use 32 characters at maximum.</p>
           <button
             onClick={handleUpdateName}
             disabled={isUpdatingName || name === user?.name || !name.trim()}
-            className="bg-black text-white dark:bg-white dark:text-black px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800 dark:hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+            className="btn-solid disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isUpdatingName ? 'Saving...' : 'Save Changes'}
           </button>
@@ -159,10 +155,10 @@ const SettingsPage: React.FC = () => {
       </div>
 
       {/* Your Email Card */}
-      <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div className="p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Your Email</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-4">
+          <h3 className="text-base font-medium text-foreground">Your Email</h3>
+          <p className="text-sm text-muted-foreground mt-1 mb-4">
             Please enter the email address you want to use to log in.
           </p>
           <div className="max-w-md">
@@ -170,22 +166,22 @@ const SettingsPage: React.FC = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-[#2B2B30] rounded-md focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-[#2B2B30] text-gray-900 dark:text-white"
+              className="w-full px-3.5 py-2 border border-input rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-background text-foreground transition-colors text-sm"
             />
           </div>
           {emailMessage && (
-            <div className={`mt-3 text-sm flex items-center gap-1.5 ${emailMessage.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+            <div className={`mt-3 text-sm flex items-center gap-1.5 ${emailMessage.type === 'success' ? 'text-emerald-500' : 'text-rose-500'}`}>
               {emailMessage.type === 'success' ? <Check className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
               {emailMessage.text}
             </div>
           )}
         </div>
-        <div className="px-6 py-4 bg-gray-50 dark:bg-[#2B2B30]/50 border-t border-gray-200 dark:border-[#2B2B30] flex items-center justify-between">
-          <p className="text-xs text-gray-500 dark:text-gray-400">We will email you to verify the change.</p>
+        <div className="px-6 py-3.5 bg-secondary/30 border-t border-border flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">We will email you to verify the change.</p>
           <button
             onClick={handleUpdateEmail}
             disabled={isUpdatingEmail || email === user?.email || !email.trim()}
-            className="bg-black text-white dark:bg-white dark:text-black px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800 dark:hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+            className="btn-solid disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isUpdatingEmail ? 'Saving...' : 'Save Changes'}
           </button>
@@ -193,10 +189,10 @@ const SettingsPage: React.FC = () => {
       </div>
 
       {/* Your User ID Card */}
-      <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div className="p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Your User ID</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-4">
+          <h3 className="text-base font-medium text-foreground">Your User ID</h3>
+          <p className="text-sm text-muted-foreground mt-1 mb-4">
             This is your unique identifier when communicating with support.
           </p>
           <div className="max-w-md flex items-center gap-2">
@@ -204,34 +200,34 @@ const SettingsPage: React.FC = () => {
               type="text"
               readOnly
               value={userIdDisplay}
-              className="flex-1 px-3 py-2 border border-gray-300 dark:border-[#2B2B30] rounded-md bg-gray-50 dark:bg-[#111113]/80 text-gray-600 dark:text-gray-400 font-mono text-sm cursor-not-allowed"
+              className="flex-1 px-3.5 py-2 border border-input rounded-lg bg-secondary/40 text-muted-foreground font-mono text-sm cursor-not-allowed"
             />
             <button
               onClick={copyToClipboard}
-              className="p-2 border border-gray-300 dark:border-[#2B2B30] rounded-md hover:bg-gray-50 dark:hover:bg-[#2B2B30] transition-colors text-gray-600 dark:text-gray-300"
+              className="p-2 border border-input rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
               title="Copy User ID"
             >
-              {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
             </button>
           </div>
         </div>
       </div>
 
       {/* Delete Account Card */}
-      <div className="bg-white dark:bg-[#1E1E21] border border-red-200 dark:border-red-900/30 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-card border border-rose-500/20 rounded-xl overflow-hidden">
         <div className="p-6">
-          <h3 className="text-lg font-medium text-red-600 dark:text-red-400 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5" />
+          <h3 className="text-base font-medium text-rose-500 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" />
             Delete Account
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 mb-4">
+          <p className="text-sm text-muted-foreground mt-2 mb-4">
             Permanently remove your personal account and all of its contents from our platform. This action is not reversible, so please continue with caution.
           </p>
         </div>
-        <div className="px-6 py-4 bg-red-50 dark:bg-red-900/10 border-t border-red-100 dark:border-red-900/30 flex items-center justify-end">
+        <div className="px-6 py-3.5 bg-rose-500/5 border-t border-rose-500/20 flex items-center justify-end">
           <button
             onClick={() => setIsDeleteModalOpen(true)}
-            className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm"
+            className="bg-rose-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-rose-700 transition-colors shadow-sm"
           >
             Delete Account
           </button>
@@ -245,55 +241,55 @@ const SettingsPage: React.FC = () => {
           animate={{ opacity: 1 }} 
           exit={{ opacity: 0 }} 
           transition={{ duration: 0.15 }} 
-          className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
         >
           <motion.div 
             initial={{ opacity: 0, scale: 0.96, y: 8 }} 
             animate={{ opacity: 1, scale: 1, y: 0 }} 
             exit={{ opacity: 0, scale: 0.96, y: 8 }} 
             transition={{ duration: 0.15, ease: "easeOut" }} 
-            className="bg-white dark:bg-[#1E1E21] max-w-md w-full rounded-xl p-6 shadow-2xl relative border border-gray-200 dark:border-[#2B2B30]"
+            className="bg-card max-w-md w-full rounded-2xl p-6 shadow-2xl relative border border-border"
           >
             <button 
               onClick={() => setIsDeleteModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 rounded-md"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-               <AlertTriangle className="w-6 h-6 text-red-500" /> Delete Account
+            <h2 className="text-lg font-bold text-foreground mb-2 flex items-center gap-2">
+               <AlertTriangle className="w-5 h-5 text-rose-500" /> Delete Account
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-sm text-muted-foreground mb-6">
               Warning: This will permanently delete your account, along with all your links, analytics, and folders. This action cannot be undone.
             </p>
 
-            <div className="bg-gray-50 dark:bg-[#2B2B30]/50 p-4 rounded-lg flex items-center gap-3 mb-6 border border-gray-100 dark:border-[#2B2B30]">
-               <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-[#2B2B30] text-gray-700 dark:text-gray-200 flex items-center justify-center font-bold uppercase shadow-sm shrink-0">
+            <div className="bg-secondary/40 p-4 rounded-xl flex items-center gap-3 mb-6 border border-border">
+               <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold uppercase shrink-0">
                  {user?.name ? user.name.charAt(0) : user?.email ? user.email.charAt(0) : 'U'}
                </div>
                <div className="min-w-0">
-                 <div className="font-medium text-gray-900 dark:text-white truncate">{user?.name || 'User'}</div>
-                 <div className="text-sm text-gray-500 dark:text-gray-400 truncate">{user?.email}</div>
+                 <div className="font-medium text-foreground text-sm truncate">{user?.name || 'User'}</div>
+                 <div className="text-xs text-muted-foreground truncate">{user?.email}</div>
                </div>
             </div>
 
             <div className="mb-6">
-               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                 To verify, type <span className="font-bold">confirm delete account</span> below
+               <label className="block text-xs font-medium text-foreground mb-2">
+                 To verify, type <span className="font-bold text-rose-500">confirm delete account</span> below
                </label>
                <input
                  type="text"
                  value={confirmationText}
                  onChange={(e) => setConfirmationText(e.target.value)}
-                 className="w-full px-3 py-2 border border-gray-300 dark:border-[#2B2B30] rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-[#2B2B30] text-gray-900 dark:text-white"
+                 className="w-full px-3.5 py-2 border border-input rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 bg-background text-foreground text-sm"
                  placeholder="confirm delete account"
                />
             </div>
 
             {deleteError && (
-              <div className="mb-4 text-sm text-red-600 flex items-center gap-1.5">
+              <div className="mb-4 text-xs text-rose-500 flex items-center gap-1.5">
                 <AlertCircle className="w-4 h-4" /> {deleteError}
               </div>
             )}
@@ -301,7 +297,7 @@ const SettingsPage: React.FC = () => {
             <button
                disabled={!isConfirmationMatch || isDeleting}
                onClick={handleDeleteAccount}
-               className="w-full py-2.5 rounded-md font-medium text-sm transition-colors disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed dark:disabled:bg-slate-800 dark:disabled:text-slate-600 bg-red-600 text-white hover:bg-red-700"
+               className="w-full py-2.5 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-rose-600 text-white hover:bg-rose-700 shadow-sm"
             >
                {isDeleting ? 'Deleting...' : 'Delete Account'}
             </button>

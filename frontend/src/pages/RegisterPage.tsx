@@ -69,24 +69,20 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="antialiased min-h-screen flex flex-col bg-gray-50 dark:bg-[#111113] text-black dark:text-[#EDEDED] font-sans relative">
-      {/* Background Dot Mesh */}
+    <div className="antialiased min-h-screen flex flex-col bg-background text-foreground font-sans relative">
+      {/* Background subtle mesh */}
       <div 
-        className="absolute inset-0 z-0 dark:hidden"
-        style={{ backgroundImage: 'radial-gradient(#e5e7eb 1px, transparent 1px)', backgroundSize: '24px 24px' }}
-      />
-      <div 
-        className="absolute inset-0 z-0 hidden dark:block"
-        style={{ backgroundImage: 'radial-gradient(#2B2B30 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+        className="absolute inset-0 z-0 opacity-40"
+        style={{ backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)', backgroundSize: '24px 24px' }}
       />
 
       {/* BEGIN: Navigation Bar */}
-      <header className="sticky top-0 z-50 bg-white/90 dark:bg-[#111113]/90 backdrop-blur-sm border-b border-gray-100 dark:border-[#2B2B30]">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 h-14 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center gap-2">
-              <BrandLogo className="h-9 w-auto text-[#12141D] dark:text-white" />
+              <BrandLogo className="h-8 w-auto text-foreground" />
             </Link>
           </div>
 
@@ -95,14 +91,14 @@ const RegisterPage: React.FC = () => {
             {token ? (
               <Link 
                 to="/dashboard" 
-                className="px-4 py-2 bg-[#12141D] dark:bg-white text-white dark:text-black text-sm font-semibold rounded-xl hover:bg-[#201F22] dark:hover:bg-gray-200 transition-colors"
+                className="btn-solid"
               >
                 Dashboard
               </Link>
             ) : (
               <Link 
                 to="/login" 
-                className="px-4 py-2 bg-[#12141D] dark:bg-white text-white dark:text-black text-sm font-semibold rounded-xl hover:bg-[#201F22] dark:hover:bg-gray-200 transition-colors"
+                className="btn-solid"
               >
                 Log in
               </Link>
@@ -124,27 +120,27 @@ const RegisterPage: React.FC = () => {
           
           {/* Brand Logo Outside Card */}
           <div className="mb-8 flex justify-center">
-            <BrandLogo className="h-10 w-auto text-gray-900 dark:text-white mx-auto" />
+            <BrandLogo className="h-9 w-auto text-foreground mx-auto" />
           </div>
 
           {/* Card Container */}
-          <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-2xl p-8 shadow-xl max-w-md w-full mx-auto">
+          <div className="bg-card border border-border rounded-xl p-8 shadow-xl max-w-md w-full mx-auto">
             <div className="text-center mb-6">
-              <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-[#EDEDED] mb-2">Create your trim account</h1>
+              <h1 className="text-xl font-bold tracking-tight text-foreground mb-1.5">Create your trim account</h1>
             </div>
 
             <div className="space-y-6">
               {success && (
-                <div className="flex items-start gap-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-xl p-4">
-                  <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-emerald-700 dark:text-emerald-400 text-sm">Account created! Redirecting to login…</p>
+                <div className="flex items-start gap-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+                  <CheckCircle className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-emerald-500 text-sm">Account created! Redirecting to login…</p>
                 </div>
               )}
 
               <form onSubmit={step === 'form' ? handleNextStep : handleFinalSubmit} className="space-y-4">
                 {/* Full name */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-900 dark:text-[#EDEDED] text-left">Full name</label>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-foreground text-left">Full name</label>
                   <input 
                     type="text"
                     name="name"
@@ -153,13 +149,13 @@ const RegisterPage: React.FC = () => {
                     value={form.name}
                     onChange={handleChange}
                     placeholder="Jane Doe" 
-                    className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500 disabled:opacity-50 disabled:bg-gray-50/80 dark:disabled:bg-[#151518] transition-all duration-200"
+                    className="w-full px-3.5 py-2 border rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-foreground bg-background border-input placeholder:text-muted-foreground disabled:opacity-50 disabled:bg-secondary transition-all duration-200 text-sm"
                   />
                 </div>
 
                 {/* Work email */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-900 dark:text-[#EDEDED] text-left">Work email</label>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-foreground text-left">Work email</label>
                   <input 
                     type="email" 
                     name="email"
@@ -168,12 +164,12 @@ const RegisterPage: React.FC = () => {
                     value={form.email}
                     onChange={handleChange}
                     placeholder="janedoe@email.com"
-                    className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500 disabled:opacity-50 disabled:bg-gray-50/80 dark:disabled:bg-[#151518] transition-all duration-200"
+                    className="w-full px-3.5 py-2 border rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-foreground bg-background border-input placeholder:text-muted-foreground disabled:opacity-50 disabled:bg-secondary transition-all duration-200 text-sm"
                   />
                 </div>
 
                 {/* Single Dynamic Password Slot with Smooth Transition */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div className="min-h-[22px]">
                     <AnimatePresence mode="wait" initial={false}>
                       {step === 'form' ? (
@@ -184,7 +180,7 @@ const RegisterPage: React.FC = () => {
                           exit={{ opacity: 0, y: 4 }}
                           transition={{ duration: 0.15 }}
                         >
-                          <label className="block text-sm font-medium text-gray-900 dark:text-[#EDEDED] text-left">Password</label>
+                          <label className="block text-xs font-medium text-foreground text-left">Password</label>
                         </motion.div>
                       ) : (
                         <motion.div
@@ -195,14 +191,14 @@ const RegisterPage: React.FC = () => {
                           transition={{ duration: 0.15 }}
                           className="flex items-center justify-between"
                         >
-                          <label className="block text-sm font-medium text-gray-900 dark:text-[#EDEDED] text-left">Confirm Password</label>
+                          <label className="block text-xs font-medium text-foreground text-left">Confirm Password</label>
                           <button 
                             type="button" 
                             onClick={() => {
                               setStep('form');
                               setError('');
                             }} 
-                            className="text-gray-400 hover:text-gray-900 dark:hover:text-white flex items-center gap-1 text-xs transition-colors"
+                            className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors"
                           >
                             <ArrowLeft className="w-3.5 h-3.5" /> Change info
                           </button>
@@ -225,15 +221,15 @@ const RegisterPage: React.FC = () => {
                       autoFocus={step === 'confirm'}
                       value={step === 'form' ? form.password : confirmPassword}
                       onChange={step === 'form' ? handleChange : (e) => setConfirmPassword(e.target.value)}
-                      placeholder={step === 'form' ? 'At least 8 characters' : 'Repeat your password'} 
-                      className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-[#EDEDED] bg-white dark:bg-[#111113] border-gray-200 dark:border-[#2B2B30] dark:placeholder-gray-500 transition-colors"
+                      placeholder={step === 'form' ? 'At least 8 characters' : 'Enter your password again'} 
+                      className="w-full px-3.5 py-2 border rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-foreground bg-background border-input placeholder:text-muted-foreground transition-colors text-sm"
                     />
                     <button 
                       type="button" 
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </motion.div>
                 </div>
@@ -245,40 +241,38 @@ const RegisterPage: React.FC = () => {
                       animate={{ opacity: 1, y: 0, height: 'auto' }}
                       exit={{ opacity: 0, y: -4, height: 0 }}
                       transition={{ duration: 0.15 }}
-                      className="text-red-500 text-sm text-center font-medium pt-1 overflow-hidden"
+                      className="text-rose-500 text-xs text-center font-medium pt-1 overflow-hidden"
                     >
                       {error}
                     </motion.div>
                   )}
                 </AnimatePresence>
 
-                <motion.button 
-                  whileHover={{ scale: 1.005 }}
-                  whileTap={{ scale: 0.995 }}
+                <button 
                   type="submit"
-                  disabled={loading || success}
-                  className="w-full bg-black text-white dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 rounded-lg py-2.5 font-medium transition-all disabled:opacity-50 mt-2"
+                  disabled={loading}
+                  className="w-full btn-solid mt-2 text-center flex justify-center py-2"
                 >
-                  {loading ? 'Creating account...' : 'Sign Up'}
-                </motion.button>
+                  {loading ? (step === 'form' ? 'Processing...' : 'Creating account...') : (step === 'form' ? 'Continue' : 'Complete signup')}
+                </button>
               </form>
 
               <div className="relative my-6">
                 <div aria-hidden="true" className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200 dark:border-[#2B2B30]"></div>
+                  <div className="w-full border-t border-border"></div>
                 </div>
-                <div className="relative flex justify-center text-sm font-medium leading-6">
-                  <span className="bg-white dark:bg-[#1E1E21] px-2 text-gray-400 dark:text-gray-500 text-xs uppercase tracking-wider">OR</span>
+                <div className="relative flex justify-center text-xs font-medium leading-6">
+                  <span className="bg-card px-2 text-muted-foreground uppercase tracking-wider text-[10px]">OR</span>
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <button 
                   type="button"
                   onClick={() => toast('Social login is coming soon!', { icon: '🚧' })}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm bg-white dark:bg-[#111113] text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#2B2B30] transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-lg bg-background text-sm font-medium text-foreground hover:bg-secondary transition-colors"
                 >
-                  <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24">
+                  <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path>
@@ -289,28 +283,30 @@ const RegisterPage: React.FC = () => {
                 <button 
                   type="button"
                   onClick={() => toast('Social login is coming soon!', { icon: '🚧' })}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm bg-white dark:bg-[#111113] text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#2B2B30] transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-lg bg-background text-sm font-medium text-foreground hover:bg-secondary transition-colors"
                 >
-                  <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
                   </svg>
                   Continue with GitHub
                 </button>
               </div>
 
-              <p className="text-center text-sm text-gray-500 dark:text-[#A1A1AA] mt-6">
+              <p className="text-center text-xs text-muted-foreground mt-6">
                 Already have an account?{' '}
-                <Link to="/login" className="font-bold text-gray-900 dark:text-[#EDEDED] hover:underline">
+                <Link to="/login" className="font-semibold text-foreground hover:underline">
                   Log in
                 </Link>
               </p>
             </div>
           </div>
 
-          <div className="text-center text-xs text-gray-500 dark:text-[#A1A1AA] max-w-sm px-4 mt-8 mx-auto">
-            By continuing, you agree to trim's <a className="font-medium text-gray-700 dark:text-gray-300 hover:underline" href="#">Terms of Service</a> and <a className="font-medium text-gray-700 dark:text-gray-300 hover:underline" href="#">Privacy Policy</a>
+          <div className="text-center text-xs text-muted-foreground max-w-sm px-4 mt-6 mx-auto">
+            By creating an account, you agree to our{' '}
+            <Link to="/terms-and-conditions" className="underline hover:text-foreground">Terms of Service</Link>
+            {' '}and{' '}
+            <Link to="/privacy-policy" className="underline hover:text-foreground">Privacy Policy</Link>.
           </div>
-
         </motion.div>
       </main>
       {/* END: Main Content */}

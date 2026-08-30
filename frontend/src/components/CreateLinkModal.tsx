@@ -7,9 +7,8 @@ import {
 } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import axios from 'axios';
-import type { UrlEntry } from '../types';
 import { 
-  format, parseISO, formatDistanceToNow, addDays, startOfDay,
+  format, parseISO, formatDistanceToNow,
   addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   isSameMonth, isSameDay, isToday, eachDayOfInterval 
 } from 'date-fns';
@@ -115,7 +114,6 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [removePassword, setRemovePassword] = useState(false);
 
-
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
   const [tagSearchQuery, setTagSearchQuery] = useState('');
   const tagRef = useRef<HTMLDivElement>(null);
@@ -130,7 +128,6 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
   useEffect(() => {
     setLocalFolders(folders);
   }, [folders]);
-
 
   const [isFolderDropdownOpen, setIsFolderDropdownOpen] = useState(false);
   const [folderSearchQuery, setFolderSearchQuery] = useState('');
@@ -198,8 +195,6 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
     fetchQrCode();
   }, [customAlias]);
 
-  // removed early return for AnimatePresence
-
   const toggleTag = (id: number) => {
     setSelectedTagIds(prev => 
       prev.includes(id) ? prev.filter(tId => tId !== id) : [...prev, id]
@@ -234,7 +229,6 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
           setLoading(false);
           return;
         }
-        console.log("Attempting to update hash:", hash);
         
         const isCurrentlyExpired = urlToEdit.expiresAt ? new Date(urlToEdit.expiresAt + 'Z').getTime() < Date.now() : !urlToEdit.isActive;
         const willBeExpired = expiresAt && expirationPreset.toLowerCase() !== 'none' ? new Date(expiresAt + 'Z').getTime() < Date.now() : false;
@@ -316,8 +310,6 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
     }
   };
 
-
-
   const filteredTags = (localTags || []).filter(t => t?.name?.toLowerCase().includes((tagSearchQuery || '').toLowerCase()));
   const filteredFolders = (localFolders || []).filter(f => f?.name?.toLowerCase().includes((folderSearchQuery || '').toLowerCase()));
 
@@ -332,7 +324,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
 
       const renderLeft = () => {
         if (isCurrentlyExpired) {
-          return <span className="text-red-500 font-medium">Expired</span>;
+          return <span className="text-rose-500 font-medium">Expired</span>;
         } else if (!originalExpireDate) {
           return <span>Never expires</span>;
         } else {
@@ -345,7 +337,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
           return <span>Never expires</span>;
         }
         if (newExpireDate.getTime() < Date.now()) {
-          return <span className="text-red-500 font-medium">Will expire immediately</span>;
+          return <span className="text-rose-500 font-medium">Will expire immediately</span>;
         }
         return <span>Expires {formatDistanceToNow(newExpireDate, { addSuffix: true })}</span>;
       };
@@ -353,11 +345,11 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
       return (
         <div className="mt-2 flex items-center gap-3 text-sm min-h-[2rem]">
           {/* "Before" state */}
-          <div className="text-gray-500" title={originalExpireDate ? format(originalExpireDate, 'PPpp') : 'No expiration set'}>
+          <div className="text-gray-500 dark:text-zinc-500" title={originalExpireDate ? format(originalExpireDate, 'PPpp') : 'No expiration set'}>
             {renderLeft()}
           </div>
 
-          {showRightSide && <ArrowRight className="w-4 h-4 text-gray-400" />}
+          {showRightSide && <ArrowRight className="w-4 h-4 text-gray-400 dark:text-zinc-500" />}
 
           {/* "After" state */}
           {showRightSide && (
@@ -382,12 +374,12 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
               Expires {formatDistanceToNow(expireDate, { addSuffix: true })}
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            <span className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
               {format(expireDate, "PPpp")}
             </span>
           </>
         ) : (
-          <span className="text-sm font-medium text-red-500">
+          <span className="text-sm font-medium text-rose-500">
             Will expire immediately
           </span>
         )}
@@ -453,52 +445,52 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
         <button 
           type="button" 
           onClick={() => setIsDatePickerOpen(!isDatePickerOpen)} 
-          className="w-full flex items-center justify-between border border-gray-200 dark:border-[#2B2B30] bg-white dark:bg-[#111113] rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-[#EDEDED] shadow-sm hover:bg-gray-50 dark:hover:bg-[#2B2B30] transition-colors"
+          className="w-full flex items-center justify-between border border-input bg-background rounded-lg px-3 py-2 text-xs text-foreground hover:bg-secondary transition-colors"
         >
           <div className="flex items-center gap-2 truncate">
-            <CalendarIcon className="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0" />
+            <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
             <span className="truncate">
               {selectedDate 
                 ? format(selectedDate, 'PPpp') 
                 : 'Select custom date and time...'}
             </span>
           </div>
-          <ChevronDown className="w-4 h-4 text-gray-400 shrink-0 ml-2" />
+          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 ml-2" />
         </button>
 
         <AnimatePresence>
           {isDatePickerOpen && (
             <motion.div
-              initial={{ opacity: 0, y: 6, scale: 0.98 }}
+              initial={{ opacity: 0, y: 4, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 6, scale: 0.98 }}
+              exit={{ opacity: 0, y: 4, scale: 0.98 }}
               transition={{ duration: 0.1, ease: "easeOut" }}
-              className="absolute bottom-full mb-2 left-0 z-[60] bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-2xl shadow-2xl p-4 w-72"
+              className="absolute bottom-full mb-1 left-0 z-[60] bg-popover border border-border rounded-xl shadow-xl p-3.5 w-72"
             >
               <div className="space-y-3">
                 {/* Month Header */}
-                <div className="flex items-center justify-between pb-1 border-b border-gray-100 dark:border-[#2B2B30]">
+                <div className="flex items-center justify-between pb-1 border-b border-border">
                   <button
                     type="button"
                     onClick={() => setPickerMonth(subMonths(pickerMonth, 1))}
-                    className="p-1 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded-md transition-colors"
+                    className="p-1 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md transition-colors"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-3.5 h-3.5" />
                   </button>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <span className="text-xs font-semibold text-foreground">
                     {format(pickerMonth, 'MMMM yyyy')}
                   </span>
                   <button
                     type="button"
                     onClick={() => setPickerMonth(addMonths(pickerMonth, 1))}
-                    className="p-1 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded-md transition-colors"
+                    className="p-1 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md transition-colors"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
                 {/* Weekday Headers */}
-                <div className="grid grid-cols-7 text-center text-[11px] font-medium text-gray-400 dark:text-gray-500">
+                <div className="grid grid-cols-7 text-center text-[10px] font-medium text-muted-foreground">
                   {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
                     <div key={d} className="py-1">{d}</div>
                   ))}
@@ -517,17 +509,17 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                         type="button"
                         disabled={!isCurrentMonth}
                         onClick={() => handleSelectDay(day)}
-                        className={`relative flex flex-col items-center justify-center h-8 text-xs rounded-md transition-colors ${
+                        className={`relative flex flex-col items-center justify-center h-7 text-xs rounded-md transition-colors ${
                           !isCurrentMonth
-                            ? 'text-gray-300 dark:text-gray-700 cursor-default opacity-40'
+                            ? 'text-muted-foreground/30 cursor-default opacity-40'
                             : isSelected
-                            ? 'bg-blue-600 text-white font-bold shadow-sm'
-                            : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#2B2B30]'
+                            ? 'bg-primary text-primary-foreground font-semibold'
+                            : 'text-foreground hover:bg-secondary'
                         }`}
                       >
                         <span>{format(day, 'd')}</span>
                         {isDayToday && !isSelected && (
-                          <span className="w-1 h-1 bg-blue-600 rounded-full absolute bottom-0.5" />
+                          <span className="w-1 h-1 bg-primary rounded-full absolute bottom-0.5" />
                         )}
                       </button>
                     );
@@ -535,38 +527,38 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 </div>
 
                 {/* Time Selection Section */}
-                <div className="pt-3 border-t border-gray-100 dark:border-[#2B2B30] flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Time</span>
+                <div className="pt-2.5 border-t border-border flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">Time</span>
                   <div className="flex items-center gap-1.5">
                     <select
                       value={timeValues.hour}
                       onChange={(e) => handleTimeChange('hour', e.target.value)}
-                      className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-[#2B2B30] rounded-md px-2 py-1 text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                      className="bg-background border border-input rounded-md px-2 py-1 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
                     >
                       {Array.from({ length: 12 }, (_, i) => (i + 1).toString()).map((h) => (
                         <option key={h} value={h}>{h.padStart(2, '0')}</option>
                       ))}
                     </select>
-                    <span className="text-gray-400 text-xs font-bold">:</span>
+                    <span className="text-muted-foreground text-xs font-bold">:</span>
                     <select
                       value={timeValues.minute}
                       onChange={(e) => handleTimeChange('minute', e.target.value)}
-                      className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-[#2B2B30] rounded-md px-2 py-1 text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                      className="bg-background border border-input rounded-md px-2 py-1 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
                     >
                       {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map((m) => (
                         <option key={m} value={m}>{m}</option>
                       ))}
                     </select>
-                    <div className="flex bg-gray-100 dark:bg-[#111113] p-0.5 rounded-md border border-gray-200 dark:border-[#2B2B30]">
+                    <div className="flex bg-secondary p-0.5 rounded-md border border-border">
                       {['AM', 'PM'].map((period) => (
                         <button
                           key={period}
                           type="button"
                           onClick={() => handleTimeChange('ampm', period)}
-                          className={`px-2 py-0.5 text-[11px] font-bold rounded transition-colors ${
+                          className={`px-2 py-0.5 text-[10px] font-bold rounded transition-colors ${
                             timeValues.ampm === period
-                              ? 'bg-white dark:bg-[#2B2B30] text-gray-900 dark:text-white shadow-xs'
-                              : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                              ? 'bg-background text-foreground shadow-sm'
+                              : 'text-muted-foreground hover:text-foreground'
                           }`}
                         >
                           {period}
@@ -591,29 +583,29 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
           animate={{ opacity: 1 }} 
           exit={{ opacity: 0 }} 
           transition={{ duration: 0.15 }}
-          className="fixed inset-0 bg-gray-500/30 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
         >
           <motion.div 
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="bg-white dark:bg-[#1E1E21] rounded-2xl shadow-xl w-full max-w-5xl z-[101] overflow-visible flex flex-col relative max-h-[95vh] min-h-[640px] border border-transparent dark:border-[#2B2B30]"
+            className="bg-card rounded-2xl shadow-2xl w-full max-w-5xl z-[101] overflow-visible flex flex-col relative max-h-[95vh] min-h-[640px] border border-border"
           >
         {/* Header */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#2B2B30] shrink-0 rounded-t-2xl">
+        <header className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0 rounded-t-2xl">
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-gray-500 dark:text-[#A1A1AA] hover:text-gray-900 font-medium cursor-pointer transition-colors">Links</span>
-            <span className="text-gray-400 dark:text-[#A1A1AA]">
+            <span className="text-muted-foreground hover:text-foreground font-medium cursor-pointer transition-colors">Links</span>
+            <span className="text-muted-foreground">
               <ChevronRight className="w-4 h-4" />
             </span>
-            <div className="flex items-center gap-2 text-gray-900 dark:text-[#EDEDED] font-medium">
-              <Globe className="w-4 h-4" />
+            <div className="flex items-center gap-2 text-foreground font-medium">
+              <Globe className="w-4 h-4 text-primary" />
               {urlToEdit ? 'Edit URL' : 'New link'}
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={onClose} className="text-gray-400 dark:text-[#A1A1AA] hover:text-gray-600 dark:hover:bg-[#2B2B30] transition-colors p-1 rounded-md hover:bg-gray-100">
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-secondary">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -623,7 +615,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
         <div className="flex-1 overflow-y-auto p-6 relative z-20" style={{ scrollbarWidth: 'thin' }}>
           <form id="create-link-form" onSubmit={handleShortenSubmit}>
             {error && (
-              <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+              <div className="mb-4 p-3 bg-rose-500/10 text-rose-500 text-sm rounded-lg border border-rose-500/20">
                 {error}
               </div>
             )}
@@ -634,8 +626,8 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 {/* Destination URL */}
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5">
-                    <label className="text-sm font-medium text-gray-700 dark:text-[#EDEDED]">Destination URL</label>
-                    <button type="button" className="text-gray-400 hover:text-gray-600">
+                    <label className="text-sm font-medium text-foreground">Destination URL</label>
+                    <button type="button" className="text-muted-foreground hover:text-foreground">
                       <HelpCircle className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -644,7 +636,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                     required 
                     value={longUrl}
                     onChange={(e) => setLongUrl(e.target.value)}
-                    className="block w-full rounded-md border border-gray-300 dark:border-[#2B2B30] shadow-sm focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors px-3 py-2 sm:text-sm placeholder:text-gray-400 dark:placeholder-[#6b7280] dark:bg-[#111113] dark:text-[#EDEDED]"
+                    className="block w-full rounded-lg border border-input focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors px-3.5 py-2.5 sm:text-sm placeholder:text-muted-foreground bg-background text-foreground"
                     placeholder="https://dub.co/help/article/dub-links" 
                   />
                 </div>
@@ -652,13 +644,13 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 {/* Short Link */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-gray-700 dark:text-[#EDEDED]">Short Link</label>
+                    <label className="text-sm font-medium text-foreground">Short Link</label>
                     <div className="flex gap-2">
                       {!urlToEdit && (
                         <button 
                           type="button" 
                           onClick={() => setCustomAlias(generateRandomHash())}
-                          className="p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100" 
+                          className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-secondary" 
                           title="Randomize"
                         >
                           <Shuffle className="w-4 h-4" />
@@ -666,8 +658,8 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                       )}
                     </div>
                   </div>
-                  <div className="flex rounded-md shadow-sm">
-                    <div className="flex items-center whitespace-nowrap shrink-0 px-5 sm:px-6 py-2 bg-gray-50 dark:bg-[#111113] border border-gray-300 dark:border-[#2B2B30] border-r-0 rounded-l-md text-sm text-gray-500 dark:text-[#A1A1AA]">
+                  <div className="flex rounded-lg overflow-hidden border border-input">
+                    <div className="flex items-center whitespace-nowrap shrink-0 px-4 py-2 bg-secondary border-r border-border text-sm text-muted-foreground">
                       {displayDomain}/
                     </div>
                     <input 
@@ -675,7 +667,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                       value={customAlias}
                       onChange={(e) => setCustomAlias(e.target.value.replace(/[^a-zA-Z0-9-_]/g, ''))}
                       disabled={!!urlToEdit}
-                      className="block flex-1 min-w-0 w-full rounded-none rounded-r-md border border-gray-300 dark:border-[#2B2B30] focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors px-4 sm:px-5 py-2 sm:text-sm disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-slate-800 dark:bg-[#111113] dark:text-[#EDEDED] dark:placeholder-[#6b7280]" 
+                      className="block flex-1 min-w-0 w-full rounded-none border-none focus:outline-none focus:ring-0 transition-colors px-4 py-2 sm:text-sm disabled:bg-secondary disabled:text-muted-foreground bg-background text-foreground placeholder:text-muted-foreground" 
                     />
                   </div>
                 </div>
@@ -684,18 +676,18 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 <div className="space-y-1.5 relative z-30" ref={tagRef}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
-                      <label className="text-sm font-medium text-gray-700 dark:text-[#EDEDED]">Tags</label>
-                      <button type="button" className="text-gray-400 hover:text-gray-600">
+                      <label className="text-sm font-medium text-foreground">Tags</label>
+                      <button type="button" className="text-muted-foreground hover:text-foreground">
                         <HelpCircle className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
                   <div 
                     onClick={() => setIsTagDropdownOpen(!isTagDropdownOpen)}
-                    className="relative flex flex-wrap items-center w-full min-h-[38px] rounded-md border border-gray-300 dark:border-[#2B2B30] py-1.5 pl-3 pr-8 shadow-sm cursor-pointer bg-white dark:bg-[#111113] dark:text-[#EDEDED]"
+                    className="relative flex flex-wrap items-center w-full min-h-[42px] rounded-lg border border-input py-1.5 pl-3 pr-8 cursor-pointer bg-background text-foreground"
                   >
                     {selectedTagIds.length === 0 ? (
-                      <span className="text-gray-400 sm:text-sm">Select tags...</span>
+                      <span className="text-muted-foreground sm:text-sm">Select tags...</span>
                     ) : (
                       <div className="flex flex-wrap gap-1">
                         {selectedTagIds.map(id => {
@@ -712,17 +704,17 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                         })}
                       </div>
                     )}
-                    <ChevronsUpDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <ChevronsUpDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                   </div>
                   
                   <AnimatePresence>
                     {isTagDropdownOpen && (
                       <motion.div 
-                        initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                        initial={{ opacity: 0, y: -4, scale: 0.98 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                        exit={{ opacity: 0, y: -4, scale: 0.98 }}
                         transition={{ duration: 0.1, ease: "easeOut" }}
-                        className="absolute top-full mt-1 left-0 w-full z-40 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl shadow-xl p-1 flex flex-col"
+                        className="absolute top-full mt-1 left-0 w-full z-40 bg-popover border border-border rounded-xl shadow-lg p-1 flex flex-col"
                       >
                       <input
                         type="text"
@@ -730,7 +722,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                         placeholder="Search or create tag..."
                         value={tagSearchQuery}
                         onChange={(e) => setTagSearchQuery(e.target.value)}
-                        className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-2 px-3 text-gray-900 dark:text-white placeholder-gray-400 border-b border-gray-100 dark:border-slate-800"
+                        className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-2 px-3 text-foreground placeholder:text-muted-foreground border-b border-border"
                       />
                       <div className="max-h-40 overflow-y-auto flex flex-col gap-1 p-1">
                         {filteredTags.map(tag => (
@@ -739,10 +731,10 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                             key={tag.id}
                             type="button"
                             onClick={() => toggleTag(tag.id)}
-                            className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-[#2B2B30] text-gray-700 dark:text-[#EDEDED]"
+                            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-sm rounded-lg transition-colors hover:bg-secondary text-foreground"
                           >
-                            <div className={`w-4 h-4 rounded-sm border flex items-center justify-center ${selectedTagIds.includes(tag.id) ? 'bg-black border-black' : 'border-gray-300'}`}>
-                              {selectedTagIds.includes(tag.id) && <Check className="w-3 h-3 text-white" />}
+                            <div className={`w-4 h-4 rounded-sm border flex items-center justify-center ${selectedTagIds.includes(tag.id) ? 'bg-primary border-primary' : 'border-input'}`}>
+                              {selectedTagIds.includes(tag.id) && <Check className="w-3 h-3 text-primary-foreground" />}
                             </div>
                             <Tag className={`w-3.5 h-3.5 ${getTagColor(tag.color).classes.split(' ').find(c => c.startsWith('text-') && !c.includes('dark:'))}`} />
                             <span>{tag.name}</span>
@@ -750,13 +742,13 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                         ))}
                       </div>
                       {tagSearchQuery && !localTags.some(t => t.name.toLowerCase() === tagSearchQuery.toLowerCase()) && (
-                        <div className="p-1 border-t border-gray-100">
+                        <div className="p-1 border-t border-border">
                           <button
                             type="button"
-                            className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-[#2B2B30] text-gray-700 dark:text-[#EDEDED]"
+                            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-sm rounded-lg transition-colors hover:bg-secondary text-foreground"
                             onClick={handleCreateTag}
                           >
-                            <span className="font-medium">+ Create</span> "{tagSearchQuery}"
+                            <span className="font-medium text-primary">+ Create</span> "{tagSearchQuery}"
                           </button>
                         </div>
                       )}
@@ -768,14 +760,14 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 {/* Password */}
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5">
-                    <label className="text-sm font-medium text-gray-700 dark:text-[#EDEDED]">Password</label>
-                    <button type="button" className="text-gray-400 hover:text-gray-600">
+                    <label className="text-sm font-medium text-foreground">Password</label>
+                    <button type="button" className="text-muted-foreground hover:text-foreground">
                       <HelpCircle className="w-3.5 h-3.5" />
                     </button>
                   </div>
                   <div className="relative">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                      <Lock className="w-4 h-4 text-gray-400" />
+                      <Lock className="w-4 h-4 text-muted-foreground" />
                     </div>
                     <input 
                       type={showPassword ? "text" : "password"} 
@@ -783,13 +775,13 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                       value={password}
                       disabled={removePassword}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full rounded-md border border-gray-300 py-2 pl-9 pr-10 shadow-sm focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors sm:text-sm placeholder:text-gray-400 disabled:bg-gray-100 disabled:text-gray-500 dark:bg-[#111113] dark:border-[#2B2B30] dark:text-[#EDEDED] dark:placeholder-[#6b7280]"
+                      className="block w-full rounded-lg border border-input py-2.5 pl-9 pr-10 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors sm:text-sm placeholder:text-muted-foreground disabled:bg-secondary disabled:text-muted-foreground bg-background text-foreground"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       disabled={removePassword}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground disabled:opacity-50"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -802,7 +794,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                           setRemovePassword(!removePassword);
                           if (!removePassword) setPassword('');
                         }}
-                        className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+                        className="text-xs text-rose-500 hover:text-rose-400 font-medium transition-colors"
                       >
                         {removePassword ? "Cancel password removal" : "Remove current password"}
                       </button>
@@ -813,8 +805,8 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 {/* Expiration */}
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5">
-                    <label className="text-sm font-medium text-gray-700 dark:text-[#EDEDED]">Expiration</label>
-                    <button type="button" className="text-gray-400 hover:text-gray-600">
+                    <label className="text-sm font-medium text-foreground">Expiration</label>
+                    <button type="button" className="text-muted-foreground hover:text-foreground">
                       <HelpCircle className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -832,8 +824,8 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                           type="button"
                           onClick={() => handleExpirationPresetChange(preset.id)}
                           className={expirationPreset.toLowerCase() === preset.id.toLowerCase() 
-                            ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900 border border-transparent px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
-                            : "bg-transparent text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#2B2B30] px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
+                            ? "bg-gray-900 text-white dark:bg-white dark:text-zinc-950 border border-transparent px-4 py-1.5 rounded-full text-sm font-semibold transition-colors shadow-sm"
+                            : "bg-secondary text-muted-foreground hover:text-foreground border border-border hover:bg-secondary/80 px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
                           }
                         >
                           {preset.label}
@@ -847,18 +839,18 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
               </div>
               
               {/* Right Column */}
-              <div className="space-y-6 border-t md:border-t-0 md:border-l border-gray-100 pt-6 md:pt-0 md:pl-8">
+              <div className="space-y-6 border-t md:border-t-0 md:border-l border-border pt-6 md:pt-0 md:pl-8">
                 {/* Folder */}
                 <div className="space-y-1.5 relative" ref={folderRef}>
                   <div className="flex items-center gap-1.5">
-                    <label className="text-sm font-medium text-gray-700 dark:text-[#EDEDED]">Folder</label>
-                    <button type="button" className="text-gray-400 hover:text-gray-600">
+                    <label className="text-sm font-medium text-foreground">Folder</label>
+                    <button type="button" className="text-muted-foreground hover:text-foreground">
                       <HelpCircle className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
                   {urlToEdit ? (
-                    <div className="flex items-center gap-2 w-full border border-gray-200 dark:border-[#2B2B30] bg-gray-100 dark:bg-[#111113] rounded-md px-3 py-2 text-sm text-gray-500 dark:text-[#EDEDED] cursor-not-allowed">
+                    <div className="flex items-center gap-2 w-full border border-border bg-secondary rounded-lg px-3 py-2 text-sm text-muted-foreground cursor-not-allowed">
                       <Folder className="w-4 h-4 text-emerald-500" />
                       <span className="truncate">
                         {urlToEdit?.folderName || (folders || []).find(f => f.id === urlToEdit?.folderId)?.name || 'Uncategorized'}
@@ -869,7 +861,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                       <button 
                         type="button"
                         onClick={() => setIsFolderDropdownOpen(!isFolderDropdownOpen)}
-                        className="relative w-full cursor-pointer rounded-md border border-gray-300 dark:border-[#2B2B30] bg-white dark:bg-[#111113] dark:text-[#EDEDED] py-2 pl-3 pr-10 text-left shadow-sm focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors sm:text-sm flex items-center gap-2"
+                        className="relative w-full cursor-pointer rounded-lg border border-input bg-background text-foreground py-2 pl-3 pr-10 text-left focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors sm:text-sm flex items-center gap-2"
                       >
                         {(() => {
                           const currentFolder = (localFolders || []).find(f => f.id === selectedFolderId);
@@ -877,36 +869,36 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                           const displayName = currentFolder?.name || (urlToEdit?.folderId === selectedFolderId && urlToEdit?.folderName ? urlToEdit.folderName : 'Links');
                           return (
                             <>
-                              <div className={`p-0.5 rounded ${isDefault ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' : 'bg-emerald-100 text-emerald-600'}`}>
+                              <div className={`p-0.5 rounded ${isDefault ? 'bg-primary/10 text-primary' : 'bg-emerald-500/10 text-emerald-500'}`}>
                                 <FolderArchive className="w-3.5 h-3.5" />
                               </div>
-                              <span className="block truncate text-gray-900 dark:text-[#EDEDED] font-medium">
+                              <span className="block truncate text-foreground font-medium">
                                 {displayName}
                               </span>
                             </>
                           );
                         })()}
                         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                          <ChevronsUpDown className="w-4 h-4 text-gray-400" />
+                          <ChevronsUpDown className="w-4 h-4 text-muted-foreground" />
                         </span>
                       </button>
                       
                       <AnimatePresence>
                         {isFolderDropdownOpen && (
                           <motion.div 
-                            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                            initial={{ opacity: 0, y: -4, scale: 0.98 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                            exit={{ opacity: 0, y: -4, scale: 0.98 }}
                             transition={{ duration: 0.1, ease: "easeOut" }}
-                            className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-md shadow-lg overflow-hidden flex flex-col p-1"
+                            className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-xl shadow-lg overflow-hidden flex flex-col p-1"
                           >
-                            <div className="p-1 border-b border-gray-100">
+                            <div className="p-1 border-b border-border">
                               <input
                                 type="text"
                                 placeholder="Search folders..."
                                 value={folderSearchQuery}
                                 onChange={(e) => setFolderSearchQuery(e.target.value)}
-                                className="w-full px-2 py-1 text-sm bg-gray-50 dark:bg-[#111113] rounded border border-gray-200 dark:border-[#2B2B30] focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors text-gray-900 dark:text-[#EDEDED]"
+                                className="w-full px-2.5 py-1.5 text-sm bg-background rounded-lg border border-input focus:outline-none focus:border-primary transition-colors text-foreground placeholder:text-muted-foreground"
                               />
                             </div>
                             <div className="max-h-60 overflow-y-auto p-1 space-y-1">
@@ -919,35 +911,35 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                                     key={folder.id}
                                     type="button"
                                     onClick={() => { setSelectedFolderId(folder.id); setIsFolderDropdownOpen(false); }}
-                                    className="w-full flex items-center justify-between px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-[#2B2B30] text-gray-700 dark:text-[#EDEDED]"
+                                    className="w-full flex items-center justify-between px-2.5 py-1.5 text-sm rounded-lg transition-colors hover:bg-secondary text-foreground"
                                   >
                                     <div className="flex items-center gap-2">
-                                      <Folder className={`w-3.5 h-3.5 ${isDefault ? 'text-blue-500' : 'text-emerald-500'}`} />
+                                      <Folder className={`w-3.5 h-3.5 ${isDefault ? 'text-primary' : 'text-emerald-500'}`} />
                                       <span className="truncate">{folder.name}</span>
                                       {isDefault && (
-                                        <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold">
+                                        <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.2 rounded bg-primary/10 text-primary font-semibold">
                                           Default
                                         </span>
                                       )}
                                     </div>
-                                    {isSelected && <Check className="w-3.5 h-3.5 text-black dark:text-white" />}
+                                    {isSelected && <Check className="w-3.5 h-3.5 text-primary" />}
                                   </motion.button>
                                 );
                               })}
                               {filteredFolders.length === 0 && (
-                                <div className="px-2 py-2 text-xs text-gray-500 text-center">No folders found</div>
+                                <div className="px-2 py-2 text-xs text-muted-foreground text-center">No folders found</div>
                               )}
                             </div>
-                            <div className="p-1 border-t border-gray-100">
+                            <div className="p-1 border-t border-border">
                               <button
                                 type="button"
                                 onClick={() => {
-                                  setIsFolderDropdownOpen(false); // Close the dropdown
-                                  if (onOpenFolderModal) onOpenFolderModal(); // Open the Folder modal
+                                  setIsFolderDropdownOpen(false);
+                                  if (onOpenFolderModal) onOpenFolderModal();
                                 }}
-                                className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-[#2B2B30] text-gray-700 dark:text-[#EDEDED]"
+                                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-sm rounded-lg transition-colors hover:bg-secondary text-foreground"
                               >
-                                <FolderPlus className="w-4 h-4" /> Create new folder
+                                <FolderPlus className="w-4 h-4 text-muted-foreground" /> Create new folder
                               </button>
                             </div>
                           </motion.div>
@@ -961,18 +953,18 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 {!urlToEdit && (
                   <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5">
-                    <label className="text-sm font-medium text-gray-700 dark:text-[#EDEDED]">QR Code</label>
-                    <button type="button" className="text-gray-400 hover:text-gray-600">
+                    <label className="text-sm font-medium text-foreground">QR Code</label>
+                    <button type="button" className="text-muted-foreground hover:text-foreground">
                       <HelpCircle className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <div className="border border-dashed border-gray-300 dark:border-[#2B2B30] rounded-lg p-6 bg-gray-50 dark:bg-[#111113] flex flex-col items-center justify-center relative group min-h-[140px]">
+                  <div className="border border-dashed border-border rounded-xl p-6 bg-secondary/30 flex flex-col items-center justify-center relative group min-h-[140px]">
                     {isQrLoading ? (
-                      <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-400 rounded-full animate-spin"></div>
+                      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                     ) : qrCodeUrl ? (
-                      <img src={qrCodeUrl} alt="QR Code Preview" className="w-full h-full rounded-md object-contain max-h-[120px]" />
+                      <img src={qrCodeUrl} alt="QR Code Preview" className="w-full h-full rounded-lg object-contain max-h-[120px] bg-white p-1" />
                     ) : (
-                      <div className="bg-white p-2 rounded shadow-sm">
+                      <div className="bg-white p-2 rounded-lg shadow-sm">
                         <div className="grid grid-cols-3 gap-0.5 w-8 h-8">
                           <div className="bg-gray-800 rounded-sm"></div><div className="bg-gray-800 rounded-sm"></div><div className="bg-gray-800 rounded-sm"></div>
                           <div className="bg-gray-800 rounded-sm"></div><div className="bg-white rounded-sm"></div><div className="bg-gray-800 rounded-sm"></div>
@@ -980,7 +972,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                         </div>
                       </div>
                     )}
-                    <button type="button" className="absolute top-2 right-2 p-1.5 bg-white border border-gray-200 rounded-md shadow-sm text-gray-500 hover:text-gray-700 hover:bg-gray-50 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button type="button" className="absolute top-2 right-2 p-1.5 bg-popover border border-border rounded-md shadow-sm text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -992,17 +984,17 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
         </div>
 
         {/* Footer */}
-        <footer className="relative z-10 border-t border-gray-200 dark:border-[#2B2B30] bg-gray-50 dark:bg-[#111113] px-6 py-4 flex items-center justify-between gap-4 shrink-0 rounded-b-2xl">
+        <footer className="relative z-10 border-t border-border bg-secondary/40 px-6 py-4 flex items-center justify-between gap-4 shrink-0 rounded-b-2xl">
           <div></div>
           <div>
             <button 
               type="submit" 
               form="create-link-form"
               disabled={loading}
-              className="inline-flex items-center gap-2 rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-slate-500 focus:ring-offset-2 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary hover:bg-primary/90 px-4 py-2 text-sm font-semibold text-primary-foreground focus:outline-none transition-colors disabled:opacity-50"
             >
               {loading ? (urlToEdit ? 'Saving...' : 'Creating...') : (urlToEdit ? 'Save changes' : 'Create link')}
-              <span className="flex items-center text-[10px] text-gray-400 border border-gray-700 px-1 rounded bg-gray-900 ml-1">
+              <span className="flex items-center text-[10px] text-primary-foreground/70 border border-primary-foreground/20 px-1 rounded bg-primary/20 ml-1">
                 <CornerDownLeft className="w-3 h-3" />
               </span>
             </button>

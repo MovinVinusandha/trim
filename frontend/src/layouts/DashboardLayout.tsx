@@ -84,11 +84,9 @@ const DashboardLayout: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
   
-  // Stats for the sub-nav (populated by children)
   const [navStats, setNavStats] = useState({ totalClicks: 0, linkCount: 0 });
   const [isStatsLoading, setIsStatsLoading] = useState(true);
 
-  // Function to pass down to children to trigger refresh
   const [latestNewEntry, setLatestNewEntry] = useState<UrlEntry | null>(null);
   
   const triggerRefresh = (newEntry: UrlEntry) => {
@@ -159,45 +157,53 @@ const DashboardLayout: React.FC = () => {
   const renderHeaderButton = () => {
     if (location.pathname.startsWith('/analytics')) {
       return (
-        <button 
-          onClick={() => toast.success('Export functionality coming soon!')}
-          className="bg-black text-white dark:bg-white dark:text-slate-900 px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-gray-800 dark:hover:bg-slate-200 active:scale-[0.98] transition-all duration-150 shadow-sm"
+        <button
+          onClick={() => {
+            const currentUrl = window.location.href;
+            if (navigator?.clipboard?.writeText) {
+              navigator.clipboard.writeText(currentUrl);
+            }
+            toast.success('Analytics link copied to clipboard!');
+          }}
+          className="btn-secondary flex items-center gap-2"
         >
           <Download className="w-4 h-4" /> Export
         </button>
       );
     }
+
     if (location.pathname.startsWith('/folders')) {
       return (
-        <button 
+        <button
           onClick={() => {
             setFolderToEdit(null);
             setIsFolderModalOpen(true);
-          }} 
-          className="bg-black text-white dark:bg-white dark:text-slate-900 px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-gray-800 dark:hover:bg-slate-200 active:scale-[0.98] transition-all duration-150 shadow-sm"
+          }}
+          className="btn-solid flex items-center gap-2"
         >
-          <FolderPlus className="w-4 h-4" /> Create folder
+          <FolderPlus className="w-4 h-4" /> Create Folder
         </button>
       );
     }
+
     if (location.pathname.startsWith('/tags')) {
       return (
-        <button 
+        <button
           onClick={() => {
             setTagToEdit(null);
             setIsCreateTagModalOpen(true);
-          }} 
-          className="bg-black text-white dark:bg-white dark:text-slate-900 px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-gray-800 dark:hover:bg-slate-200 active:scale-[0.98] transition-all duration-150 shadow-sm"
+          }}
+          className="btn-solid flex items-center gap-2"
         >
-          <TagIcon className="w-4 h-4" /> Create tag
+          <TagIcon className="w-4 h-4" /> Create Tag
         </button>
       );
     }
-    // Default case for /dashboard
+
     return (
-      <button 
+      <button
         onClick={() => setIsCreateModalOpen(true)}
-        className="bg-black text-white dark:bg-white dark:text-slate-900 px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-gray-800 dark:hover:bg-slate-200 active:scale-[0.98] transition-all duration-150 shadow-sm"
+        className="btn-solid flex items-center gap-2"
       >
         <LinkIcon className="w-4 h-4" /> Create link
       </button>
@@ -209,56 +215,58 @@ const DashboardLayout: React.FC = () => {
     : (activeFolderId ? (folders.find(f => f.id === activeFolderId)?.name || 'All Links') : 'All Links');
 
   return (
-    <div className="h-screen flex overflow-hidden bg-[#E4E4E4] dark:bg-[#111113] text-gray-900 dark:text-[#EDEDED] font-sans">
+    <div className="h-screen flex overflow-hidden bg-background text-foreground font-sans">
       {/* ── Sidebar ────────────────────────────────────────── */}
-      <aside className="w-20 shrink-0 bg-transparent hidden sm:flex flex-col items-center py-4 z-20">
+      <aside className="w-16 shrink-0 bg-background border-r border-border hidden sm:flex flex-col items-center py-4 z-30">
         <div className="mb-8 flex items-center justify-center w-full px-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
-          <BrandLogo className="w-10 h-10 text-black dark:text-[#EDEDED]" />
+          <BrandLogo className="w-8 h-8 text-foreground" />
         </div>
         <nav className="flex-1 flex flex-col items-center gap-4">
         </nav>
-        <div className="mt-auto flex flex-col items-center gap-4">
+        <div className="mt-auto flex flex-col items-center gap-3">
           <button 
             onClick={() => toast('Help & Support coming soon!', { icon: '👋' })}
-            className="text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors p-2 rounded-lg hover:bg-secondary"
+            title="Help & Support"
           >
-            <HelpCircle className="w-6 h-6" />
+            <HelpCircle className="w-5 h-5" />
           </button>
           
           <div className="relative" ref={themeMenuRef}>
             <button 
               onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-[#EDEDED] transition-colors"
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              title="Switch Theme"
             >
-              {theme === 'system' ? <Monitor className="w-5 h-5" /> : theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+              {theme === 'system' ? <Monitor className="w-4 h-4" /> : theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </button>
 
             <AnimatePresence>
             {isThemeMenuOpen && (
               <motion.div 
-                initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                initial={{ opacity: 0, y: -4, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                exit={{ opacity: 0, y: -4, scale: 0.98 }}
                 transition={{ duration: 0.1, ease: "easeOut" }}
-                className="absolute left-full ml-4 bottom-0 z-50 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] shadow-xl rounded-lg w-32 p-1 flex flex-col gap-1"
+                className="absolute left-full ml-3 bottom-0 z-50 bg-popover border border-border shadow-lg rounded-xl w-32 p-1 flex flex-col gap-0.5"
               >
                 <button
                   onClick={() => { setTheme('light'); setIsThemeMenuOpen(false); }}
-                  className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors w-full text-left ${theme === 'light' ? 'bg-gray-100 dark:bg-[#222222] text-gray-900 dark:text-[#EDEDED]' : 'text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
+                  className={`flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg transition-colors w-full text-left ${theme === 'light' ? 'bg-secondary text-foreground font-medium' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'}`}
                 >
-                  <Sun className="w-4 h-4" /> Light
+                  <Sun className="w-3.5 h-3.5" /> Light
                 </button>
                 <button
                   onClick={() => { setTheme('dark'); setIsThemeMenuOpen(false); }}
-                  className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors w-full text-left ${theme === 'dark' ? 'bg-gray-100 dark:bg-[#222222] text-gray-900 dark:text-[#EDEDED]' : 'text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
+                  className={`flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg transition-colors w-full text-left ${theme === 'dark' ? 'bg-secondary text-foreground font-medium' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'}`}
                 >
-                  <Moon className="w-4 h-4" /> Dark
+                  <Moon className="w-3.5 h-3.5" /> Dark
                 </button>
                 <button
                   onClick={() => { setTheme('system'); setIsThemeMenuOpen(false); }}
-                  className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors w-full text-left ${theme === 'system' ? 'bg-gray-100 dark:bg-[#222222] text-gray-900 dark:text-[#EDEDED]' : 'text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
+                  className={`flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg transition-colors w-full text-left ${theme === 'system' ? 'bg-secondary text-foreground font-medium' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'}`}
                 >
-                  <Monitor className="w-4 h-4" /> System
+                  <Monitor className="w-3.5 h-3.5" /> System
                 </button>
               </motion.div>
             )}
@@ -268,7 +276,7 @@ const DashboardLayout: React.FC = () => {
           <div className="relative" ref={userMenuRef}>
             <button 
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              className="w-10 h-10 rounded-full bg-gray-200 dark:bg-[#2B2B30] text-gray-700 dark:text-gray-200 flex items-center justify-center text-sm font-medium uppercase border border-gray-300 dark:border-slate-600 shadow-sm cursor-pointer"
+              className="w-8 h-8 rounded-full bg-secondary text-foreground flex items-center justify-center text-xs font-semibold uppercase border border-border cursor-pointer hover:border-primary/40 transition-colors"
             >
               {user?.name ? user.name.charAt(0) : user?.email ? user.email.charAt(0) : 'U'}
             </button>
@@ -276,34 +284,34 @@ const DashboardLayout: React.FC = () => {
             <AnimatePresence>
             {isUserMenuOpen && (
               <motion.div 
-                initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                initial={{ opacity: 0, y: -4, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                exit={{ opacity: 0, y: -4, scale: 0.98 }}
                 transition={{ duration: 0.1, ease: "easeOut" }}
-                className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-xl z-50 p-2"
+                className="absolute bottom-full left-0 mb-2 w-60 bg-popover border border-border rounded-xl shadow-lg z-50 p-1.5"
               >
-                <div className="px-3 py-2 border-b border-gray-100 dark:border-[#2B2B30] mb-1">
-                  <div className="font-medium text-gray-900 dark:text-[#EDEDED] truncate">{user?.name || 'User'}</div>
-                  <div className="text-sm text-gray-500 dark:text-[#A1A1AA] truncate">{user?.email}</div>
+                <div className="px-3 py-2 border-b border-border mb-1">
+                  <div className="font-medium text-sm text-foreground truncate">{user?.name || 'User'}</div>
+                  <div className="text-xs text-muted-foreground truncate">{user?.email}</div>
                 </div>
                 
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-0.5">
                   <button
                     onClick={() => {
                       setIsUserMenuOpen(false);
                       toast('Profile page coming soon!', { icon: '👤' });
                     }}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded-md transition-colors w-full text-left"
+                    className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground rounded-lg transition-colors w-full text-left"
                   >
-                    <User className="w-4 h-4 text-gray-400" />
+                    <User className="w-3.5 h-3.5 text-muted-foreground" />
                     Profile
                   </button>
                   <Link
                     to="/settings"
                     onClick={() => setIsUserMenuOpen(false)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded-md transition-colors"
+                    className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground rounded-lg transition-colors"
                   >
-                    <Settings className="w-4 h-4 text-gray-400" />
+                    <Settings className="w-3.5 h-3.5 text-muted-foreground" />
                     Account settings
                   </Link>
                   <button
@@ -311,20 +319,20 @@ const DashboardLayout: React.FC = () => {
                       setIsUserMenuOpen(false);
                       toast("What's new coming soon!", { icon: '🎁' });
                     }}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-100 dark:hover:bg-[#2B2B30] rounded-md transition-colors w-full text-left"
+                    className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground rounded-lg transition-colors w-full text-left"
                   >
-                    <Gift className="w-4 h-4 text-gray-400" />
+                    <Gift className="w-3.5 h-3.5 text-muted-foreground" />
                     What's new
                   </button>
-                  <div className="border-t border-gray-100 dark:border-[#2B2B30] my-1"></div>
+                  <div className="border-t border-border my-1"></div>
                   <button
                     onClick={() => {
                       setIsUserMenuOpen(false);
                       logout();
                     }}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors w-full text-left"
+                    className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-red-500 hover:bg-red-500/10 rounded-lg transition-colors w-full text-left font-medium"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="w-3.5 h-3.5" />
                     Log out
                   </button>
                 </div>
@@ -335,23 +343,21 @@ const DashboardLayout: React.FC = () => {
         </div>
       </aside>
 
-      {/* ── Main Content Area (The "Island") ───────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen pt-2 pr-2 pb-2 pl-0 gap-1.5">
+      {/* ── Main Layout Body ───────────────────────────────────── */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen bg-background">
         
-        {/* Combined Top Header and Navigation Tabs */}
-        <div className="flex flex-col rounded-xl shrink-0 shadow-sm border border-gray-200 dark:border-[#2B2B30] relative z-40">
-          {/* Top Header */}
-          <header className="h-16 bg-[#F5F5F5] dark:bg-[#1D1D1F] px-6 flex items-center justify-between relative z-[60] rounded-t-xl border-b border-gray-200 dark:border-[#2B2B30]">
+        {/* Top Header */}
+        <header className="h-14 border-b border-border bg-background/95 backdrop-blur px-6 flex items-center justify-between shrink-0 relative z-30">
           <div className="flex items-center gap-2 relative" ref={folderSwitcherRef}>
             {location.pathname.startsWith('/settings') ? (
               <div className="flex items-center gap-3">
                 <button 
                   onClick={() => navigate('/dashboard')}
-                  className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-[#2B2B30] text-gray-500 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <ArrowLeft className="w-5 h-5" />
+                  <ArrowLeft className="w-4 h-4" />
                 </button>
-                <h1 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED]">
+                <h1 className="text-base font-semibold text-foreground tracking-tight">
                   Settings
                 </h1>
               </div>
@@ -359,43 +365,43 @@ const DashboardLayout: React.FC = () => {
               <>
                 <button 
                   onClick={() => setIsFolderSwitcherOpen(!isFolderSwitcherOpen)}
-                  className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED] flex items-center gap-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2B2B30] px-2 py-1 rounded-md transition-colors"
+                  className="text-base font-semibold text-foreground tracking-tight flex items-center gap-1.5 cursor-pointer hover:bg-secondary px-2.5 py-1 rounded-lg transition-colors"
                 >
                   {activeFolderName}
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
                 </button>
                 
                 <AnimatePresence>
                 {isFolderSwitcherOpen && (
                   <motion.div 
-                    initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                    initial={{ opacity: 0, y: -4, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.98 }}
                     transition={{ duration: 0.1, ease: "easeOut" }}
-                    className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] shadow-xl rounded-lg p-2 z-[100] flex flex-col gap-2"
+                    className="absolute top-full left-0 mt-1 w-64 bg-popover border border-border shadow-lg rounded-xl p-2 z-[100] flex flex-col gap-1.5"
                   >
-                    <div className="relative flex items-center px-2 border-b border-gray-100 dark:border-slate-800">
-                      <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 ml-1" />
+                    <div className="relative flex items-center px-2 border-b border-border pb-1">
+                      <Search className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 ml-1" />
                       <input 
                         type="text" 
                         autoFocus={true}
                         placeholder="Search folders..." 
                         value={folderSearch}
                         onChange={(e) => setFolderSearch(e.target.value)}
-                        className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-2 px-3 text-gray-900 dark:text-white placeholder-gray-400"
+                        className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-1.5 px-2.5 text-foreground placeholder:text-muted-foreground"
                       />
                       <button
                         onClick={() => {
                           navigate('/folders');
                           setIsFolderSwitcherOpen(false);
                         }}
-                        className="text-xs font-medium text-gray-500 hover:text-gray-900 dark:text-[#A1A1AA] dark:hover:text-white flex-shrink-0 whitespace-nowrap"
+                        className="text-xs font-medium text-muted-foreground hover:text-foreground flex-shrink-0 whitespace-nowrap"
                       >
                         View All
                       </button>
                     </div>
                     
-                    <div className="max-h-56 overflow-y-auto flex flex-col gap-1 border-y border-gray-100 dark:border-[#2B2B30] py-1">
+                    <div className="max-h-56 overflow-y-auto flex flex-col gap-0.5 py-1">
                       {/* All Links Option */}
                       <button
                         onClick={() => {
@@ -403,10 +409,10 @@ const DashboardLayout: React.FC = () => {
                           navigate('/dashboard');
                           setIsFolderSwitcherOpen(false);
                         }}
-                        className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between ${!folderSlug && !activeFolderId ? 'bg-gray-100 dark:bg-[#222222] text-gray-900 dark:text-[#EDEDED] font-medium' : 'text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
+                        className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between ${!folderSlug && !activeFolderId ? 'bg-secondary text-foreground font-medium' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'}`}
                       >
                         <div className="flex items-center gap-2">
-                          <LinkIcon className="w-4 h-4 text-blue-500" />
+                          <LinkIcon className="w-3.5 h-3.5 text-primary" />
                           <span>All Links</span>
                         </div>
                       </button>
@@ -418,28 +424,28 @@ const DashboardLayout: React.FC = () => {
 
                         return (
                           <motion.button
-                            layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
+                            layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.15 }}
                             key={folder.id}
                             onClick={() => {
                               setActiveFolderId(folder.id);
                               navigate(`/dashboard/f/${slug}`);
                               setIsFolderSwitcherOpen(false);
                             }}
-                            className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between ${isSelected ? 'bg-gray-100 dark:bg-[#222222] text-gray-900 dark:text-[#EDEDED] font-medium' : 'text-gray-700 dark:text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30]'}`}
+                            className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between ${isSelected ? 'bg-secondary text-foreground font-medium' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'}`}
                           >
                             <div className="flex items-center gap-2">
-                              <FolderIcon className={`w-4 h-4 ${isDefault ? 'text-blue-500' : 'text-emerald-500'}`} />
+                              <FolderIcon className={`w-3.5 h-3.5 ${isDefault ? 'text-primary' : 'text-emerald-500'}`} />
                               <span>{folder.name}</span>
                             </div>
                             {isDefault && (
-                              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold">
+                              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold">
                                 Default
                               </span>
                             )}
                           </motion.button>
                         );
                       })}
-                      {folders.length === 0 && <div className="px-3 py-2 text-sm text-gray-500">No folders found</div>}
+                      {folders.length === 0 && <div className="px-2.5 py-2 text-xs text-muted-foreground">No folders found</div>}
                     </div>
                     
                     <button
@@ -447,9 +453,9 @@ const DashboardLayout: React.FC = () => {
                         navigate('/folders?create=true');
                         setIsFolderSwitcherOpen(false);
                       }}
-                      className="w-full text-left px-3 py-2 text-sm text-[#A1A1AA] hover:bg-gray-50 dark:hover:bg-[#2B2B30] rounded-md transition-colors flex items-center gap-2 font-medium"
+                      className="w-full text-left px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground rounded-lg transition-colors flex items-center gap-2 font-medium border-t border-border pt-1.5"
                     >
-                      <FolderPlus className="w-4 h-4 text-gray-400" />
+                      <FolderPlus className="w-3.5 h-3.5 text-muted-foreground" />
                       Create new folder
                     </button>
                   </motion.div>
@@ -457,19 +463,19 @@ const DashboardLayout: React.FC = () => {
                 </AnimatePresence>
               </>
             ) : location.pathname.startsWith('/analytics') ? (
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED] px-2 py-1">
+              <h1 className="text-base font-semibold text-foreground tracking-tight px-1">
                 Analytics
               </h1>
             ) : location.pathname.startsWith('/folders') ? (
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED] px-2 py-1">
+              <h1 className="text-base font-semibold text-foreground tracking-tight px-1">
                 Folders
               </h1>
             ) : location.pathname.startsWith('/tags') ? (
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED] px-2 py-1">
+              <h1 className="text-base font-semibold text-foreground tracking-tight px-1">
                 Tags
               </h1>
             ) : (
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-[#EDEDED] px-2 py-1">
+              <h1 className="text-base font-semibold text-foreground tracking-tight px-1">
                 {getTitle()}
               </h1>
             )}
@@ -477,23 +483,23 @@ const DashboardLayout: React.FC = () => {
           {!location.pathname.startsWith('/settings') && renderHeaderButton()}
         </header>
 
-          {/* Top Navigation Tabs */}
-          <div className="h-14 bg-[#F5F5F5] dark:bg-[#1D1D1F] px-6 flex items-center justify-between text-sm relative z-[40] rounded-b-xl">
-          <div className="flex items-center overflow-x-auto whitespace-nowrap gap-2">
+        {/* Top Navigation Tabs */}
+        <div className="h-12 border-b border-border bg-background px-6 flex items-center justify-between text-sm shrink-0">
+          <div className="flex items-center overflow-x-auto whitespace-nowrap gap-1">
             {location.pathname.startsWith('/settings') ? (
               <>
                 <Link 
                   to="/settings" 
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium transition-colors ${location.pathname === '/settings' ? 'bg-[#E7EFF9] text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-600 hover:bg-[#EAEAEA] hover:text-gray-900 dark:text-[#A1A1AA] dark:hover:bg-[#2B2B30] dark:hover:text-gray-100'}`}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-xs transition-colors ${location.pathname === '/settings' ? 'bg-secondary text-foreground font-semibold' : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'}`}
                 >
-                  <Settings className="w-4 h-4" />
+                  <Settings className="w-3.5 h-3.5" />
                   General
                 </Link>
                 <Link 
                   to="/settings/security" 
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium transition-colors ${location.pathname === '/settings/security' ? 'bg-[#E7EFF9] text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-600 hover:bg-[#EAEAEA] hover:text-gray-900 dark:text-[#A1A1AA] dark:hover:bg-[#2B2B30] dark:hover:text-gray-100'}`}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-xs transition-colors ${location.pathname === '/settings/security' ? 'bg-secondary text-foreground font-semibold' : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'}`}
                 >
-                  <Shield className="w-4 h-4" />
+                  <Shield className="w-3.5 h-3.5" />
                   Security
                 </Link>
               </>
@@ -501,30 +507,30 @@ const DashboardLayout: React.FC = () => {
               <>
                 <Link 
                   to={folderSlug ? `/dashboard/f/${folderSlug}` : (activeFolderId ? `/dashboard?folderId=${activeFolderId}` : "/dashboard")} 
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium transition-colors ${location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/f/') ? 'bg-[#E7EFF9] text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-600 hover:bg-[#EAEAEA] hover:text-gray-900 dark:text-[#A1A1AA] dark:hover:bg-[#2B2B30] dark:hover:text-gray-100'}`}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-xs transition-colors ${location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/f/') ? 'bg-secondary text-foreground font-semibold' : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'}`}
                 >
-                  <LinkIcon className="w-4 h-4" />
+                  <LinkIcon className="w-3.5 h-3.5" />
                   Links
                 </Link>
                 <Link 
                   to={folderSlug ? `/analytics/f/${folderSlug}` : (activeFolderId ? `/analytics?folderId=${activeFolderId}` : "/analytics")} 
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium transition-colors ${location.pathname.startsWith('/analytics') ? 'bg-[#E7EFF9] text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-600 hover:bg-[#EAEAEA] hover:text-gray-900 dark:text-[#A1A1AA] dark:hover:bg-[#2B2B30] dark:hover:text-gray-100'}`}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-xs transition-colors ${location.pathname.startsWith('/analytics') ? 'bg-secondary text-foreground font-semibold' : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'}`}
                 >
-                  <BarChart2 className="w-4 h-4" />
+                  <BarChart2 className="w-3.5 h-3.5" />
                   Analytics
                 </Link>
                 <Link 
                   to="/folders" 
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium transition-colors ${location.pathname === '/folders' ? 'bg-[#E7EFF9] text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-600 hover:bg-[#EAEAEA] hover:text-gray-900 dark:text-[#A1A1AA] dark:hover:bg-[#2B2B30] dark:hover:text-gray-100'}`}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-xs transition-colors ${location.pathname === '/folders' ? 'bg-secondary text-foreground font-semibold' : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'}`}
                 >
-                  <FolderIcon className="w-4 h-4" />
+                  <FolderIcon className="w-3.5 h-3.5" />
                   Folders
                 </Link>
                 <Link 
                   to="/tags" 
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium transition-colors ${location.pathname === '/tags' ? 'bg-[#E7EFF9] text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-600 hover:bg-[#EAEAEA] hover:text-gray-900 dark:text-[#A1A1AA] dark:hover:bg-[#2B2B30] dark:hover:text-gray-100'}`}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-xs transition-colors ${location.pathname === '/tags' ? 'bg-secondary text-foreground font-semibold' : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'}`}
                 >
-                  <TagIcon className="w-4 h-4" />
+                  <TagIcon className="w-3.5 h-3.5" />
                   Tags
                 </Link>
               </>
@@ -532,7 +538,7 @@ const DashboardLayout: React.FC = () => {
           </div>
           
           {!location.pathname.startsWith('/settings') && (
-            <div className="flex items-center gap-4 ml-auto pl-4 text-xs text-gray-500 shrink-0">
+            <div className="flex items-center gap-4 ml-auto pl-4 text-xs text-muted-foreground shrink-0">
               {isStatsLoading ? (
                 <>
                   <div className="flex items-center gap-1.5"><Skeleton width={40} height={16} /></div>
@@ -541,23 +547,22 @@ const DashboardLayout: React.FC = () => {
               ) : (
                 <>
                   <span className="flex items-center gap-1.5" title={`Total Clicks: ${navStats.totalClicks}`}>
-                    <ClickArrowIcon className="w-4 h-4 text-gray-500" />
-                    {navStats.totalClicks}
+                    <ClickArrowIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-foreground font-medium">{navStats.totalClicks}</span>
                   </span>
                   <span className="flex items-center gap-1.5" title={`Total Links: ${navStats.linkCount}`}>
-                    <LinkIcon className="w-4 h-4" />
-                    {navStats.linkCount}
+                    <LinkIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-foreground font-medium">{navStats.linkCount}</span>
                   </span>
                 </>
               )}
             </div>
           )}
-          </div>
         </div>
 
-        {/* Main Content Rendered Here */}
-        <main className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-[#FFFFFF] dark:bg-[#1E1E21] rounded-xl shadow-sm border border-gray-200 dark:border-[#2B2B30]">
-          <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Main Content Rendered Directly */}
+        <main className="flex-1 overflow-y-auto bg-background p-6 lg:p-8">
+          <div className="w-full max-w-6xl mx-auto">
             <AnimatePresence mode="wait">
               <Outlet key={location.pathname} context={{ 
                 triggerRefresh: latestNewEntry, 

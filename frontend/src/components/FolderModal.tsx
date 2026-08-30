@@ -23,8 +23,6 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSuccess, f
     }
   }, [isOpen, folderToEdit]);
 
-  // removed early return for AnimatePresence
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -59,49 +57,49 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSuccess, f
           animate={{ opacity: 1 }} 
           exit={{ opacity: 0 }} 
           transition={{ duration: 0.15 }}
-          className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
         >
           <motion.div 
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="bg-white dark:bg-[#1E1E21] rounded-2xl shadow-xl w-full max-w-sm overflow-hidden relative border border-gray-200 dark:border-[#2B2B30]"
+            className="bg-card rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden relative border border-border"
           >
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-[#2B2B30] z-10">
+        <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-secondary z-10">
           <X className="w-5 h-5" />
         </button>
 
         <form onSubmit={handleSubmit}>
           <div className="p-8">
             <div className="flex flex-col items-center text-center mb-8">
-              <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center mb-4 border border-gray-200 dark:border-[#2B2B30]">
-                <FolderIcon className="w-6 h-6 text-gray-900 dark:text-white" />
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4 border border-primary/20">
+                <FolderIcon className="w-6 h-6 text-primary" />
               </div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+              <h2 className="text-xl font-semibold text-foreground mb-1">
                 {folderToEdit ? 'Edit folder' : 'Create folder'}
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Organize your links into folders.
               </p>
             </div>
 
             <div className="space-y-6">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Folder Name</label>
+                <label className="text-sm font-medium text-foreground">Folder Name</label>
                 <input 
                   type="text" 
                   required 
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   autoFocus
-                  className="block w-full rounded-lg border border-gray-300 dark:border-[#2B2B30] bg-white dark:bg-[#1E1E21] px-3 py-2 text-sm shadow-sm focus:outline-none focus:border-gray-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-slate-800 transition-colors dark:text-white placeholder:text-gray-400" 
+                  className="block w-full rounded-lg border border-input bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors text-foreground placeholder:text-muted-foreground" 
                   placeholder="e.g. Marketing Campaigns" 
                 />
               </div>
 
               {error && (
-                <div className="text-sm text-red-600 dark:text-red-400 font-medium text-center">
+                <div className="text-sm text-rose-500 font-medium text-center">
                   {error}
                 </div>
               )}
@@ -110,7 +108,7 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSuccess, f
                 <button 
                   type="submit" 
                   disabled={loading || name.trim() === ''}
-                  className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white dark:text-black bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 dark:focus:ring-slate-500 disabled:bg-gray-50 dark:disabled:bg-slate-800 disabled:text-gray-400 dark:disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
+                  className="btn-solid w-full text-center"
                 >
                   {loading ? 'Saving...' : 'Save folder'}
                 </button>

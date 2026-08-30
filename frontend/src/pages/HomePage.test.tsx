@@ -99,4 +99,12 @@ describe('HomePage', () => {
 
     expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument();
   });
+
+  it('renders theme toggle button in header', () => {
+    (useAuth as any).mockReturnValue({ token: null });
+    render(<MemoryRouter><HomePage /></MemoryRouter>);
+
+    const themeBtn = document.getElementById('theme-toggle');
+    expect(themeBtn).toBeInTheDocument();
+  });
 });

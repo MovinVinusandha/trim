@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, AlertCircle } from 'lucide-react';
+import { Check, AlertCircle, ShieldCheck } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import { motion } from 'framer-motion';
 
@@ -38,22 +38,25 @@ const SecurityPage: React.FC = () => {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-8 max-w-4xl mx-auto space-y-6">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Security Settings</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your password and security preferences.</p>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-4 max-w-4xl mx-auto space-y-6">
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-foreground">Security Settings</h1>
+        <p className="text-sm text-muted-foreground mt-1">Manage your password and security preferences.</p>
       </div>
 
-      <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div className="p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Password</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-6">
+          <div className="flex items-center gap-2 mb-1">
+            <ShieldCheck className="w-5 h-5 text-primary" />
+            <h3 className="text-base font-medium text-foreground">Password</h3>
+          </div>
+          <p className="text-sm text-muted-foreground mb-6">
             Update your password to keep your account secure.
           </p>
           
           <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
             <div>
-              <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="currentPassword" className="block text-xs font-medium text-foreground mb-1.5">
                 Current Password
               </label>
               <input
@@ -61,11 +64,11 @@ const SecurityPage: React.FC = () => {
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-[#2B2B30] rounded-md focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-[#2B2B30] text-gray-900 dark:text-white"
+                className="w-full px-3.5 py-2 border border-input rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-background text-foreground transition-colors text-sm"
               />
             </div>
             <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="newPassword" className="block text-xs font-medium text-foreground mb-1.5">
                 New Password
               </label>
               <input
@@ -73,12 +76,12 @@ const SecurityPage: React.FC = () => {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-[#2B2B30] rounded-md focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-[#2B2B30] text-gray-900 dark:text-white"
+                className="w-full px-3.5 py-2 border border-input rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-background text-foreground transition-colors text-sm"
               />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Must be at least 8 characters.</p>
+              <p className="text-xs text-muted-foreground mt-1">Must be at least 8 characters.</p>
             </div>
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="confirmPassword" className="block text-xs font-medium text-foreground mb-1.5">
                 Confirm New Password
               </label>
               <input
@@ -86,22 +89,22 @@ const SecurityPage: React.FC = () => {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-[#2B2B30] rounded-md focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-[#2B2B30] text-gray-900 dark:text-white"
+                className="w-full px-3.5 py-2 border border-input rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-background text-foreground transition-colors text-sm"
               />
             </div>
 
             {message && (
-              <div className={`mt-3 text-sm flex items-center gap-1.5 ${message.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+              <div className={`mt-3 text-sm flex items-center gap-1.5 ${message.type === 'success' ? 'text-emerald-500' : 'text-rose-500'}`}>
                 {message.type === 'success' ? <Check className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
                 {message.text}
               </div>
             )}
             
-            <div className="pt-4 border-t border-gray-100 dark:border-[#2B2B30] mt-6">
+            <div className="pt-4 border-t border-border mt-6">
               <button
                 type="submit"
                 disabled={isButtonDisabled}
-                className="bg-black text-white dark:bg-white dark:text-black px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800 dark:hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                className="btn-solid disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Saving...' : 'Save Changes'}
               </button>
