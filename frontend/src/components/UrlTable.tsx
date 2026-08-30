@@ -134,9 +134,9 @@ const UrlTable: React.FC<Props> = ({ urls, onDeleted,  onOpenQr,
         </div>
       )}
 
-      <div className="bg-card border border-border rounded-lg shadow-sm overflow-hidden flex flex-col gap-0 divide-y divide-border">
+      <div className="bg-background border border-border rounded-xl shadow-sm overflow-hidden flex flex-col gap-0 divide-y divide-border">
         {sortedWithIndex.map(({ entry, originalIndex }) => (
-          <div key={`${entry.shortUrl}-${originalIndex}`} className="px-3 py-2 hover:bg-secondary/40 transition-colors group flex items-center justify-between">
+          <div key={`${entry.shortUrl}-${originalIndex}`} className="px-3 py-2 hover:bg-neutral-100/70 dark:hover:bg-[#111114] transition-all group flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <div className="w-6 h-6 rounded-full border border-border flex items-center justify-center bg-card shrink-0 overflow-hidden shadow-sm">
                 {/* Fallback globe icon for generic URLs */}

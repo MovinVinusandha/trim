@@ -818,9 +818,9 @@ const DashboardPage: React.FC = () => {
           )}
 
           {loadingAll ? (
-            <div className="bg-background border border-border rounded-xl overflow-hidden flex flex-col gap-0 divide-y divide-border">
+            <div className="bg-background border border-border rounded-xl overflow-hidden flex flex-col gap-0">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="flex items-center p-4">
+                <div key={i} className="flex items-center p-4 border-b border-dashed border-border last:border-b-0">
                   <div className="shrink-0 mr-4">
                     <Skeleton circle width={36} height={36} />
                   </div>
@@ -836,12 +836,12 @@ const DashboardPage: React.FC = () => {
               ))}
             </div>
           ) : (
-            <div className="bg-background border border-border rounded-xl overflow-visible flex flex-col gap-0 divide-y divide-border">
+            <div className="bg-background border border-border rounded-xl overflow-visible flex flex-col gap-0">
               {displayedUrls.length === 0 ? (
                 <div className="p-12 text-center text-muted-foreground text-sm">No links found.</div>
               ) : (
                 displayedUrls.map((url) => (
-                  <motion.div layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.15 }} key={url.shortUrl} className="group relative flex items-center p-4 hover:bg-secondary/40 transition-colors">
+                  <motion.div layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.15 }} key={url.shortUrl} className="group relative flex items-center p-4 border-b border-dashed border-border last:border-b-0 hover:border-solid hover:bg-neutral-100/70 dark:hover:bg-[#111114] transition-all first:rounded-t-xl last:rounded-b-xl">
                     {/* Favicon */}
                     <div className="shrink-0 mr-4">
                       <div className="w-9 h-9 rounded-full border border-border bg-secondary overflow-hidden flex items-center justify-center p-1">

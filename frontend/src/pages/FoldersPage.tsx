@@ -83,7 +83,7 @@ const FoldersPage: React.FC = () => {
                   transition={{ duration: 0.15 }} 
                   key={folder.id} 
                   onClick={() => handleFolderClick(folder)} 
-                  className="bg-background border border-border rounded-xl p-4 transition-all group relative cursor-pointer hover:border-border/80 hover:bg-secondary/20"
+                  className="bg-background border border-border rounded-xl p-4 transition-all group relative cursor-pointer hover:border-border/90 hover:bg-neutral-100/70 dark:hover:bg-[#111114]"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">

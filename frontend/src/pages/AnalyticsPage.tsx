@@ -985,7 +985,7 @@ const AnalyticsPage: React.FC = () => {
                 clicksByCountry.slice(0, 5).map((country) => {
                   const pct = totalClicks > 0 ? (country.count / totalClicks) * 100 : 0;
                   return (
-                    <div key={country.country} className="group flex items-center justify-between p-3 hover:bg-secondary/50 transition-colors border-b border-border/50 last:border-0 relative">
+                    <div key={country.country} className="group flex items-center justify-between p-3 border-b border-border/50 last:border-0 hover:bg-neutral-100/70 dark:hover:bg-[#111114] transition-all relative">
                       <div className="absolute left-0 top-0 bottom-0 bg-primary/10 z-0 rounded-r-sm transition-all" style={{ width: `${pct}%` }}></div>
                       <div className="flex items-center gap-3 z-10">
                         <Globe className="w-3.5 h-3.5 text-muted-foreground" />
@@ -1059,7 +1059,7 @@ const AnalyticsPage: React.FC = () => {
                 clicksByBrowser.slice(0, 5).map((browser) => {
                   const pct = totalClicks > 0 ? (browser.count / totalClicks) * 100 : 0;
                   return (
-                    <div key={browser.browser} className="group flex items-center justify-between p-3 hover:bg-secondary/50 transition-colors border-b border-border/50 last:border-0 relative">
+                    <div key={browser.browser} className="group flex items-center justify-between p-3 border-b border-border/50 last:border-0 hover:bg-neutral-100/70 dark:hover:bg-[#111114] transition-all relative">
                       <div className="absolute left-0 top-0 bottom-0 bg-primary/10 z-0 rounded-r-sm transition-all" style={{ width: `${pct}%` }}></div>
                       <div className="flex items-center gap-3 z-10">
                         <div className="w-5 h-5 bg-secondary border border-border rounded flex items-center justify-center text-[10px] font-bold text-foreground uppercase">

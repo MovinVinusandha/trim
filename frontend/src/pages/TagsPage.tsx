@@ -72,7 +72,7 @@ const TagsPage: React.FC = () => {
                 layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.15 }}
                 key={tag.id} 
                 onClick={() => navigate(`/dashboard?tag=${encodeURIComponent(tag.name)}`)}
-                className="group relative flex items-center justify-between p-4 hover:bg-secondary/40 transition-colors cursor-pointer"
+                className="group relative flex items-center justify-between p-4 hover:bg-neutral-100/70 dark:hover:bg-[#111114] transition-all cursor-pointer first:rounded-t-xl last:rounded-b-xl"
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-6 h-6 rounded flex items-center justify-center border ${getTagColor(tag.color).classes}`}>
