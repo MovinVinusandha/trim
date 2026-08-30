@@ -931,37 +931,48 @@ const AnalyticsPage: React.FC = () => {
 
           {/* Chart Container */}
           <div className="p-6 relative">
-            <div className="relative w-full h-[300px]">
+            <div className="relative w-full h-[300px] overflow-hidden">
               {clicksByDate.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={clicksByDate} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <XAxis 
-                      dataKey="date" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: '#71717A', fontSize: 11 }} 
-                      tickFormatter={formatXAxisTick}
-                      minTickGap={40}
-                    />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#71717A', fontSize: 11 }} allowDecimals={false} />
-                    <Tooltip content={<CustomTooltip />} labelFormatter={formatTooltipLabel} />
-                    <Area 
-                      type="monotone" 
-                      dataKey="count" 
-                      stroke="#0099ff" 
-                      strokeWidth={2} 
-                      fillOpacity={1} 
-                      fill="url(#colorClicks)" 
-                      activeDot={{ r: 5, fill: '#ffffff', stroke: '#0099ff', strokeWidth: 2 }} 
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <motion.div 
+                  key={`${JSON.stringify(dateRange)}-${hashParam || 'all'}`}
+                  initial={{ opacity: 0, scaleY: 0 }}
+                  animate={{ opacity: 1, scaleY: 1 }}
+                  transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                  style={{ transformOrigin: 'bottom center' }}
+                  className="w-full h-full"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={clicksByDate} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#0099ff" stopOpacity={0.45}/>
+                          <stop offset="65%" stopColor="#0099ff" stopOpacity={0.12}/>
+                          <stop offset="100%" stopColor="#0099ff" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <XAxis 
+                        dataKey="date" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fill: '#71717A', fontSize: 11 }} 
+                        tickFormatter={formatXAxisTick}
+                        minTickGap={40}
+                      />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#71717A', fontSize: 11 }} allowDecimals={false} />
+                      <Tooltip content={<CustomTooltip />} labelFormatter={formatTooltipLabel} />
+                      <Area 
+                        type="monotone" 
+                        dataKey="count" 
+                        stroke="#0099ff" 
+                        strokeWidth={2.5} 
+                        fillOpacity={1} 
+                        fill="url(#colorClicks)" 
+                        isAnimationActive={false}
+                        activeDot={{ r: 5, fill: '#ffffff', stroke: '#0099ff', strokeWidth: 2 }} 
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </motion.div>
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground border border-dashed border-border rounded-xl text-xs">
                   No data available for the selected period
