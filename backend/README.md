@@ -4,13 +4,14 @@ Enterprise-grade Spring Boot 3 REST API powering URL redirection, analytics proc
 
 ## Key Features
 
-- **UTC Everywhere Timezone Standard**: Global UTC timezone enforcement at the JVM level (`TimeZone.setDefault("UTC")`) with ISO-8601 UTC timestamp serialization (`yyyy-MM-dd'T'HH:mm:ss.SSSX`) across all database entities and API payloads.
-- **Scheduled Expiration Sweeper**: Automated background worker (`@Scheduled(fixedRate = 60000)`) that regularly queries active URLs past their `expiresAt` threshold, marks them inactive, and evicts stale cache keys from Redis.
+- **UTC Everywhere Timezone Standard**: Global UTC timezone enforcement at the JVM level (`TimeZone.setDefault("UTC")`) with ISO-8601 UTC timestamp serialization (`yyyy-MM-dd'T'HH:mm:ss.SSSX`) across all database entities, DTOs, and API responses.
+- **Scheduled Expiration Sweeper**: Automated background worker (`@Scheduled(fixedRate = 60000)`) that queries active URLs past their `expiresAt` threshold, deactivates them (`isActive = false`), and evicts stale cache keys from Redis.
 - **Transactional Account Hard-Delete**: Comprehensive `@Transactional` cascade process that completely purges click events, short URLs, tag associations, custom tags, folders, and user credentials upon account deletion.
-- **Asynchronous Click Analytics**: Non-blocking click processing leveraging Spring thread pools and the Yauaa library for background User-Agent parsing and geo-location logging without delaying HTTP 302 redirects.
-- **Redis Caching & Invalidation**: High-speed Redis cache layers for short URL resolution with aggressive cache eviction upon URL updates, password modifications, or deletions.
-- **Flyway Database Migrations**: Version-controlled SQL migration scripts managing schema evolution and relational constraints.
-- **Stateless JWT Security**: Dual-token architecture issuing short-lived access tokens and securing long-lived refresh tokens in HTTP-only cookies.
+- **Asynchronous Click Analytics**: Non-blocking click processing leveraging Spring thread pools and the Yauaa library for background User-Agent parsing (device, operating system, browser) and IP geo-location logging without delaying HTTP 302 redirects.
+- **Redis Caching & Invalidation**: High-speed Redis cache layer for short URL resolution with aggressive cache eviction upon URL updates, password modifications, expiration, or deletion.
+- **Flyway Database Migrations**: Version-controlled SQL migration scripts managing schema evolution and relational constraints across 12 migrations (V1 to V12).
+- **Stateless JWT Security**: Dual-token architecture issuing short-lived access tokens (5 minutes) and securing long-lived refresh tokens (7 days) in HTTP-only, Secure cookies.
+- **Interactive OpenAPI / Swagger Documentation**: Built-in interactive API documentation via SpringDoc OpenAPI (`/swagger-ui/index.html`).
 
 ## Setup
 
@@ -53,6 +54,14 @@ The following environment variables configure the backend across development and
 | `FRONTEND_URL` | General frontend application root URL | `http://localhost` | `https://trim.com` |
 
 ## API Endpoints
+
+### System & Documentation
+
+| Method | Endpoint | Auth Required | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/health` / `/api/health` | No | System health status and application version check. |
+| `GET` | `/swagger-ui/index.html` | No | Interactive Swagger UI API documentation. |
+| `GET` | `/v3/api-docs` | No | OpenAPI 3.0 specification JSON schema. |
 
 ### Authentication
 
@@ -117,3 +126,10 @@ The following environment variables configure the backend across development and
 | `POST` | `/admin/addNew` | Yes (ROOT) | Provision a new administrative user account. |
 
 *\* Requires ownership of the resource or ROOT administrator role.*
+
+## Testing
+
+Execute unit and integration tests:
+```bash
+./mvnw test
+```

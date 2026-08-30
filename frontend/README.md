@@ -1,15 +1,16 @@
 # Frontend Application - trim
 
-Modern single-page application (SPA) built with React 18, TypeScript, Vite, and Tailwind CSS, featuring link management, interactive analytics, and multi-subdomain routing support.
+Modern single-page application (SPA) built with React 19, TypeScript, Vite, Tailwind CSS, and Framer Motion, featuring link management, interactive analytics, dynamic QR codes, and multi-subdomain routing support.
 
 ## Key Features
 
-- **Framer Motion Animations**: Fluid page transitions, modal dialog animations, and interactive hover states using Framer Motion.
+- **Framer Motion Animations**: Fluid page transitions, modal dialog animations, and interactive hover states using Framer Motion with `AnimatePresence`.
 - **Skeleton Loaders**: Dedicated skeleton loading placeholders preventing layout shifts during asynchronous data fetches across tables and cards.
+- **Interactive Data Visualization**: Comprehensive analytics charts powered by Recharts (30-day click trends, device pie charts, OS distribution bars, top browser metrics, and country statistics).
 - **Toast Notification System**: Integrated `react-hot-toast` notifications providing contextual feedback for API operations, clipboard actions, and coming-soon alerts.
 - **Shared Layout Architecture**: Centralized `DashboardLayout` wrapping authenticated routes with a persistent sidebar, active navigation indicators, theme toggles, and responsive mobile drawers.
-- **Dynamic Theming**: Light and dark mode support managed through React Context and persisted in local storage.
-- **Subdomain Routing Support**: Built-in compatibility with the 3-pillar subdomain architecture (`app.domain.com` for application views and `domain.com` for root landing and link resolution).
+- **Dynamic Theming**: Light and dark mode support managed through React Context (`ThemeContext`) and persisted in local storage.
+- **Subdomain Routing Support**: Built-in compatibility with the 3-pillar subdomain architecture (`app.trim.com` for application views and `trim.com` for root landing and link resolution).
 
 ## Setup
 
@@ -58,6 +59,7 @@ The client-side routing is organized into public access pages and authenticated 
 | `/register` | `RegisterPage` | Account registration interface for new users. |
 | `/expired` | `ExpiredPage` | Landing notice presented when navigating to an expired short URL. |
 | `/secure/:hash` | `SecurePage` | Password authentication screen required to unlock password-protected destination links. |
+| `*` | `NotFoundPage` | 404 page for unmatched routes. |
 
 ### Protected Routes (Wrapped in `DashboardLayout`)
 
@@ -77,8 +79,24 @@ The client-side routing is organized into public access pages and authenticated 
 | :--- | :--- | :--- |
 | `DashboardLayout` | `src/layouts/DashboardLayout.tsx` | Main shell with sidebar navigation, user profile header, and main content area. |
 | `ProtectedRoute` | `src/components/ProtectedRoute.tsx` | Route guard validating JWT authentication and redirecting unauthenticated users. |
+| `BrandLogo` | `src/components/BrandLogo.tsx` | SVG brand logo with customized light/dark branding variations. |
 | `CreateLinkModal` | `src/components/CreateLinkModal.tsx` | Modal form supporting custom aliases, passwords, expiration dates, folders, and tags. |
-| `EditLinkModal` | `src/components/EditLinkModal.tsx` | Modal form for editing existing link destinations and metadata. |
-| `QrCodeModal` | `src/components/QrCodeModal.tsx` | Modal displaying generated QR code with image download capabilities. |
-| `DeleteConfirmModal` | `src/components/DeleteConfirmModal.tsx` | Confirmation dialog for safe deletion of links, folders, and tags. |
-| `Skeleton` | `src/components/Skeleton.tsx` | Reusable placeholder loading indicators for smooth UX during data fetching. |
+| `EditModal` | `src/components/EditModal.tsx` | Modal form for editing existing link destinations and metadata. |
+| `CreateTagModal` | `src/components/CreateTagModal.tsx` | Modal form for creating and customizing colored tags. |
+| `FolderModal` | `src/components/FolderModal.tsx` | Modal form for creating and updating folder names. |
+| `DateRangePicker` | `src/components/DateRangePicker.tsx` | Date range selector component for analytics filtering. |
+| `Navbar` | `src/components/Navbar.tsx` | Top navigation bar for landing and public pages. |
+| `ShortenForm` | `src/components/ShortenForm.tsx` | Quick URL shortening input form. |
+| `ThemeToggle` | `src/components/ThemeToggle.tsx` | Interactive light/dark mode switcher. |
+| `UrlTable` | `src/components/UrlTable.tsx` | Data table displaying shortened URLs, tags, clicks, and action menus. |
+
+## Available Scripts
+
+| Command | Description |
+| :--- | :--- |
+| `npm run dev` | Start Vite development server at `http://localhost:5173`. |
+| `npm run build` | Compile TypeScript and build production bundle into `dist/`. |
+| `npm run preview` | Locally preview production build output. |
+| `npm run lint` | Run Oxlint linter across the codebase. |
+| `npm test` | Execute unit and component tests with Vitest. |
+| `npm run test:e2e` | Run end-to-end browser tests with Playwright. |
