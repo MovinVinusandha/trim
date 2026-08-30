@@ -11,7 +11,7 @@ import {
   ArrowLeft, MousePointerClick, Globe, Monitor, 
   Link as LinkIcon, Activity,
   Share2, Folder as FolderIcon,
-  Tag, X, Search, Filter, ChevronDown, ChevronLeft
+  Tag, X, Search, Filter, ChevronDown, ChevronLeft, Check
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -359,7 +359,7 @@ const AnalyticsPage: React.FC = () => {
                       <div className="py-1 p-1">
                         <button 
                           onClick={() => { setActiveFilter('link'); setFilterSearch(''); }}
-                          className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs text-foreground hover:bg-secondary rounded-lg transition-colors group"
+                          className="w-full flex items-center justify-between px-2.5 py-2 text-xs text-foreground hover:bg-neutral-100/70 dark:hover:bg-[#111114] rounded-lg transition-colors group"
                         >
                           <div className="flex items-center">
                             <LinkIcon className="mr-2.5 h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground" />
@@ -368,7 +368,7 @@ const AnalyticsPage: React.FC = () => {
                         </button>
                         <button 
                           onClick={() => { setActiveFilter('tag'); setFilterSearch(''); }}
-                          className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs text-foreground hover:bg-secondary rounded-lg transition-colors group"
+                          className="w-full flex items-center justify-between px-2.5 py-2 text-xs text-foreground hover:bg-neutral-100/70 dark:hover:bg-[#111114] rounded-lg transition-colors group"
                         >
                           <div className="flex items-center">
                             <Tag className="mr-2.5 h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground" />
@@ -377,7 +377,7 @@ const AnalyticsPage: React.FC = () => {
                         </button>
                         <button 
                           onClick={() => { setActiveFilter('folder'); setFilterSearch(''); }}
-                          className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs text-foreground hover:bg-secondary rounded-lg transition-colors group"
+                          className="w-full flex items-center justify-between px-2.5 py-2 text-xs text-foreground hover:bg-neutral-100/70 dark:hover:bg-[#111114] rounded-lg transition-colors group"
                         >
                           <div className="flex items-center">
                             <FolderIcon className="mr-2.5 h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground" />
@@ -387,22 +387,22 @@ const AnalyticsPage: React.FC = () => {
                       </div>
                     ) : activeFilter === 'link' ? (
                       <>
-                        <div className="p-1 border-b border-border flex items-center">
+                        <div className="p-1.5 border-b border-border/80 bg-background/80 flex items-center gap-1">
                           <button 
                             onClick={() => { setActiveFilter('none'); setFilterSearch(''); }} 
-                            className="p-1 hover:bg-secondary rounded-md text-muted-foreground hover:text-foreground ml-1"
+                            className="p-1 hover:bg-neutral-100/70 dark:hover:bg-[#18181B] rounded-lg text-muted-foreground hover:text-foreground transition-colors"
                           >
                             <ChevronLeft className="w-3.5 h-3.5" />
                           </button>
-                          <div className="relative flex-1 flex items-center">
-                            <Search className="w-3 h-3 text-muted-foreground ml-2" />
+                          <div className="relative flex-1 flex items-center bg-secondary/40 rounded-md px-2 py-0.5 border border-border/40 focus-within:border-primary/50 transition-all">
+                            <Search className="w-3 h-3 text-muted-foreground shrink-0" />
                             <input 
                               type="text" 
                               autoFocus={true}
                               value={filterSearch}
                               onChange={e => setFilterSearch(e.target.value)}
                               placeholder="Search links..." 
-                              className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-1.5 px-2.5 text-foreground placeholder:text-muted-foreground"
+                              className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-1 px-2 text-foreground placeholder:text-muted-foreground"
                             />
                           </div>
                         </div>
@@ -427,7 +427,7 @@ const AnalyticsPage: React.FC = () => {
                                   setIsFilterOpen(false);
                                   setActiveFilter('none');
                                 }}
-                                className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between ${isSelected ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-secondary'}`}
+                                className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between ${isSelected ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-neutral-100/70 dark:hover:bg-[#111114]'}`}
                               >
                                 <div className="flex items-center gap-2 min-w-0">
                                   <LinkIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
@@ -436,7 +436,7 @@ const AnalyticsPage: React.FC = () => {
                                     <span className="truncate text-[10px] text-muted-foreground">{u.longUrl}</span>
                                   </div>
                                 </div>
-                                <span className="text-[10px] text-muted-foreground font-mono ml-2 shrink-0">
+                                <span className="text-[10px] text-muted-foreground font-mono ml-2 shrink-0 px-1.5 py-0.5 rounded-full bg-secondary/50">
                                   {u.accessed_times ?? 0} clicks
                                 </span>
                               </button>
@@ -447,22 +447,22 @@ const AnalyticsPage: React.FC = () => {
                       </>
                     ) : activeFilter === 'tag' ? (
                       <>
-                        <div className="p-1 border-b border-border flex items-center">
+                        <div className="p-1.5 border-b border-border/80 bg-background/80 flex items-center gap-1">
                           <button 
                             onClick={() => { setActiveFilter('none'); setFilterSearch(''); }} 
-                            className="p-1 hover:bg-secondary rounded-md text-muted-foreground hover:text-foreground ml-1"
+                            className="p-1 hover:bg-neutral-100/70 dark:hover:bg-[#18181B] rounded-lg text-muted-foreground hover:text-foreground transition-colors"
                           >
                             <ChevronLeft className="w-3.5 h-3.5" />
                           </button>
-                          <div className="relative flex-1 flex items-center">
-                            <Search className="w-3 h-3 text-muted-foreground ml-2" />
+                          <div className="relative flex-1 flex items-center bg-secondary/40 rounded-md px-2 py-0.5 border border-border/40 focus-within:border-primary/50 transition-all">
+                            <Search className="w-3 h-3 text-muted-foreground shrink-0" />
                             <input 
                               type="text" 
                               autoFocus={true}
                               value={filterSearch}
                               onChange={e => setFilterSearch(e.target.value)}
                               placeholder="Tag..." 
-                              className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-1.5 px-2.5 text-foreground placeholder:text-muted-foreground"
+                              className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-1 px-2 text-foreground placeholder:text-muted-foreground"
                             />
                           </div>
                         </div>
@@ -471,35 +471,46 @@ const AnalyticsPage: React.FC = () => {
                             const activeIds = (tagIdParam || '').split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
                             const isChecked = activeIds.includes(t.id);
                             return (
-                              <label key={t.id} className="flex items-center justify-between px-2.5 py-1.5 text-xs text-foreground hover:bg-secondary rounded-lg cursor-pointer group">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <input 
-                                    type="checkbox" 
-                                    checked={isChecked}
-                                    onChange={() => {
-                                      const updatedTagIds = isChecked 
-                                        ? activeIds.filter(id => id !== t.id)
-                                        : [...activeIds, t.id];
-                                      
-                                      setSearchParams(prev => {
-                                        const next = new URLSearchParams(prev);
-                                        if (updatedTagIds.length > 0) {
-                                          next.set('tagId', updatedTagIds.join(','));
-                                        } else {
-                                          next.delete('tagId');
-                                        }
-                                        return next;
-                                      });
-                                    }}
-                                    className="rounded border-input text-primary focus:ring-primary mr-1 bg-background"
-                                  />
+                              <label key={t.id} className="flex items-center justify-between px-2.5 py-1.5 text-xs text-foreground hover:bg-neutral-100/70 dark:hover:bg-[#111114] rounded-lg cursor-pointer group transition-colors">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="relative flex items-center justify-center">
+                                    <input 
+                                      type="checkbox" 
+                                      checked={isChecked}
+                                      onChange={() => {
+                                        const updatedTagIds = isChecked 
+                                          ? activeIds.filter(id => id !== t.id)
+                                          : [...activeIds, t.id];
+                                        
+                                        setSearchParams(prev => {
+                                          const next = new URLSearchParams(prev);
+                                          if (updatedTagIds.length > 0) {
+                                            next.set('tagId', updatedTagIds.join(','));
+                                          } else {
+                                            next.delete('tagId');
+                                          }
+                                          return next;
+                                        });
+                                      }}
+                                      className="sr-only"
+                                    />
+                                    <div 
+                                      className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${
+                                        isChecked 
+                                          ? 'bg-[#0099ff] border-[#0099ff] text-white shadow-sm' 
+                                          : 'border-border/80 bg-background/60 group-hover:border-muted-foreground'
+                                      }`}
+                                    >
+                                      {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                                    </div>
+                                  </div>
                                   <span 
-                                    className="w-2 h-2 rounded-full shrink-0" 
+                                    className="w-2 h-2 rounded-full shrink-0 shadow-sm" 
                                     style={{ backgroundColor: t.color || '#374151' }}
                                   />
-                                  <span className="truncate">{t.name}</span>
+                                  <span className="truncate font-medium">{t.name}</span>
                                 </div>
-                                <span className="text-[10px] text-muted-foreground font-mono ml-2 shrink-0">
+                                <span className="text-[10px] text-muted-foreground font-mono ml-2 shrink-0 px-1.5 py-0.5 rounded-full bg-secondary/50 group-hover:bg-secondary transition-colors">
                                   {t.linkCount ?? 0}
                                 </span>
                               </label>
@@ -510,22 +521,22 @@ const AnalyticsPage: React.FC = () => {
                       </>
                     ) : activeFilter === 'folder' ? (
                       <>
-                        <div className="p-1 border-b border-border flex items-center">
+                        <div className="p-1.5 border-b border-border/80 bg-background/80 flex items-center gap-1">
                           <button 
                             onClick={() => { setActiveFilter('none'); setFilterSearch(''); }} 
-                            className="p-1 hover:bg-secondary rounded-md text-muted-foreground hover:text-foreground ml-1"
+                            className="p-1 hover:bg-neutral-100/70 dark:hover:bg-[#18181B] rounded-lg text-muted-foreground hover:text-foreground transition-colors"
                           >
                             <ChevronLeft className="w-3.5 h-3.5" />
                           </button>
-                          <div className="relative flex-1 flex items-center">
-                            <Search className="w-3 h-3 text-muted-foreground ml-2" />
+                          <div className="relative flex-1 flex items-center bg-secondary/40 rounded-md px-2 py-0.5 border border-border/40 focus-within:border-primary/50 transition-all">
+                            <Search className="w-3 h-3 text-muted-foreground shrink-0" />
                             <input 
                               type="text" 
                               autoFocus={true}
                               value={filterSearch}
                               onChange={e => setFilterSearch(e.target.value)}
                               placeholder="Search folders..." 
-                              className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-1.5 px-2.5 text-foreground placeholder:text-muted-foreground"
+                              className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-1 px-2 text-foreground placeholder:text-muted-foreground"
                             />
                           </div>
                         </div>
@@ -543,14 +554,14 @@ const AnalyticsPage: React.FC = () => {
                                   setIsFilterOpen(false);
                                   setActiveFilter('none');
                                 }}
-                                className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between ${isSelected ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-secondary'}`}
+                                className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between ${isSelected ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-neutral-100/70 dark:hover:bg-[#111114]'}`}
                               >
                                 <div className="flex items-center gap-2 min-w-0">
                                   <FolderIcon className={`w-3.5 h-3.5 ${isDefault ? 'text-primary' : 'text-emerald-500'} shrink-0`} />
                                   <span className="truncate">{folder.name}</span>
                                 </div>
                                 {folder.linkCount !== undefined && (
-                                  <span className="text-[10px] text-muted-foreground font-mono ml-2 shrink-0">
+                                  <span className="text-[10px] text-muted-foreground font-mono ml-2 shrink-0 px-1.5 py-0.5 rounded-full bg-secondary/50">
                                     {folder.linkCount}
                                   </span>
                                 )}
@@ -841,16 +852,16 @@ const AnalyticsPage: React.FC = () => {
                         transition={{ duration: 0.1, ease: "easeOut" }}
                         className="absolute left-0 top-full mt-1 w-64 rounded-xl shadow-lg bg-popover border border-border divide-y divide-border focus:outline-none z-[70] overflow-hidden"
                       >
-                        <div className="p-1 border-b border-border">
-                          <div className="relative flex items-center">
-                            <Search className="w-3 h-3 text-muted-foreground ml-2" />
+                        <div className="p-1.5 border-b border-border/80 bg-background/80 flex items-center">
+                          <div className="relative flex-1 flex items-center bg-secondary/40 rounded-md px-2 py-0.5 border border-border/40 focus-within:border-primary/50 transition-all">
+                            <Search className="w-3 h-3 text-muted-foreground shrink-0" />
                             <input 
                               type="text" 
                               autoFocus={true}
                               value={tagPillSearch}
                               onChange={e => setTagPillSearch(e.target.value)}
                               placeholder="Tag..." 
-                              className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-1.5 px-2.5 text-foreground placeholder:text-muted-foreground"
+                              className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-1 px-2 text-foreground placeholder:text-muted-foreground"
                             />
                           </div>
                         </div>
@@ -859,35 +870,46 @@ const AnalyticsPage: React.FC = () => {
                             const activeIds = (tagIdParam || '').split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
                             const isChecked = activeIds.includes(t.id);
                             return (
-                              <label key={t.id} className="flex items-center justify-between px-2.5 py-1.5 text-xs text-foreground hover:bg-secondary rounded-lg cursor-pointer group">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <input 
-                                    type="checkbox" 
-                                    checked={isChecked}
-                                    onChange={() => {
-                                      const updatedTagIds = isChecked 
-                                        ? activeIds.filter(id => id !== t.id)
-                                        : [...activeIds, t.id];
-                                      
-                                      setSearchParams(prev => {
-                                        const next = new URLSearchParams(prev);
-                                        if (updatedTagIds.length > 0) {
-                                          next.set('tagId', updatedTagIds.join(','));
-                                        } else {
-                                          next.delete('tagId');
-                                        }
-                                        return next;
-                                      });
-                                    }}
-                                    className="rounded border-input text-primary focus:ring-primary mr-1 bg-background"
-                                  />
+                              <label key={t.id} className="flex items-center justify-between px-2.5 py-1.5 text-xs text-foreground hover:bg-neutral-100/70 dark:hover:bg-[#111114] rounded-lg cursor-pointer group transition-colors">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="relative flex items-center justify-center">
+                                    <input 
+                                      type="checkbox" 
+                                      checked={isChecked}
+                                      onChange={() => {
+                                        const updatedTagIds = isChecked 
+                                          ? activeIds.filter(id => id !== t.id)
+                                          : [...activeIds, t.id];
+                                        
+                                        setSearchParams(prev => {
+                                          const next = new URLSearchParams(prev);
+                                          if (updatedTagIds.length > 0) {
+                                            next.set('tagId', updatedTagIds.join(','));
+                                          } else {
+                                            next.delete('tagId');
+                                          }
+                                          return next;
+                                        });
+                                      }}
+                                      className="sr-only"
+                                    />
+                                    <div 
+                                      className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${
+                                        isChecked 
+                                          ? 'bg-[#0099ff] border-[#0099ff] text-white shadow-sm' 
+                                          : 'border-border/80 bg-background/60 group-hover:border-muted-foreground'
+                                      }`}
+                                    >
+                                      {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                                    </div>
+                                  </div>
                                   <span 
-                                    className="w-2 h-2 rounded-full shrink-0" 
+                                    className="w-2 h-2 rounded-full shrink-0 shadow-sm" 
                                     style={{ backgroundColor: t.color || '#374151' }}
                                   />
-                                  <span className="truncate">{t.name}</span>
+                                  <span className="truncate font-medium">{t.name}</span>
                                 </div>
-                                <span className="text-[10px] text-muted-foreground font-mono ml-2 shrink-0">
+                                <span className="text-[10px] text-muted-foreground font-mono ml-2 shrink-0 px-1.5 py-0.5 rounded-full bg-secondary/50 group-hover:bg-secondary transition-colors">
                                   {t.linkCount ?? 0}
                                 </span>
                               </label>

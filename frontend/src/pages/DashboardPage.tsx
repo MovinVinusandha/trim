@@ -469,7 +469,7 @@ const DashboardPage: React.FC = () => {
                       <div className="py-1 p-1">
                         <button 
                           onClick={() => { setActiveFilter('tag'); setTagSearch(''); }}
-                          className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs text-foreground hover:bg-secondary rounded-lg transition-colors group"
+                          className="w-full flex items-center justify-between px-2.5 py-2 text-xs text-foreground hover:bg-neutral-100/70 dark:hover:bg-[#111114] rounded-lg transition-colors group"
                         >
                           <div className="flex items-center">
                             <Tag className="mr-2.5 h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground" />
@@ -479,58 +479,74 @@ const DashboardPage: React.FC = () => {
                       </div>
                     ) : activeFilter === 'tag' ? (
                       <>
-                        <div className="p-1 border-b border-border flex items-center">
+                        <div className="p-1.5 border-b border-border/80 bg-background/80 flex items-center gap-1">
                           <button 
                             onClick={() => { setActiveFilter('none'); setTagSearch(''); }} 
-                            className="p-1 hover:bg-secondary rounded-md text-muted-foreground hover:text-foreground ml-1"
+                            className="p-1 hover:bg-neutral-100/70 dark:hover:bg-[#18181B] rounded-lg text-muted-foreground hover:text-foreground transition-colors"
                           >
                             <ChevronLeft className="w-3.5 h-3.5" />
                           </button>
-                          <div className="relative flex-1 flex items-center">
-                            <Search className="w-3 h-3 text-muted-foreground ml-2" />
+                          <div className="relative flex-1 flex items-center bg-secondary/40 rounded-md px-2 py-0.5 border border-border/40 focus-within:border-primary/50 transition-all">
+                            <Search className="w-3 h-3 text-muted-foreground shrink-0" />
                             <input 
                               type="text" 
                               autoFocus={true}
                               value={tagSearch}
                               onChange={e => setTagSearch(e.target.value)}
                               placeholder="Search tags..." 
-                              className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-1.5 px-2.5 text-foreground placeholder:text-muted-foreground"
+                              className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-1 px-2 text-foreground placeholder:text-muted-foreground"
                             />
                           </div>
                         </div>
                         <div className="py-1 p-1 max-h-48 overflow-y-auto">
-                          {availableTags.filter(t => t.name.toLowerCase().includes(tagSearch.toLowerCase())).map(t => (
-                            <label key={t.id} className="flex items-center px-2.5 py-1.5 text-xs text-foreground hover:bg-secondary rounded-lg cursor-pointer group">
-                              <input 
-                                type="checkbox" 
-                                checked={selectedFilterTags.includes(t.id)}
-                                onChange={() => {
-                                  const isChecked = selectedFilterTags.includes(t.id);
-                                  const updated = isChecked 
-                                    ? selectedFilterTags.filter(id => id !== t.id)
-                                    : [...selectedFilterTags, t.id];
-                                  setSelectedFilterTags(updated);
-                                  setSearchParams(prev => {
-                                    const next = new URLSearchParams(prev);
-                                    if (updated.length > 0) {
-                                      next.set('tagId', updated.join(','));
-                                    } else {
-                                      next.delete('tagId');
-                                    }
-                                    return next;
-                                  });
-                                }}
-                                className="rounded border-input text-primary focus:ring-primary mr-2.5 bg-background"
-                              />
-                              <span className="flex-1 flex items-center gap-2">
-                                <span 
-                                  className="w-2 h-2 rounded-full" 
-                                  style={{ backgroundColor: t.color || '#374151' }}
-                                />
-                                {t.name}
-                              </span>
-                            </label>
-                          ))}
+                          {availableTags.filter(t => t.name.toLowerCase().includes(tagSearch.toLowerCase())).map(t => {
+                            const isChecked = selectedFilterTags.includes(t.id);
+                            return (
+                              <label key={t.id} className="flex items-center justify-between px-2.5 py-1.5 text-xs text-foreground hover:bg-neutral-100/70 dark:hover:bg-[#111114] rounded-lg cursor-pointer group transition-colors">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="relative flex items-center justify-center">
+                                    <input 
+                                      type="checkbox" 
+                                      checked={isChecked}
+                                      onChange={() => {
+                                        const updated = isChecked 
+                                          ? selectedFilterTags.filter(id => id !== t.id)
+                                          : [...selectedFilterTags, t.id];
+                                        setSelectedFilterTags(updated);
+                                        setSearchParams(prev => {
+                                          const next = new URLSearchParams(prev);
+                                          if (updated.length > 0) {
+                                            next.set('tagId', updated.join(','));
+                                          } else {
+                                            next.delete('tagId');
+                                          }
+                                          return next;
+                                        });
+                                      }}
+                                      className="sr-only"
+                                    />
+                                    <div 
+                                      className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${
+                                        isChecked 
+                                          ? 'bg-[#0099ff] border-[#0099ff] text-white shadow-sm' 
+                                          : 'border-border/80 bg-background/60 group-hover:border-muted-foreground'
+                                      }`}
+                                    >
+                                      {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                                    </div>
+                                  </div>
+                                  <span 
+                                    className="w-2 h-2 rounded-full shrink-0 shadow-sm" 
+                                    style={{ backgroundColor: t.color || '#374151' }}
+                                  />
+                                  <span className="truncate font-medium">{t.name}</span>
+                                </div>
+                                <span className="text-[10px] text-muted-foreground font-mono ml-2 shrink-0 px-1.5 py-0.5 rounded-full bg-secondary/50 group-hover:bg-secondary transition-colors">
+                                  {t.linkCount ?? 0}
+                                </span>
+                              </label>
+                            );
+                          })}
                           {availableTags.length === 0 && <div className="px-2.5 py-2 text-xs text-muted-foreground">No tags found</div>}
                         </div>
                       </>
@@ -757,16 +773,16 @@ const DashboardPage: React.FC = () => {
                           transition={{ duration: 0.1, ease: "easeOut" }}
                           className="absolute left-0 top-full mt-1 w-64 rounded-xl shadow-lg bg-popover border border-border divide-y divide-border focus:outline-none z-[70] overflow-hidden"
                         >
-                          <div className="p-1 border-b border-border">
-                            <div className="relative flex items-center">
-                              <Search className="w-3 h-3 text-muted-foreground ml-2" />
+                          <div className="p-1.5 border-b border-border/80 bg-background/80 flex items-center">
+                            <div className="relative flex-1 flex items-center bg-secondary/40 rounded-md px-2 py-0.5 border border-border/40 focus-within:border-primary/50 transition-all">
+                              <Search className="w-3 h-3 text-muted-foreground shrink-0" />
                               <input 
                                 type="text" 
                                 autoFocus={true}
                                 value={tagPillSearch}
                                 onChange={e => setTagPillSearch(e.target.value)}
                                 placeholder="Tag..." 
-                                className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-1.5 px-2.5 text-foreground placeholder:text-muted-foreground"
+                                className="w-full border-none focus:ring-0 focus:outline-none bg-transparent text-xs py-1 px-2 text-foreground placeholder:text-muted-foreground"
                               />
                             </div>
                           </div>
@@ -774,35 +790,46 @@ const DashboardPage: React.FC = () => {
                             {availableTags.filter(t => t.name.toLowerCase().includes(tagPillSearch.toLowerCase())).map(t => {
                               const isChecked = selectedFilterTags.includes(t.id);
                               return (
-                                <label key={t.id} className="flex items-center justify-between px-2.5 py-1.5 text-xs text-foreground hover:bg-secondary rounded-lg cursor-pointer group">
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <input 
-                                      type="checkbox" 
-                                      checked={isChecked}
-                                      onChange={() => {
-                                        const updated = isChecked 
-                                          ? selectedFilterTags.filter(id => id !== t.id)
-                                          : [...selectedFilterTags, t.id];
-                                        setSelectedFilterTags(updated);
-                                        setSearchParams(prev => {
-                                          const next = new URLSearchParams(prev);
-                                          if (updated.length > 0) {
-                                            next.set('tagId', updated.join(','));
-                                          } else {
-                                            next.delete('tagId');
-                                          }
-                                          return next;
-                                        });
-                                      }}
-                                      className="rounded border-input text-primary focus:ring-primary mr-1 bg-background"
-                                    />
+                                <label key={t.id} className="flex items-center justify-between px-2.5 py-1.5 text-xs text-foreground hover:bg-neutral-100/70 dark:hover:bg-[#111114] rounded-lg cursor-pointer group transition-colors">
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="relative flex items-center justify-center">
+                                      <input 
+                                        type="checkbox" 
+                                        checked={isChecked}
+                                        onChange={() => {
+                                          const updated = isChecked 
+                                            ? selectedFilterTags.filter(id => id !== t.id)
+                                            : [...selectedFilterTags, t.id];
+                                          setSelectedFilterTags(updated);
+                                          setSearchParams(prev => {
+                                            const next = new URLSearchParams(prev);
+                                            if (updated.length > 0) {
+                                              next.set('tagId', updated.join(','));
+                                            } else {
+                                              next.delete('tagId');
+                                            }
+                                            return next;
+                                          });
+                                        }}
+                                        className="sr-only"
+                                      />
+                                      <div 
+                                        className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${
+                                          isChecked 
+                                            ? 'bg-[#0099ff] border-[#0099ff] text-white shadow-sm' 
+                                            : 'border-border/80 bg-background/60 group-hover:border-muted-foreground'
+                                        }`}
+                                      >
+                                        {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                                      </div>
+                                    </div>
                                     <span 
-                                      className="w-2 h-2 rounded-full shrink-0" 
+                                      className="w-2 h-2 rounded-full shrink-0 shadow-sm" 
                                       style={{ backgroundColor: t.color || '#374151' }}
                                     />
-                                    <span className="truncate">{t.name}</span>
+                                    <span className="truncate font-medium">{t.name}</span>
                                   </div>
-                                  <span className="text-[10px] text-muted-foreground font-mono ml-2 shrink-0">
+                                  <span className="text-[10px] text-muted-foreground font-mono ml-2 shrink-0 px-1.5 py-0.5 rounded-full bg-secondary/50 group-hover:bg-secondary transition-colors">
                                     {t.linkCount ?? 0}
                                   </span>
                                 </label>
