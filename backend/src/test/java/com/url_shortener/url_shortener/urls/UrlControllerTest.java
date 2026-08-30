@@ -2,14 +2,21 @@ package com.url_shortener.url_shortener.urls;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.url_shortener.url_shortener.analytics.AnalyticsService;
+import com.url_shortener.url_shortener.users.User;
 import com.url_shortener.url_shortener.users.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.math.BigInteger;
+import java.util.Collections;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -43,8 +50,7 @@ class UrlControllerTest {
     @Test
     void generateShortUrl_Success() throws Exception {
         UrlRequest request = new UrlRequest("https://example.com", null, null, null, null, null);
-
-        com.url_shortener.url_shortener.urls.UrlSend urlSend = new com.url_shortener.url_shortener.urls.UrlSend("https://example.com", "hash123", null, null, true, false, null, null, null);
+        UrlSend urlSend = new UrlSend("https://example.com", "hash123", null, null, true, false, null, null, null);
         when(urlService.generateShortUrl(any(UrlRequest.class))).thenReturn(urlSend);
 
         mockMvc.perform(post("/shorten")
@@ -53,6 +59,76 @@ class UrlControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.shortUrl").value("hash123"))
                 .andExpect(jsonPath("$.longUrl").value("https://example.com"));
+    }
+
+    @Test
+    void redirectToNewUrl_Success_WithXForwardedFor() throws Exception {
+        when(urlService.getLongUrlForRedirect("hash123")).thenReturn("https://example.com");
+
+        mockMvc.perform(get("/hash123")
+                .header("User-Agent", "Mozilla/5.0")
+                .header("X-Forwarded-For", "203.0.113.195, 70.41.3.18"))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", "https://example.com"));
+
+        verify(analyticsService).trackClick("hash123", "Mozilla/5.0", "203.0.113.195");
+    }
+
+    @Test
+    void redirectToNewUrl_Success_WithXRealIp() throws Exception {
+        when(urlService.getLongUrlForRedirect("hash123")).thenReturn("https://example.com");
+
+        mockMvc.perform(get("/hash123")
+                .header("User-Agent", "Mozilla/5.0")
+                .header("X-Real-IP", "198.51.100.1"))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", "https://example.com"));
+
+        verify(analyticsService).trackClick("hash123", "Mozilla/5.0", "198.51.100.1");
+    }
+
+    @Test
+    void redirectToNewUrl_PasswordProtected_RedirectsToSecure() throws Exception {
+        when(urlService.getLongUrlForRedirect("sec123")).thenThrow(new PasswordProtectedException("sec123"));
+
+        mockMvc.perform(get("/sec123"))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", org.hamcrest.Matchers.endsWith("/secure/sec123")));
+    }
+
+    @Test
+    void redirectToNewUrl_NotFound_RedirectsToCustomNotFoundPage() throws Exception {
+        when(urlService.getLongUrlForRedirect("nonexistent")).thenThrow(new UrlNotFoundException());
+
+        mockMvc.perform(get("/nonexistent"))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", org.hamcrest.Matchers.endsWith("/not-found")));
+    }
+
+    @Test
+    void unlockUrl_Success() throws Exception {
+        UnlockRequest unlockRequest = new UnlockRequest();
+        unlockRequest.setPassword("mySecret");
+        when(urlService.getUrlForUnlock("sec123", "mySecret")).thenReturn("https://secret-destination.com");
+
+        mockMvc.perform(post("/unlock/sec123")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(unlockRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.longUrl").value("https://secret-destination.com"));
+
+        verify(analyticsService).trackClick(eq("sec123"), any(), any());
+    }
+
+    @Test
+    void getUrl_Success() throws Exception {
+        UrlDto urlDto = new UrlDto(BigInteger.ONE, "https://example.com", "hash123", BigInteger.valueOf(15L), null, null, null, true, false, null, null, null);
+        when(urlService.getUrl("hash123")).thenReturn(urlDto);
+
+        mockMvc.perform(get("/url/hash123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.shortUrl").value("hash123"))
+                .andExpect(jsonPath("$.accessed_times").value(15));
     }
 
     @Test
@@ -67,24 +143,25 @@ class UrlControllerTest {
     }
 
     @Test
-    void redirectToNewUrl_Success() throws Exception {
-        when(urlService.getLongUrlForRedirect("hash123")).thenReturn("https://example.com");
+    void updateUrl_Success() throws Exception {
+        User user = User.builder().id(1L).build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        mockMvc.perform(get("/hash123")
-                .header("User-Agent", "Mozilla/5.0"))
-                .andExpect(status().isFound())
-                .andExpect(header().string("Location", "https://example.com"));
+        UrlUpdateRequestDto updateDto = new UrlUpdateRequestDto();
+        updateDto.setLongUrl("https://new.com");
 
-        verify(analyticsService).trackClick(any(), any(), any());
-    }
+        UrlDto resultDto = new UrlDto(BigInteger.ONE, "https://new.com", "hash123", BigInteger.ZERO, null, null, null, true, false, null, null, null);
+        when(urlService.updateUrl(eq("hash123"), any(UrlUpdateRequestDto.class), eq(user))).thenReturn(resultDto);
 
-    @Test
-    void redirectToNewUrl_NotFound_RedirectsToCustomNotFoundPage() throws Exception {
-        when(urlService.getLongUrlForRedirect("nonexistent")).thenThrow(new UrlNotFoundException());
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())
+        );
 
-        mockMvc.perform(get("/nonexistent"))
-                .andExpect(status().isFound())
-                .andExpect(header().string("Location", org.hamcrest.Matchers.endsWith("/not-found")));
+        mockMvc.perform(put("/url/hash123")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.longUrl").value("https://new.com"));
     }
 
     @Test
@@ -93,5 +170,16 @@ class UrlControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(urlService).deleteUrl("hash123");
+    }
+
+    @Test
+    void getQrCode_Success() throws Exception {
+        UrlDto urlDto = new UrlDto(BigInteger.ONE, "https://example.com", "http://localhost/hash123", BigInteger.ZERO, null, null, null, true, false, null, null, null);
+        when(urlService.getUrl("hash123")).thenReturn(urlDto);
+        when(qrCodeService.generateQrCode("http://localhost/hash123", 300, 300)).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/url/hash123/qr"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.IMAGE_PNG));
     }
 }

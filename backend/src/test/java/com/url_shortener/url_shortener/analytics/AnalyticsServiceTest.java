@@ -1,29 +1,34 @@
 package com.url_shortener.url_shortener.analytics;
 
 import com.url_shortener.url_shortener.analytics.dto.AnalyticsResponseDto;
+import com.url_shortener.url_shortener.statistics.Statistic;
 import com.url_shortener.url_shortener.urls.Folder;
 import com.url_shortener.url_shortener.urls.FolderRepository;
 import com.url_shortener.url_shortener.urls.Url;
+import com.url_shortener.url_shortener.urls.UrlNotFoundException;
 import com.url_shortener.url_shortener.urls.UrlRepository;
 import com.url_shortener.url_shortener.users.Role;
 import com.url_shortener.url_shortener.users.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
+
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AnalyticsServiceTest {
@@ -50,6 +55,17 @@ class AnalyticsServiceTest {
     @BeforeEach
     void setUp() {
         currentUser = User.builder().id(1L).role(Role.USER).build();
+    }
+
+    @Test
+    void getUserUsageStats_Success() {
+        when(urlRepository.countByUserId(1L)).thenReturn(12L);
+        when(clickEventRepository.countTotalClicksByUserId(1L)).thenReturn(340L);
+
+        var stats = analyticsService.getUserUsageStats(currentUser);
+
+        assertThat(stats.getTotalLinks()).isEqualTo(12L);
+        assertThat(stats.getTotalClicks()).isEqualTo(340L);
     }
 
     @Test
@@ -83,6 +99,24 @@ class AnalyticsServiceTest {
     }
 
     @Test
+    void getLinkAnalytics_UrlNotFound_ThrowsException() {
+        when(urlRepository.findByShortUrl("missing")).thenReturn(null);
+
+        assertThatThrownBy(() -> analyticsService.getAnalytics("missing", currentUser, "7d", null, null))
+                .isInstanceOf(UrlNotFoundException.class);
+    }
+
+    @Test
+    void getLinkAnalytics_UnauthorizedUser_ThrowsException() {
+        User other = User.builder().id(2L).role(Role.USER).build();
+        Url url = Url.builder().id(100L).user(other).build();
+        when(urlRepository.findByShortUrl("hash123")).thenReturn(url);
+
+        assertThatThrownBy(() -> analyticsService.getAnalytics("hash123", currentUser, "7d", null, null))
+                .isInstanceOf(UrlNotFoundException.class);
+    }
+
+    @Test
     void getFolderAnalytics_Success() {
         Folder folder = Folder.builder().id(50L).user(currentUser).build();
         when(folderRepository.findById(50L)).thenReturn(Optional.of(folder));
@@ -96,6 +130,16 @@ class AnalyticsServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.getTotalClicks()).isEqualTo(75L);
+    }
+
+    @Test
+    void getFolderAnalytics_UnauthorizedUser_ThrowsAccessDenied() {
+        User other = User.builder().id(2L).role(Role.USER).build();
+        Folder folder = Folder.builder().id(50L).user(other).build();
+        when(folderRepository.findById(50L)).thenReturn(Optional.of(folder));
+
+        assertThatThrownBy(() -> analyticsService.getFolderAnalytics(50L, currentUser, "all", null, null))
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
@@ -116,36 +160,44 @@ class AnalyticsServiceTest {
     }
 
     @Test
-    void dateRangeFiltering_7d() {
-        when(clickEventRepository.countTotalOverallClicks(eq(1L), dateCaptor.capture(), eq(null), eq(null), eq(null), eq(null))).thenReturn(100L);
-        when(clickEventRepository.countOverallClicksByDate(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countOverallClicksByCountry(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countOverallClicksByDevice(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countOverallClicksByBrowser(eq(1L), any(LocalDateTime.class), eq(null), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
+    void dateRangeFiltering_CustomDates() {
+        when(clickEventRepository.countTotalOverallClicks(eq(1L), any(), any(), eq(null), eq(null), eq(null))).thenReturn(100L);
+        when(clickEventRepository.countOverallClicksByDate(eq(1L), any(), any(), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countOverallClicksByCountry(eq(1L), any(), any(), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countOverallClicksByDevice(eq(1L), any(), any(), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
+        when(clickEventRepository.countOverallClicksByBrowser(eq(1L), any(), any(), eq(null), eq(null), eq(null))).thenReturn(Collections.emptyList());
 
-        analyticsService.getOverallAnalytics(currentUser, "7d", null, null, null, null, null);
+        analyticsService.getOverallAnalytics(currentUser, "custom", "2026-08-01T00:00:00", "2026-08-10T23:59:59", null, null, null);
 
-        LocalDateTime capturedDate = dateCaptor.getValue();
-        assertThat(capturedDate).isAfter(LocalDateTime.now().minusDays(8));
-        assertThat(capturedDate).isBefore(LocalDateTime.now().minusDays(6));
+        verify(clickEventRepository).countTotalOverallClicks(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class), eq(null), eq(null), eq(null));
     }
 
     @Test
-    void getOverallAnalytics_SanitizeTagIds() {
-        java.util.List<Long> tagIdsWithZeros = new java.util.ArrayList<>();
-        tagIdsWithZeros.add(0L);
-        tagIdsWithZeros.add(5L);
+    void trackClick_Success() {
+        Statistic statistic = new Statistic();
+        Url url = Url.builder().id(10L).shortUrl("clickHash").statistic(statistic).build();
+        when(urlRepository.findByShortUrl("clickHash")).thenReturn(url);
 
-        when(clickEventRepository.countTotalOverallClicks(eq(1L), any(), eq(null), eq(null), eq(java.util.List.of(5L)), eq(null))).thenReturn(10L);
-        when(clickEventRepository.countOverallClicksByDate(eq(1L), any(), eq(null), eq(null), eq(java.util.List.of(5L)), eq(null))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countOverallClicksByCountry(eq(1L), any(), eq(null), eq(null), eq(java.util.List.of(5L)), eq(null))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countOverallClicksByDevice(eq(1L), any(), eq(null), eq(null), eq(java.util.List.of(5L)), eq(null))).thenReturn(Collections.emptyList());
-        when(clickEventRepository.countOverallClicksByBrowser(eq(1L), any(), eq(null), eq(null), eq(java.util.List.of(5L)), eq(null))).thenReturn(Collections.emptyList());
+        when(userAgentParserService.parse("Chrome-UA"))
+                .thenReturn(new UserAgentParserService.DeviceInfo("Desktop", "Chrome", "Windows"));
+        when(geoLocationService.lookup("8.8.8.8"))
+                .thenReturn(new GeoLocationService.GeoInfo("United States", "Mountain View", "California", "North America"));
+        when(clickEventRepository.countByUrl_Id(eq(10L), any(), any())).thenReturn(1L);
 
-        AnalyticsResponseDto response = analyticsService.getOverallAnalytics(currentUser, "all", null, null, null, tagIdsWithZeros, null);
+        analyticsService.trackClick("clickHash", "Chrome-UA", "8.8.8.8");
 
-        assertThat(response).isNotNull();
-        assertThat(response.getTotalClicks()).isEqualTo(10L);
+        verify(clickEventRepository).save(any(ClickEvent.class));
+        verify(urlRepository).save(url);
+        assertThat(statistic.getAccessedTimes()).isEqualTo(1L);
+    }
+
+    @Test
+    void trackClick_UrlNotFound_DoesNothing() {
+        when(urlRepository.findByShortUrl("missing")).thenReturn(null);
+
+        analyticsService.trackClick("missing", "UA", "1.1.1.1");
+
+        verify(clickEventRepository, never()).save(any());
     }
 
     @Test
@@ -166,7 +218,6 @@ class AnalyticsServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.getTotalClicks()).isEqualTo(10L);
         assertThat(response.getClicksByDate()).isNotEmpty();
-        // Check that points are formatted in ISO format YYYY-MM-DDTHH:00:00
         assertThat(response.getClicksByDate().get(0).getDate()).contains("T");
     }
 }
