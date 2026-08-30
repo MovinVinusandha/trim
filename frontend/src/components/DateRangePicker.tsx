@@ -128,6 +128,15 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChang
     const days = eachDayOfInterval({ start: startDate, end: endDate });
     const weekDays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
+    const effectiveEnd = selectionEnd || hoverDate;
+    let rangeStart = selectionStart;
+    let rangeEnd = effectiveEnd;
+    if (rangeStart && rangeEnd && isBefore(rangeEnd, rangeStart)) {
+      const tmp = rangeStart;
+      rangeStart = rangeEnd;
+      rangeEnd = tmp;
+    }
+
     return (
       <div className="flex-1 w-64 p-3">
         <div className="flex items-center justify-between mb-4">
@@ -135,57 +144,79 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChang
             {format(month, 'MMMM yyyy')}
           </span>
         </div>
-        <div className="grid grid-cols-7 gap-y-1 text-center mb-2">
+        <div className="grid grid-cols-7 text-center mb-1">
           {weekDays.map(day => (
-            <div key={day} className="text-[10px] font-medium text-muted-foreground">
+            <div key={day} className="text-[11px] font-medium text-muted-foreground py-1">
               {day}
             </div>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-y-1">
-          {days.map((day) => {
-            const isSelectedStart = selectionStart && isSameDay(day, selectionStart);
-            const isSelectedEnd = selectionEnd && isSameDay(day, selectionEnd);
+          {days.map((day, idx) => {
+            const isSelectedStart = rangeStart && isSameDay(day, rangeStart);
+            const isSelectedEnd = rangeEnd && isSameDay(day, rangeEnd);
             const isSelected = isSelectedStart || isSelectedEnd;
-            const inRange = isInRange(day);
+            const hasRange = Boolean(rangeStart && rangeEnd && !isSameDay(rangeStart, rangeEnd));
+            const inRange = Boolean(
+              rangeStart && rangeEnd && isWithinInterval(day, { start: startOfDay(rangeStart), end: endOfDay(rangeEnd) })
+            );
             const isCurrentMonth = isSameMonth(day, month);
             const isDayToday = isToday(day);
+
+            const dayOfWeek = idx % 7;
+            const isFirstDayOfWeek = dayOfWeek === 0;
+            const isLastDayOfWeek = dayOfWeek === 6;
 
             return (
               <div 
                 key={day.toISOString()} 
-                className={`relative flex items-center justify-center h-7 w-7 text-xs cursor-pointer
-                  ${!isCurrentMonth ? 'text-muted-foreground/30' : 'text-foreground'}
-                `}
+                className="relative flex items-center justify-center h-8 w-full cursor-pointer"
                 onClick={() => handleDayClick(day)}
                 onMouseEnter={() => setHoverDate(day)}
               >
-                {/* Background highlight for in-between range */}
+                {/* Continuous background range highlight band */}
                 {inRange && !isSelectedStart && !isSelectedEnd && (
-                  <div className="absolute inset-0 bg-primary/15 -mx-0.5" />
-                )}
-                {inRange && isSelectedStart && !isSelectedEnd && (selectionEnd || hoverDate) && (
-                  <div className={`absolute inset-y-0 bg-primary/15 -mx-0.5 ${
-                    (selectionEnd && isAfter(selectionEnd, selectionStart)) || (hoverDate && isAfter(hoverDate, selectionStart))
-                      ? 'right-0 left-1/2'
-                      : 'left-0 right-1/2'
-                  }`} />
-                )}
-                {inRange && isSelectedEnd && !isSelectedStart && (
-                  <div className="absolute inset-y-0 left-0 right-1/2 bg-primary/15 -mx-0.5" />
+                  <div 
+                    className={`absolute inset-y-0.5 inset-x-0 bg-blue-500/15 dark:bg-[#0099ff]/25 ${
+                      isFirstDayOfWeek ? 'rounded-l-lg' : ''
+                    } ${isLastDayOfWeek ? 'rounded-r-lg' : ''}`} 
+                  />
                 )}
 
-                {/* Day Number */}
+                {/* Start Date Half-Connector */}
+                {isSelectedStart && hasRange && (
+                  <div 
+                    className={`absolute inset-y-0.5 right-0 left-1/2 bg-blue-500/15 dark:bg-[#0099ff]/25 ${
+                      isLastDayOfWeek ? 'rounded-r-lg' : ''
+                    }`} 
+                  />
+                )}
+
+                {/* End Date Half-Connector */}
+                {isSelectedEnd && hasRange && (
+                  <div 
+                    className={`absolute inset-y-0.5 left-0 right-1/2 bg-blue-500/15 dark:bg-[#0099ff]/25 ${
+                      isFirstDayOfWeek ? 'rounded-l-lg' : ''
+                    }`} 
+                  />
+                )}
+
+                {/* Day Badge */}
                 <div 
-                  className={`relative z-10 flex flex-col items-center justify-center w-7 h-7 transition-colors rounded-md
-                    ${isSelected ? 'bg-primary text-primary-foreground font-semibold' : ''}
-                    ${!isSelected && inRange ? 'text-primary font-medium' : ''}
-                    ${!isSelected && !inRange && isCurrentMonth ? 'hover:bg-secondary' : ''}
+                  className={`relative z-10 flex flex-col items-center justify-center w-full h-8 transition-colors rounded-lg text-xs
+                    ${isSelected 
+                      ? 'bg-[#0099ff] text-white font-semibold shadow-sm' 
+                      : inRange 
+                        ? 'text-[#0099ff] dark:text-[#38bdf8] font-medium' 
+                        : isCurrentMonth 
+                          ? 'text-foreground hover:bg-secondary' 
+                          : 'text-muted-foreground/30'
+                    }
                   `}
                 >
                   <span>{format(day, 'd')}</span>
                   {isDayToday && !isSelected && (
-                    <span className="w-1 h-1 bg-primary rounded-full absolute bottom-0.5" />
+                    <span className="w-1 h-1 bg-[#0099ff] rounded-full absolute bottom-1" />
                   )}
                 </div>
               </div>
