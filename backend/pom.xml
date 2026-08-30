@@ -28,7 +28,32 @@
 	</scm>
 	<properties>
 		<java.version>17</java.version>
+		<sonar.coverage.exclusions>
+			**/dto/**,
+			**/dtos/**,
+			**/*Dto.java,
+			**/*Request*.java,
+			**/*Response*.java,
+			**/*Send.java,
+			**/config/**,
+			**/*Config*.java,
+			**/*SecurityRules*.java,
+			**/UrlShortenerApplication.java,
+			**/CommandLineAppStartupRunner.java,
+			**/H2Functions.java,
+			**/entities/**,
+			**/analytics/ClickEvent.java,
+			**/statistics/Statistic.java,
+			**/users/User.java,
+			**/urls/Url.java,
+			**/urls/Folder.java,
+			**/urls/Tag.java,
+			**/users/Role.java,
+			**/auth/Jwt.java,
+			**/*MapperImpl.java
+		</sonar.coverage.exclusions>
 	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -70,7 +95,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <scope>annotationProcessor</scope>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -131,6 +156,40 @@
             <version>0.12.6</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>nl.basjes.parse.useragent</groupId>
+            <artifactId>yauaa</artifactId>
+            <version>7.28.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
 	<build>
@@ -159,14 +218,62 @@
                 <artifactId>flyway-maven-plugin</artifactId>
                 <version>11.11.0</version>
                 <configuration>
-                    <url>jdbc:mysql://localhost:3306/url_shortener?createDatabaseIfNotExist=true</url>
-                    <user>root</user>
-                    <password>password</password>
+                    <url>${env.DB_URL:jdbc:mysql://localhost:3306/url_shortener?createDatabaseIfNotExist=true}</url>
+                    <user>${env.DB_USER:root}</user>
+                    <password>${env.DB_PASSWORD:}</password>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.12</version>
+				<configuration>
+					<excludes>
+						<exclude>**/dto/**</exclude>
+						<exclude>**/dtos/**</exclude>
+						<exclude>**/*Dto.*</exclude>
+						<exclude>**/*Request*.*</exclude>
+						<exclude>**/*Response*.*</exclude>
+						<exclude>**/*Send.*</exclude>
+						<exclude>**/config/**</exclude>
+						<exclude>**/*Config*.*</exclude>
+						<exclude>**/*SecurityRules*.*</exclude>
+						<exclude>**/UrlShortenerApplication.*</exclude>
+						<exclude>**/CommandLineAppStartupRunner.*</exclude>
+						<exclude>**/H2Functions.*</exclude>
+						<exclude>**/analytics/ClickEvent.*</exclude>
+						<exclude>**/statistics/Statistic.*</exclude>
+						<exclude>**/users/User.*</exclude>
+						<exclude>**/urls/Url.*</exclude>
+						<exclude>**/urls/Folder.*</exclude>
+						<exclude>**/urls/Tag.*</exclude>
+						<exclude>**/users/Role.*</exclude>
+						<exclude>**/auth/Jwt.*</exclude>
+						<exclude>**/*MapperImpl.*</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

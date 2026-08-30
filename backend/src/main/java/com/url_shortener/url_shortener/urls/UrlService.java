@@ -1,32 +1,82 @@
 package com.url_shortener.url_shortener.urls;
 
+import com.url_shortener.url_shortener.analytics.ClickEventRepository;
 import com.url_shortener.url_shortener.statistics.Statistic;
+import com.url_shortener.url_shortener.users.User;
 import com.url_shortener.url_shortener.users.UserNotFoundException;
 import com.url_shortener.url_shortener.users.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigInteger;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.zip.CRC32;
 
+import org.springframework.security.access.AccessDeniedException;
+
 @Service
-@AllArgsConstructor
+@lombok.RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class UrlService {
     private final UrlMapper urlMapper;
     private final UrlRepository urlRepository;
     private final UserRepository userRepository;
+    private final ClickEventRepository clickEventRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final TagRepository tagRepository;
+    private final FolderRepository folderRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired 
+    private org.springframework.cache.CacheManager cacheManager;
+
+    @org.springframework.beans.factory.annotation.Value("${app.domain.root}")
+    private String rootDomainUrl;
 
     public UrlSend generateShortUrl(UrlRequest urlRequest) {
-        String shortUrl = generateUrlHash(urlRequest.getLongUrl());
-        if (urlRepository.existsUrlByShortUrl(shortUrl)) {
-            throw new UrlExistInDataBaseException();
+        var authForCheck = SecurityContextHolder.getContext().getAuthentication();
+        if (authForCheck != null && authForCheck.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ROOT") || a.getAuthority().equals("ROOT"))) {
+            throw new AccessDeniedException("Admins cannot create short links.");
+        }
+        String hash;
+        if (urlRequest.getCustomAlias() != null && !urlRequest.getCustomAlias().trim().isEmpty()) {
+            String alias = urlRequest.getCustomAlias().trim();
+            if (!alias.matches("^[a-zA-Z0-9-_]+$")) {
+                throw new IllegalArgumentException("Custom alias can only contain letters, numbers, hyphens, and underscores.");
+            }
+            if (urlRepository.existsUrlByShortUrl(alias)) {
+                throw new AliasAlreadyExistsException();
+            }
+            hash = alias;
+        } else {
+            hash = generateUrlHash(urlRequest.getLongUrl());
+            if (urlRepository.existsUrlByShortUrl(hash)) {
+                throw new UrlExistInDataBaseException();
+            }
         }
         var url = urlMapper.toEntity(urlRequest);
-        url.setShortUrl(shortUrl);
+        url.setShortUrl(hash);
+        
+        url.setActive(true);
+        if (urlRequest.getExpiresAt() != null && urlRequest.getExpiresAt().isBefore(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC))) {
+            url.setActive(false);
+        }
+        
+        if (urlRequest.getPassword() != null && !urlRequest.getPassword().trim().isEmpty()) {
+            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+                throw new AccessDeniedException("You must be logged in to set a password.");
+            }
+            url.setPasswordHash(passwordEncoder.encode(urlRequest.getPassword().trim()));
+        }
 
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null
@@ -41,6 +91,50 @@ public class UrlService {
             url.setUser(user);
         }
 
+        if (urlRequest.getTagIds() != null && !urlRequest.getTagIds().isEmpty()) {
+            if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+                throw new AccessDeniedException("You must be logged in to assign tags.");
+            }
+            Long userId = (Long) authentication.getPrincipal();
+            User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+            
+            List<Tag> requestedTags = tagRepository.findAllById(urlRequest.getTagIds());
+            for (Tag t : requestedTags) {
+                if (!t.getUser().getId().equals(userId)) {
+                    throw new AccessDeniedException("You cannot assign a tag you do not own.");
+                }
+            }
+            url.setTags(new HashSet<>(requestedTags));
+        }
+
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
+            Long userId = (Long) authentication.getPrincipal();
+            if (urlRequest.getFolderId() != null) {
+                Folder folder = folderRepository.findById(urlRequest.getFolderId())
+                        .orElseThrow(FolderNotFoundException::new);
+                
+                if (!folder.getUser().getId().equals(userId)) {
+                    throw new AccessDeniedException("You cannot assign a folder you do not own.");
+                }
+                url.setFolder(folder);
+            } else {
+                Folder defaultFolder = folderRepository.findByUserIdAndSlug(userId, "links")
+                        .orElseGet(() -> folderRepository.findByNameIgnoreCaseAndUserId("Links", userId)
+                                .orElseGet(() -> {
+                                    User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+                                    Folder newDefault = Folder.builder()
+                                            .name("Links")
+                                            .slug("links")
+                                            .user(user)
+                                            .build();
+                                    return folderRepository.save(newDefault);
+                                }));
+                url.setFolder(defaultFolder);
+            }
+        }
+
+        var savedUrl = urlRepository.save(url);
+
         var stat = Statistic.builder()
                 .accessedTimes(0L)
                 .urls(url)
@@ -49,7 +143,21 @@ public class UrlService {
         url.addStatistic(stat);
 
         urlRepository.save(url);
-        return urlMapper.toSendDto(url);
+        
+        String cacheKey = "urls::" + url.getShortUrl();
+        if (url.getExpiresAt() != null) {
+            java.time.Duration ttl = java.time.Duration.between(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC), url.getExpiresAt());
+            if (!ttl.isNegative()) {
+                redisTemplate.opsForValue().set(cacheKey, url.getLongUrl(), ttl);
+            }
+        } else {
+            redisTemplate.opsForValue().set(cacheKey, url.getLongUrl(), java.time.Duration.ofHours(24));
+        }
+        
+        var sendDto = urlMapper.toSendDto(url);
+        String fullShortUrl = rootDomainUrl + "/" + url.getShortUrl();
+        sendDto.setShortUrl(fullShortUrl);
+        return sendDto;
     }
 
     public String generateUrlHash(String data){
@@ -58,13 +166,64 @@ public class UrlService {
         return String.format(Locale.US,"%08X", CRC32.getValue());
     }
 
-    public Url urlRedirect(String shortUrl) {
+    private final org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
+
+    public String getLongUrlForRedirect(String shortUrl) {
+        // Enforce strict lazy evaluation first
         var url = isExistsShortUrl(shortUrl);
+        
+        if (url.getExpiresAt() != null && url.getExpiresAt().isBefore(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC))) {
+            url.setActive(false);
+            urlRepository.save(url);
+            redisTemplate.delete("urls::" + url.getShortUrl());
+            throw new LinkExpiredException("Link expired");
+        }
+        if (!url.isActive()) {
+            throw new LinkExpiredException("Link inactive");
+        }
+        
+        log.info("Evaluating URL hash: {}. IsActive: {}, ExpiresAt: {}", url.getShortUrl(), url.isActive(), url.getExpiresAt());
 
-        url.getStatistic().setAccessedTimes(url.getStatistic().getAccessedTimes() + 1);
-        urlRepository.save(url);
+        if (url.getPasswordHash() != null && !url.getPasswordHash().isEmpty()) {
+            throw new PasswordProtectedException(shortUrl);
+        }
 
-        return url;
+        String cacheKey = "urls::" + shortUrl;
+        String cachedUrl = redisTemplate.opsForValue().get(cacheKey);
+        if (cachedUrl != null) {
+            return cachedUrl;
+        }
+
+        String longUrl = url.getLongUrl();
+
+        if (url.getExpiresAt() != null) {
+            java.time.Duration ttl = java.time.Duration.between(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC), url.getExpiresAt());
+            if (!ttl.isNegative()) {
+                redisTemplate.opsForValue().set(cacheKey, longUrl, ttl);
+            }
+        } else {
+            redisTemplate.opsForValue().set(cacheKey, longUrl, java.time.Duration.ofHours(24));
+        }
+
+        return longUrl;
+    }
+
+    public String getUrlForUnlock(String shortUrl, String password) {
+        var url = isExistsShortUrl(shortUrl);
+        
+        if (!url.isActive()) {
+            throw new LinkExpiredException();
+        }
+        
+        if (url.getPasswordHash() == null || url.getPasswordHash().isEmpty()) {
+            throw new IllegalArgumentException("URL is not password protected.");
+        }
+        
+        if (!passwordEncoder.matches(password, url.getPasswordHash())) {
+            throw new org.springframework.security.authentication.BadCredentialsException("Incorrect password");
+        }
+        
+        return url.getLongUrl();
     }
 
     public UrlDto getUrl(String shortUrl) {
@@ -72,35 +231,195 @@ public class UrlService {
 
         isUserCorrect(url);
 
-        urlMapper.toDto(url);
-        return urlMapper.toDto(url);
+        return toDtoWithClickCount(url);
     }
 
-    public List<UrlDto> getAllUrls(String sortBy) {
-        if (sortBy.equals("accessed_times")) {
-            sortBy = "statistic.accessedTimes";
+    public List<UrlDto> getAllUrls(String sortBy, Long tagId, Long folderId, String folderSlug, String search) {
+        var sortByClickCount = sortBy.equals("accessed_times");
+
+        if (sortByClickCount) {
+            sortBy = "id";
         }
 
-        if (!Set.of( "id", "statistic.accessedTimes").contains(sortBy))
+        if (!Set.of("id", "statistic.accessedTimes").contains(sortBy)) {
             sortBy = "id";
+        }
 
-        return urlRepository.findAll(Sort.by(sortBy).descending())
-                .stream()
-                .map(urlMapper::toDto)
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ROOT") || a.getAuthority().equals("ROOT"));
+
+        List<Url> urls;
+        if (isAdmin) {
+            urls = urlRepository.findAll(Sort.by(sortBy).descending());
+        } else {
+            Long userId = getUserId();
+            List<Url> unassignedUrls = urlRepository.findByUserIdAndFolderIsNull(userId);
+            if (!unassignedUrls.isEmpty()) {
+                folderRepository.findByNameIgnoreCaseAndUserId("Links", userId).ifPresent(linksFolder -> {
+                    unassignedUrls.forEach(url -> url.setFolder(linksFolder));
+                    urlRepository.saveAll(unassignedUrls);
+                });
+            }
+            urls = urlRepository.findAllByUserIdWithFilters(userId, tagId, folderId, folderSlug, search);
+            urls.sort(Comparator.comparing(Url::getId).reversed());
+        }
+
+        var dtos = urls.stream()
+                .map(this::toDtoWithClickCountSafe)
+                .filter(java.util.Objects::nonNull)
                 .toList();
+
+        if (sortByClickCount) {
+            return dtos.stream()
+                    .sorted(Comparator.comparing(UrlDto::getAccessed_times).reversed())
+                    .toList();
+        }
+
+        return dtos;
     }
 
+    private UrlDto toDtoWithClickCountSafe(Url url) {
+        try {
+            return toDtoWithClickCount(url);
+        } catch (Exception e) {
+            log.error("Failed to map URL id: {}", url.getId(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Builds a {@link UrlDto} whose {@code accessed_times} reflects live click data
+     * from {@link ClickEventRepository}, keeping the dashboard in sync with analytics.
+     */
+    private UrlDto toDtoWithClickCount(Url url) {
+        var dto = urlMapper.toDto(url);
+        long clicks = clickEventRepository.countByUrl_Id(url.getId(), java.time.LocalDateTime.of(1970, 1, 1, 0, 0), null);
+
+        dto.setShortUrl(rootDomainUrl + "/" + url.getShortUrl());
+
+        return new UrlDto(
+                dto.getId(),
+                dto.getLongUrl(),
+                dto.getShortUrl(),
+                BigInteger.valueOf(clicks),
+                dto.getCreatedAt(),
+                dto.getUpdatedAt(),
+                url.getExpiresAt(),
+                url.isActive(),
+                url.getPasswordHash() != null && !url.getPasswordHash().isEmpty(),
+                dto.getTags(),
+                url.getFolder() != null ? url.getFolder().getId() : null,
+                url.getFolder() != null ? url.getFolder().getName() : null
+        );
+    }
+
+    @CacheEvict(value = "urls", key = "#shortUrl")
     public UrlUpdateDto updateUrl(UrlRequest urlRequest, String shortUrl) {
         var url = isExistsShortUrl(shortUrl);
 
         isUserCorrect(url);
 
-        urlMapper.updateUrl(urlRequest, url);
-        urlRepository.save(url);
+        if (urlRequest.getCustomAlias() != null && !urlRequest.getCustomAlias().trim().isEmpty()) {
+            String alias = urlRequest.getCustomAlias().trim();
+            if (!alias.matches("^[a-zA-Z0-9-_]+$")) {
+                throw new IllegalArgumentException("Custom alias can only contain letters, numbers, hyphens, and underscores.");
+            }
+            if (!alias.equals(shortUrl) && urlRepository.existsUrlByShortUrl(alias)) {
+                throw new AliasAlreadyExistsException();
+            }
+            url.setShortUrl(alias);
+        }
 
-        return urlMapper.toUpdateDto(url);
+        urlMapper.updateUrl(urlRequest, url);
+        
+        if (url.getExpiresAt() == null || url.getExpiresAt().isAfter(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC))) {
+            url.setActive(true);
+        } else {
+            url.setActive(false);
+        }
+        
+        urlRepository.save(url);
+        
+        redisTemplate.delete("urls::" + url.getShortUrl());
+        org.springframework.cache.Cache cache = cacheManager.getCache("urls");
+        if (cache != null) {
+            cache.evict(url.getShortUrl());
+        }
+        
+        String cacheKey = "urls::" + url.getShortUrl();
+        if (url.getExpiresAt() != null) {
+            java.time.Duration ttl = java.time.Duration.between(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC), url.getExpiresAt());
+            if (!ttl.isNegative()) {
+                redisTemplate.opsForValue().set(cacheKey, url.getLongUrl(), ttl);
+            }
+        } else {
+            redisTemplate.opsForValue().set(cacheKey, url.getLongUrl(), java.time.Duration.ofHours(24));
+        }
+
+        var updateDto = urlMapper.toUpdateDto(url);
+        updateDto.setShortUrl(rootDomainUrl + "/" + url.getShortUrl());
+        return updateDto;
     }
 
+    public UrlDto updateUrl(String hash, UrlUpdateRequestDto request, User currentUser) {
+        var url = isExistsShortUrl(hash);
+
+        boolean isAdmin = currentUser.getRole() == com.url_shortener.url_shortener.users.Role.ROOT || currentUser.getRole() == com.url_shortener.url_shortener.users.Role.ADMIN;
+
+        if (!isAdmin && !url.getUser().getId().equals(currentUser.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("You do not own this URL.");
+        }
+
+        if (request.getLongUrl() != null && !request.getLongUrl().trim().isEmpty()) {
+            url.setLongUrl(request.getLongUrl().trim());
+        }
+        if (request.getPassword() != null) {
+            if (request.getPassword().isEmpty()) {
+                url.setPasswordHash(null);
+            } else if (!request.getPassword().trim().isEmpty()) {
+                url.setPasswordHash(passwordEncoder.encode(request.getPassword().trim()));
+            }
+        }
+        url.setExpiresAt(request.getExpiresAt());
+        if (request.getTagIds() != null) {
+            List<Tag> tags = tagRepository.findAllById(request.getTagIds());
+            for (Tag t : tags) {
+                if (!isAdmin && !t.getUser().getId().equals(currentUser.getId())) {
+                    throw new org.springframework.security.access.AccessDeniedException("You cannot assign a tag you do not own.");
+                }
+            }
+            url.setTags(new java.util.HashSet<>(tags));
+        }
+
+        if (url.getExpiresAt() == null || url.getExpiresAt().isAfter(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC))) {
+            url.setActive(true);
+        } else {
+            url.setActive(false);
+        }
+
+        url = urlRepository.save(url);
+        
+        // CRITICAL CACHE INVALIDATION
+        redisTemplate.delete("urls::" + url.getShortUrl());
+        org.springframework.cache.Cache updateCache = cacheManager.getCache("urls");
+        if (updateCache != null) {
+            updateCache.evict(url.getShortUrl());
+        }
+        
+        if (url.getExpiresAt() != null) {
+            java.time.Duration ttl = java.time.Duration.between(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC), url.getExpiresAt());
+            if (!ttl.isNegative()) {
+                redisTemplate.opsForValue().set("urls::" + url.getShortUrl(), url.getLongUrl(), ttl);
+            }
+        } else {
+            redisTemplate.opsForValue().set("urls::" + url.getShortUrl(), url.getLongUrl(), java.time.Duration.ofHours(24));
+        }
+
+        return toDtoWithClickCount(url);
+    }
+
+    @CacheEvict(value = "urls", key = "#shortUrl")
     public void deleteUrl(String shortUrl) {
         var url = isExistsShortUrl(shortUrl);
 
@@ -110,6 +429,11 @@ public class UrlService {
     }
 
     private static void isUserCorrect(Url url) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ROOT") || a.getAuthority().equals("ROOT"))) {
+            return;
+        }
         if (!(url.getUser().getId().equals(getUserId()))) {
             throw new UrlNotFoundException();
         }
@@ -120,7 +444,13 @@ public class UrlService {
         if (url == null){
             throw new UrlNotFoundException();
         }
-
+        
+        if (url.isActive() && url.getExpiresAt() != null && url.getExpiresAt().isBefore(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC))) {
+            url.setActive(false);
+            urlRepository.save(url);
+            redisTemplate.delete("urls::" + url.getShortUrl());
+        }
+        
         return url;
     }
 

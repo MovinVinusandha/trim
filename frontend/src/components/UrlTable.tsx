@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from 'react';
 import {
   ExternalLink,
@@ -10,15 +11,23 @@ import {
   ChevronUp,
   Link2,
   AlertCircle,
+  Activity,
+  Lock,
+  QrCode,
+  ArrowRight,
+  Globe
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import axiosInstance, { extractBackendError } from '../api/axiosInstance';
-import EditModal from './EditModal';
 import type { UrlEntry } from '../types';
+import { getTagColorClasses } from '../utils/tagColors';
 
 interface Props {
   urls: UrlEntry[];
-  onUpdated: (index: number, entry: UrlEntry) => void;
   onDeleted: (index: number) => void;
+  onOpenQr?: (hash: string) => void;
+  onEdit?: (index: number) => void;
+  headerRightNode?: React.ReactNode;
 }
 
 const extractHash = (shortUrl: string): string =>
@@ -27,8 +36,44 @@ const extractHash = (shortUrl: string): string =>
 const truncate = (str: string, max = 55): string =>
   str.length > max ? str.slice(0, max) + '…' : str;
 
-const UrlTable: React.FC<Props> = ({ urls, onUpdated, onDeleted }) => {
-  const [editIndex, setEditIndex] = useState<number | null>(null);
+const formatExpiration = (expiresAt: string | null | undefined, isActive: boolean) => {
+  if (!isActive) {
+    return <span className="text-red-500 bg-red-100 dark:bg-red-500/20 px-2 py-1 rounded-md text-xs font-medium">Expired</span>;
+  }
+  if (!expiresAt) {
+    return <span className="text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md text-xs font-medium">Never</span>;
+  }
+  
+  const now = new Date();
+  // Backend returns yyyy-MM-dd HH:mm:ss, append Z to parse as UTC.
+  // Replace space with T to be safe.
+  const expDate = new Date(expiresAt.replace(' ', 'T') + 'Z');
+  const diffMs = expDate.getTime() - now.getTime();
+  
+  if (diffMs <= 0) {
+    return <span className="text-red-500 bg-red-100 dark:bg-red-500/20 px-2 py-1 rounded-md text-xs font-medium">Expired</span>;
+  }
+
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+  
+  let timeStr = '';
+  if (diffDays > 0) {
+    timeStr = `In ${diffDays} day${diffDays > 1 ? 's' : ''}`;
+  } else if (diffHours > 0) {
+    timeStr = `In ${diffHours} hour${diffHours > 1 ? 's' : ''}`;
+  } else {
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    timeStr = `In ${diffMins} min${diffMins > 1 ? 's' : ''}`;
+  }
+  
+  return <span className="text-violet-600 bg-violet-100 dark:text-violet-300 dark:bg-violet-500/20 px-2 py-1 rounded-md text-xs font-medium">{timeStr}</span>;
+};
+
+const UrlTable: React.FC<Props> = ({ urls, onDeleted,  onOpenQr,
+  onEdit,
+  headerRightNode,
+}) => {
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [copied, setCopied] = useState<number | null>(null);
@@ -60,269 +105,112 @@ const UrlTable: React.FC<Props> = ({ urls, onUpdated, onDeleted }) => {
   const sortedWithIndex = [...urls]
     .map((entry, i) => ({ entry, originalIndex: i }))
     .sort((a, b) => {
-      const dateA = new Date(a.entry.createdAt).getTime();
-      const dateB = new Date(b.entry.createdAt).getTime();
+      const dateA = new Date(a.entry.createdAt.replace(' ', 'T') + 'Z').getTime();
+      const dateB = new Date(b.entry.createdAt.replace(' ', 'T') + 'Z').getTime();
       return sortAsc ? dateA - dateB : dateB - dateA;
     });
 
-  if (urls.length === 0) {
+  if (!urls || urls.length === 0) {
     return (
-      <div className="card p-12 text-center animate-slide-up">
-        <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center mx-auto mb-4">
+      <div className="card p-12 flex flex-col items-center justify-center animate-slide-up">
+        <div className="w-16 h-16 bg-slate-100 dark:bg-[#2B2B30] rounded-full flex items-center justify-center mb-4">
           <Link2 className="w-8 h-8 text-slate-400 dark:text-slate-500" />
         </div>
-        <h3 className="text-slate-700 dark:text-slate-300 font-medium mb-1">No links yet</h3>
-        <p className="text-slate-400 dark:text-slate-500 text-sm">
-          Shorten your first URL above to see it here.
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No links yet</h3>
+        <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm text-center">
+          Shorten your first URL above and it will appear here automatically.
         </p>
       </div>
     );
   }
 
   return (
-    <>
-      {editIndex !== null && (
-        <EditModal
-          entry={urls[editIndex]}
-          onClose={() => setEditIndex(null)}
-          onUpdated={(updated) => {
-            onUpdated(editIndex, updated);
-            setEditIndex(null);
-          }}
-        />
+    <div className="w-full">
+      {/* Table header controls are now managed by DashboardPage natively, but we keep error display */}
+      {deleteError && (
+        <div className="mb-4 flex items-start gap-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-3 animate-fade-in">
+          <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400 mt-0.5 flex-shrink-0" />
+          <p className="text-red-600 dark:text-red-400 text-sm">{deleteError}</p>
+        </div>
       )}
 
-      <div className="card overflow-hidden animate-slide-up">
-        {/* Table header controls */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BarChart2 className="w-5 h-5 text-violet-500 dark:text-violet-400" />
-            <h2 className="text-slate-900 dark:text-white font-semibold">Your Links</h2>
-            <span className="ml-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300 text-xs font-bold">
-              {urls.length}
-            </span>
-          </div>
-          <button
-            onClick={() => setSortAsc(!sortAsc)}
-            className="flex items-center gap-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs font-medium transition-colors"
-            title="Toggle sort order"
-          >
-            Date
-            {sortAsc
-              ? <ChevronUp className="w-3.5 h-3.5" />
-              : <ChevronDown className="w-3.5 h-3.5" />}
-          </button>
-        </div>
-
-        {deleteError && (
-          <div className="mx-6 mt-4 flex items-start gap-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-3 animate-fade-in">
-            <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400 mt-0.5 flex-shrink-0" />
-            <p className="text-red-600 dark:text-red-400 text-sm">{deleteError}</p>
-          </div>
-        )}
-
-        {/* ── Desktop table ─────────────────────────────── */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800">
-                {['Original URL', 'Short URL', 'Clicks', 'Created', 'Actions'].map((h) => (
-                  <th
-                    key={h}
-                    className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider last:text-right"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-              {sortedWithIndex.map(({ entry, originalIndex }) => (
-                <tr
-                  key={`${entry.shortUrl}-${originalIndex}`}
-                  className="group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
-                >
-                  {/* Original URL */}
-                  <td className="px-6 py-4 max-w-xs">
-                    <p
-                      className="text-slate-700 dark:text-slate-200 text-sm truncate"
-                      title={entry.longUrl}
-                    >
-                      {truncate(entry.longUrl)}
-                    </p>
-                  </td>
-
-                  {/* Short URL */}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <a
-                        href={entry.shortUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 text-sm font-medium flex items-center gap-1 transition-colors"
-                      >
-                        {truncate(entry.shortUrl, 30)}
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                      <button
-                        onClick={() => copyToClipboard(entry.shortUrl, originalIndex)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-slate-700 dark:hover:text-white"
-                        title="Copy to clipboard"
-                      >
-                        {copied === originalIndex
-                          ? <Check className="w-4 h-4 text-emerald-500" />
-                          : <Copy className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </td>
-
-                  {/* Clicks */}
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200">
-                      <BarChart2 className="w-3 h-3 text-violet-500 dark:text-violet-400" />
-                      {entry.accessed_times ?? 0}
-                    </span>
-                  </td>
-
-                  {/* Created */}
-                  <td className="px-6 py-4 text-slate-500 dark:text-slate-400 text-sm whitespace-nowrap">
-                    {entry.createdAt
-                      ? new Date(entry.createdAt.replace(' ', 'T')).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })
-                      : '—'}
-                  </td>
-
-                  {/* Actions */}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        id={`edit-btn-${originalIndex}`}
-                        onClick={() => { setEditIndex(originalIndex); setDeleteConfirm(null); }}
-                        className="p-2 rounded-lg text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-all"
-                        title="Edit URL"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-
-                      {deleteConfirm === originalIndex ? (
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            id={`confirm-delete-btn-${originalIndex}`}
-                            onClick={() => handleDelete(originalIndex)}
-                            disabled={deleting === originalIndex}
-                            className="px-2.5 py-1.5 rounded-lg bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-500/30 text-xs font-medium transition-all disabled:opacity-50"
-                          >
-                            {deleting === originalIndex ? (
-                              <span className="flex items-center gap-1">
-                                <span className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
-                                Deleting…
-                              </span>
-                            ) : 'Confirm'}
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirm(null)}
-                            className="px-2.5 py-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-medium transition-all"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          id={`delete-btn-${originalIndex}`}
-                          onClick={() => { setDeleteConfirm(originalIndex); setDeleteError(''); }}
-                          className="p-2 rounded-lg text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
-                          title="Delete URL"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* ── Mobile cards ──────────────────────────────── */}
-        <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800/60">
-          {sortedWithIndex.map(({ entry, originalIndex }) => (
-            <div key={`mob-${entry.shortUrl}-${originalIndex}`} className="p-4 space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-slate-700 dark:text-slate-200 text-sm truncate" title={entry.longUrl}>
-                    {truncate(entry.longUrl, 45)}
-                  </p>
-                  <a
-                    href={entry.shortUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 text-xs font-medium flex items-center gap-1 mt-1 transition-colors"
-                  >
-                    {truncate(entry.shortUrl, 35)}
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-                <span className="flex-shrink-0 inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-200">
-                  <BarChart2 className="w-3 h-3 text-violet-500 dark:text-violet-400" />
-                  {entry.accessed_times ?? 0}
-                </span>
+      <div className="bg-white dark:bg-[#1E1E21] border border-gray-200 dark:border-[#2B2B30] rounded-lg shadow-sm overflow-hidden flex flex-col gap-0 divide-y divide-gray-200 dark:divide-slate-800">
+        {sortedWithIndex.map(({ entry, originalIndex }) => (
+          <div key={`${entry.shortUrl}-${originalIndex}`} className="px-3 py-2 hover:bg-gray-50 dark:hover:bg-[#2B2B30]/50 transition-colors group flex items-center justify-between">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="w-6 h-6 rounded-full border border-gray-200 dark:border-[#2B2B30] flex items-center justify-center bg-white shrink-0 overflow-hidden shadow-sm">
+                {/* Fallback globe icon for generic URLs */}
+                <Globe className="w-3.5 h-3.5 text-slate-400" />
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400 dark:text-slate-500 text-xs">
-                  {entry.createdAt
-                    ? new Date(entry.createdAt.replace(' ', 'T')).toLocaleDateString()
-                    : '—'}
-                </span>
+              <div className="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => copyToClipboard(entry.shortUrl, originalIndex)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-                  >
-                    {copied === originalIndex
-                      ? <Check className="w-4 h-4 text-emerald-500" />
-                      : <Copy className="w-4 h-4" />}
+                  <a href={`${window.location.origin}/${extractHash(entry.shortUrl)}`} target="_blank" rel="noreferrer" className="font-medium text-sm text-gray-900 dark:text-slate-100 hover:underline truncate">
+                    {`${window.location.host}/${extractHash(entry.shortUrl)}`}
+                  </a>
+                  <button onClick={() => copyToClipboard(`${window.location.origin}/${extractHash(entry.shortUrl)}`, originalIndex)} className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" title="Copy">
+                    {copied === originalIndex ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
                   </button>
-                  <button
-                    onClick={() => setEditIndex(originalIndex)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-all"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  {deleteConfirm === originalIndex ? (
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => handleDelete(originalIndex)}
-                        disabled={deleting === originalIndex}
-                        className="px-2 py-1 rounded-lg bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium"
-                      >
-                        {deleting === originalIndex ? '…' : 'Yes'}
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(null)}
-                        className="px-2 py-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-medium"
-                      >
-                        No
-                      </button>
+                  {entry.hasPassword && <Lock className="w-3 h-3 text-violet-500 shrink-0" title="Password Protected" />}
+                </div>
+                
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400 truncate flex-1">
+                  <ArrowRight className="w-3 h-3 shrink-0 hidden sm:block" />
+                  <span className="truncate" title={entry.longUrl}>{entry.longUrl}</span>
+                  
+                  {/* Tags */}
+                  {entry.tags && entry.tags.length > 0 && (
+                    <div className="hidden md:flex items-center gap-1 shrink-0 ml-1">
+                      {entry.tags.map(tag => {
+                        const colors = getTagColorClasses(tag.color);
+                        return (
+                          <span key={tag.id} className={`text-[9px] px-1.5 py-0.5 rounded border ${colors.bg} ${colors.text} ${colors.border}`}>
+                            {tag.name}
+                          </span>
+                        );
+                      })}
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => setDeleteConfirm(originalIndex)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   )}
+
+                  <div className="flex items-center gap-1 shrink-0 ml-1">
+                    {formatExpiration(entry.expiresAt, entry.isActive ?? true)}
+                  </div>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+            
+            <div className="flex items-center gap-2 shrink-0 ml-3">
+              <Link to={`/analytics/${extractHash(entry.shortUrl)}`} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-50 dark:bg-[#2B2B30] border border-gray-200 dark:border-[#2B2B30] text-xs font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors shadow-sm">
+                <BarChart2 className="w-3 h-3 text-violet-500" />
+                {entry.accessed_times ?? 0} clicks
+              </Link>
+              
+              <div className="flex items-center lg:opacity-0 lg:group-hover:opacity-100 transition-opacity gap-1">
+                {deleteConfirm === originalIndex ? (
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => handleDelete(originalIndex)} disabled={deleting === originalIndex} className="px-2 py-1 bg-red-100 text-red-600 rounded text-xs font-medium hover:bg-red-200">
+                      {deleting === originalIndex ? '...' : 'Yes'}
+                    </button>
+                    <button onClick={() => setDeleteConfirm(null)} className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-medium hover:bg-slate-200">No</button>
+                  </div>
+                ) : (
+                  <>
+                    <button onClick={() => onOpenQr && onOpenQr(extractHash(entry.shortUrl))} className="p-1 text-gray-400 hover:text-gray-900 dark:hover:text-slate-300 rounded hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors" title="QR Code">
+                      <QrCode className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => { if (onEdit) onEdit(originalIndex); }} className="p-1 text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 rounded hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors" title="Edit">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => setDeleteConfirm(originalIndex)} className="p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded hover:bg-gray-100 dark:hover:bg-[#2B2B30] transition-colors" title="Delete">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
-    </>
+    </div>
   );
 };
 

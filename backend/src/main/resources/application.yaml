@@ -5,7 +5,30 @@ spring:
     secret: ${JWT_SECRET}
     accessTokenExpiration: 300  # 5m
     refreshTokenExpiration: 604800  # 7d
-    rootAdminEmail: ${ROOT_ADMIN_EMAIL}
-    rootAdminPassword: ${ROOT_ADMIN_PASSWORD}
   profiles:
     active: dev
+
+server:
+  forward-headers-strategy: framework
+
+root:
+  user:
+    email: ${ROOT_USER_EMAIL}
+    password: ${ROOT_USER_PASSWORD}
+
+# Async thread pool configuration for click analytics
+analytics:
+  async:
+    core-pool-size: 4
+    max-pool-size: 16
+    queue-capacity: 500
+
+app:
+  domain:
+    root: ${ROOT_DOMAIN_URL:http://localhost:8080}
+  frontend:
+    url: ${FRONTEND_URL:http://localhost}
+  dashboard:
+    url: ${APP_DASHBOARD_URL:http://app.localhost}
+  cors:
+    allowed-origins: ${APP_DOMAIN_URL:http://localhost,http://localhost:5173}
