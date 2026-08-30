@@ -590,7 +590,7 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="bg-card rounded-2xl shadow-2xl w-full max-w-5xl z-[101] overflow-visible flex flex-col relative max-h-[95vh] min-h-[640px] border border-border"
+            className="bg-background rounded-2xl shadow-2xl w-full max-w-5xl z-[101] overflow-visible flex flex-col relative max-h-[95vh] min-h-[640px] border border-border"
           >
         {/* Header */}
         <header className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0 rounded-t-2xl">

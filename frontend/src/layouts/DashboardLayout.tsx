@@ -165,7 +165,7 @@ const DashboardLayout: React.FC = () => {
             }
             toast.success('Analytics link copied to clipboard!');
           }}
-          className="btn-secondary flex items-center gap-2"
+          className="btn-solid flex items-center gap-2"
         >
           <Download className="w-4 h-4" /> Export
         </button>
@@ -248,7 +248,7 @@ const DashboardLayout: React.FC = () => {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -4, scale: 0.98 }}
                 transition={{ duration: 0.1, ease: "easeOut" }}
-                className="absolute left-full ml-3 bottom-0 z-50 bg-popover border border-border shadow-lg rounded-xl w-32 p-1 flex flex-col gap-0.5"
+                className="absolute left-full ml-3 bottom-0 z-50 bg-background border border-border shadow-lg rounded-xl w-32 p-1 flex flex-col gap-0.5"
               >
                 <button
                   onClick={() => { setTheme('light'); setIsThemeMenuOpen(false); }}
@@ -288,7 +288,7 @@ const DashboardLayout: React.FC = () => {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -4, scale: 0.98 }}
                 transition={{ duration: 0.1, ease: "easeOut" }}
-                className="absolute bottom-full left-0 mb-2 w-60 bg-popover border border-border rounded-xl shadow-lg z-50 p-1.5"
+                className="absolute bottom-full left-0 mb-2 w-60 bg-background border border-border rounded-xl shadow-lg z-50 p-1.5"
               >
                 <div className="px-3 py-2 border-b border-border mb-1">
                   <div className="font-medium text-sm text-foreground truncate">{user?.name || 'User'}</div>
@@ -378,7 +378,7 @@ const DashboardLayout: React.FC = () => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -4, scale: 0.98 }}
                     transition={{ duration: 0.1, ease: "easeOut" }}
-                    className="absolute top-full left-0 mt-1 w-64 bg-popover border border-border shadow-lg rounded-xl p-2 z-[100] flex flex-col gap-1.5"
+                    className="absolute top-full left-0 mt-1 w-64 bg-background border border-border shadow-lg rounded-xl p-2 z-[100] flex flex-col gap-1.5"
                   >
                     <div className="relative flex items-center px-2 border-b border-border pb-1">
                       <Search className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 ml-1" />

@@ -58,7 +58,7 @@ const FoldersPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {isFoldersLoading ? (
             [...Array(6)].map((_, i) => (
-              <div key={i} className="bg-card border border-border rounded-xl p-4 h-32 flex flex-col justify-between">
+              <div key={i} className="bg-background border border-border rounded-xl p-4 h-32 flex flex-col justify-between">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <Skeleton width={36} height={36} borderRadius={8} />
@@ -83,7 +83,7 @@ const FoldersPage: React.FC = () => {
                   transition={{ duration: 0.15 }} 
                   key={folder.id} 
                   onClick={() => handleFolderClick(folder)} 
-                  className="bg-card border border-border rounded-xl p-4 transition-all group relative cursor-pointer hover:border-border/80 hover:bg-secondary/20"
+                  className="bg-background border border-border rounded-xl p-4 transition-all group relative cursor-pointer hover:border-border/80 hover:bg-secondary/20"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
@@ -211,7 +211,7 @@ const FoldersPage: React.FC = () => {
       <AnimatePresence>
       {folderToDelete && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-card max-w-sm w-full rounded-2xl p-6 shadow-2xl border border-border">
+          <div className="bg-background max-w-sm w-full rounded-2xl p-6 shadow-2xl border border-border">
             <h3 className="text-lg font-semibold text-foreground mb-2">Delete Folder</h3>
             <p className="text-sm text-muted-foreground mb-6">
               Are you sure you want to delete the "{folderToDelete.name}" folder? {folderToDelete.linkCount > 0 ? `This folder currently contains ${folderToDelete.linkCount} links. The folder will be deleted and the links will be moved out of it, but the links themselves will not be deleted.` : ''}

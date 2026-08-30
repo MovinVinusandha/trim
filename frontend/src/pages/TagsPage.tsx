@@ -50,7 +50,7 @@ const TagsPage: React.FC = () => {
           />
         </div>
 
-        <div className="bg-card border border-border rounded-xl overflow-visible flex flex-col gap-0 divide-y divide-border">
+        <div className="bg-background border border-border rounded-xl overflow-visible flex flex-col gap-0 divide-y divide-border">
           {isTagsLoading ? (
             [...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center justify-between p-4 h-[72px]">
@@ -163,7 +163,7 @@ const TagsPage: React.FC = () => {
       <AnimatePresence>
       {tagToDelete && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-card max-w-sm w-full rounded-2xl p-6 shadow-2xl border border-border">
+          <div className="bg-background max-w-sm w-full rounded-2xl p-6 shadow-2xl border border-border">
             <h3 className="text-lg font-semibold text-foreground mb-2">Delete Tag</h3>
             <p className="text-sm text-muted-foreground mb-6">
               Are you sure you want to delete the "{tagToDelete.name}" tag? {tagToDelete.linkCount > 0 ? `This tag is currently used in ${tagToDelete.linkCount} links. It will be removed from all links, but the links will not be deleted.` : ''}

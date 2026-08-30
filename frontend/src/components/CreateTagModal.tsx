@@ -76,7 +76,7 @@ const CreateTagModal: React.FC<CreateTagModalProps> = ({ isOpen, onClose, onSucc
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="bg-card rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative border border-border"
+            className="bg-background rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative border border-border"
           >
         <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-secondary z-10">
           <X className="w-5 h-5" />

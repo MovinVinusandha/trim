@@ -209,7 +209,7 @@ const AnalyticsPage: React.FC = () => {
 
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-card border border-border rounded-xl p-6 flex flex-col gap-1">
+            <div key={i} className="bg-background border border-border rounded-xl p-6 flex flex-col gap-1">
               <Skeleton width={120} height={16} />
               <div className="mt-2"><Skeleton width={80} height={36} /></div>
               <Skeleton width={60} height={12} className="mt-1" />
@@ -217,7 +217,7 @@ const AnalyticsPage: React.FC = () => {
           ))}
         </section>
 
-        <section className="bg-card border border-border rounded-xl p-6 flex flex-col gap-6">
+        <section className="bg-background border border-border rounded-xl p-6 flex flex-col gap-6">
           <div className="flex items-center justify-between mb-2">
             <div>
               <Skeleton width={150} height={24} />
@@ -232,7 +232,7 @@ const AnalyticsPage: React.FC = () => {
 
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-card border border-border rounded-xl p-0 flex flex-col overflow-hidden">
+            <div key={i} className="bg-background border border-border rounded-xl p-0 flex flex-col overflow-hidden">
               <div className="p-4 border-b border-border flex items-center gap-2">
                 <Skeleton width={120} height={20} />
               </div>
@@ -905,11 +905,11 @@ const AnalyticsPage: React.FC = () => {
         </div>
 
         {/* Unified Master Card */}
-        <div className="bg-card border border-border rounded-xl overflow-hidden flex flex-col w-full">
+        <div className="bg-background border border-border rounded-xl overflow-hidden flex flex-col w-full">
           {/* Integrated Metric Header Bar */}
           <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border border-b border-border">
             {/* Column 1: Clicks */}
-            <div className="p-4 sm:p-5 bg-secondary/30">
+            <div className="p-4 sm:p-5 bg-background">
               <div className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                 <MousePointerClick className="w-3.5 h-3.5 text-primary" /> Clicks
               </div>
@@ -919,7 +919,7 @@ const AnalyticsPage: React.FC = () => {
             </div>
 
             {/* Column 2: Top Source */}
-            <div className="p-4 sm:p-5">
+            <div className="p-4 sm:p-5 bg-background">
               <div className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                 <Share2 className="w-3.5 h-3.5 text-primary" /> Top Source
               </div>
@@ -975,7 +975,7 @@ const AnalyticsPage: React.FC = () => {
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Countries */}
-          <div className="bg-card border border-border rounded-xl p-0 flex flex-col overflow-hidden">
+          <div className="bg-background border border-border rounded-xl p-0 flex flex-col overflow-hidden">
             <div className="p-4 border-b border-border flex items-center gap-2">
               <Globe className="w-4 h-4 text-primary" />
               <h3 className="font-medium text-xs text-foreground">Top Countries</h3>
@@ -1002,7 +1002,7 @@ const AnalyticsPage: React.FC = () => {
           </div>
 
           {/* Devices */}
-          <div className="bg-card border border-border rounded-xl p-0 flex flex-col overflow-hidden">
+          <div className="bg-background border border-border rounded-xl p-0 flex flex-col overflow-hidden">
             <div className="p-4 border-b border-border flex items-center gap-2">
               <Monitor className="w-4 h-4 text-primary" />
               <h3 className="font-medium text-xs text-foreground">Devices</h3>
@@ -1049,7 +1049,7 @@ const AnalyticsPage: React.FC = () => {
           </div>
 
           {/* Referrers */}
-          <div className="bg-card border border-border rounded-xl p-0 flex flex-col overflow-hidden">
+          <div className="bg-background border border-border rounded-xl p-0 flex flex-col overflow-hidden">
             <div className="p-4 border-b border-border flex items-center gap-2">
               <LinkIcon className="w-4 h-4 text-primary" />
               <h3 className="font-medium text-xs text-foreground">Referrers</h3>

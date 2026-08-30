@@ -39,9 +39,9 @@ html {
   .dark {
     --background: #000000;
     --foreground: #FFFFFF;
-    --card: #0C0C0E;
+    --card: #000000;
     --card-foreground: #FFFFFF;
-    --popover: #141416;
+    --popover: #000000;
     --popover-foreground: #FFFFFF;
     --primary: #0099FF;
     --primary-foreground: #FFFFFF;
@@ -118,7 +118,7 @@ html {
 
   /* Flat Arcane / Framer card */
   .card {
-    @apply bg-white dark:bg-[#0C0C0E] border border-gray-200 dark:border-[#222226] rounded-xl;
+    @apply bg-white dark:bg-[#000000] border border-gray-200 dark:border-[#222226] rounded-xl;
   }
 
   /* Flat page background */

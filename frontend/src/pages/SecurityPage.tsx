@@ -44,7 +44,7 @@ const SecurityPage: React.FC = () => {
         <p className="text-sm text-muted-foreground mt-1">Manage your password and security preferences.</p>
       </div>
 
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="bg-background border border-border rounded-xl overflow-hidden">
         <div className="p-6">
           <div className="flex items-center gap-2 mb-1">
             <ShieldCheck className="w-5 h-5 text-primary" />

@@ -85,7 +85,7 @@ const SettingsPage: React.FC = () => {
         </div>
 
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-card border border-border rounded-xl overflow-hidden">
+          <div key={i} className="bg-background border border-border rounded-xl overflow-hidden">
             <div className="p-6">
               <Skeleton width={120} height={20} />
               <div className="mt-1 mb-4"><Skeleton width="60%" height={16} /></div>
@@ -93,19 +93,19 @@ const SettingsPage: React.FC = () => {
                 <Skeleton height={38} borderRadius={6} />
               </div>
             </div>
-            <div className="px-6 py-4 bg-secondary/30 border-t border-border flex items-center justify-between">
+            <div className="px-6 py-4 bg-background border-t border-border flex items-center justify-between">
               <Skeleton width={200} height={14} />
               <Skeleton width={120} height={32} borderRadius={6} />
             </div>
           </div>
         ))}
         
-        <div className="bg-card border border-rose-500/20 rounded-xl overflow-hidden">
+        <div className="bg-background border border-rose-500/20 rounded-xl overflow-hidden">
           <div className="p-6">
             <Skeleton width={160} height={20} />
             <div className="mt-2 mb-4"><Skeleton width="100%" height={32} /></div>
           </div>
-          <div className="px-6 py-4 bg-rose-500/5 border-t border-rose-500/20 flex items-center justify-end">
+          <div className="px-6 py-4 bg-background border-t border-rose-500/20 flex items-center justify-end">
             <Skeleton width={140} height={32} borderRadius={6} />
           </div>
         </div>
@@ -121,7 +121,7 @@ const SettingsPage: React.FC = () => {
       </div>
 
       {/* Your Name Card */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="bg-background border border-border rounded-xl overflow-hidden">
         <div className="p-6">
           <h3 className="text-base font-medium text-foreground">Your Name</h3>
           <p className="text-sm text-muted-foreground mt-1 mb-4">
@@ -142,7 +142,7 @@ const SettingsPage: React.FC = () => {
             </div>
           )}
         </div>
-        <div className="px-6 py-3.5 bg-secondary/30 border-t border-border flex items-center justify-between">
+        <div className="px-6 py-3.5 bg-background border-t border-border flex items-center justify-between">
           <p className="text-xs text-muted-foreground">Please use 32 characters at maximum.</p>
           <button
             onClick={handleUpdateName}
@@ -155,7 +155,7 @@ const SettingsPage: React.FC = () => {
       </div>
 
       {/* Your Email Card */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="bg-background border border-border rounded-xl overflow-hidden">
         <div className="p-6">
           <h3 className="text-base font-medium text-foreground">Your Email</h3>
           <p className="text-sm text-muted-foreground mt-1 mb-4">
@@ -176,7 +176,7 @@ const SettingsPage: React.FC = () => {
             </div>
           )}
         </div>
-        <div className="px-6 py-3.5 bg-secondary/30 border-t border-border flex items-center justify-between">
+        <div className="px-6 py-3.5 bg-background border-t border-border flex items-center justify-between">
           <p className="text-xs text-muted-foreground">We will email you to verify the change.</p>
           <button
             onClick={handleUpdateEmail}
@@ -189,7 +189,7 @@ const SettingsPage: React.FC = () => {
       </div>
 
       {/* Your User ID Card */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="bg-background border border-border rounded-xl overflow-hidden">
         <div className="p-6">
           <h3 className="text-base font-medium text-foreground">Your User ID</h3>
           <p className="text-sm text-muted-foreground mt-1 mb-4">
@@ -200,7 +200,7 @@ const SettingsPage: React.FC = () => {
               type="text"
               readOnly
               value={userIdDisplay}
-              className="flex-1 px-3.5 py-2 border border-input rounded-lg bg-secondary/40 text-muted-foreground font-mono text-sm cursor-not-allowed"
+              className="flex-1 px-3.5 py-2 border border-input rounded-lg bg-background text-foreground font-mono text-sm cursor-not-allowed"
             />
             <button
               onClick={copyToClipboard}
@@ -214,7 +214,7 @@ const SettingsPage: React.FC = () => {
       </div>
 
       {/* Delete Account Card */}
-      <div className="bg-card border border-rose-500/20 rounded-xl overflow-hidden">
+      <div className="bg-background border border-rose-500/20 rounded-xl overflow-hidden">
         <div className="p-6">
           <h3 className="text-base font-medium text-rose-500 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4" />
@@ -224,7 +224,7 @@ const SettingsPage: React.FC = () => {
             Permanently remove your personal account and all of its contents from our platform. This action is not reversible, so please continue with caution.
           </p>
         </div>
-        <div className="px-6 py-3.5 bg-rose-500/5 border-t border-rose-500/20 flex items-center justify-end">
+        <div className="px-6 py-3.5 bg-background border-t border-rose-500/20 flex items-center justify-end">
           <button
             onClick={() => setIsDeleteModalOpen(true)}
             className="bg-rose-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-rose-700 transition-colors shadow-sm"
@@ -248,7 +248,7 @@ const SettingsPage: React.FC = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }} 
             exit={{ opacity: 0, scale: 0.96, y: 8 }} 
             transition={{ duration: 0.15, ease: "easeOut" }} 
-            className="bg-card max-w-md w-full rounded-2xl p-6 shadow-2xl relative border border-border"
+            className="bg-background max-w-md w-full rounded-2xl p-6 shadow-2xl relative border border-border"
           >
             <button 
               onClick={() => setIsDeleteModalOpen(false)}

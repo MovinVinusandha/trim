@@ -818,7 +818,7 @@ const DashboardPage: React.FC = () => {
           )}
 
           {loadingAll ? (
-            <div className="bg-card border border-border rounded-xl overflow-hidden flex flex-col gap-0 divide-y divide-border">
+            <div className="bg-background border border-border rounded-xl overflow-hidden flex flex-col gap-0 divide-y divide-border">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="flex items-center p-4">
                   <div className="shrink-0 mr-4">
@@ -836,7 +836,7 @@ const DashboardPage: React.FC = () => {
               ))}
             </div>
           ) : (
-            <div className="bg-card border border-border rounded-xl overflow-visible flex flex-col gap-0 divide-y divide-border">
+            <div className="bg-background border border-border rounded-xl overflow-visible flex flex-col gap-0 divide-y divide-border">
               {displayedUrls.length === 0 ? (
                 <div className="p-12 text-center text-muted-foreground text-sm">No links found.</div>
               ) : (

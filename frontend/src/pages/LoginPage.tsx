@@ -96,7 +96,7 @@ const LoginPage: React.FC = () => {
           </div>
 
           {/* Card Container */}
-          <div className="bg-card border border-border rounded-xl p-8 shadow-xl max-w-md w-full mx-auto">
+          <div className="bg-background border border-border rounded-xl p-8 shadow-xl max-w-md w-full mx-auto">
             <div className="text-center mb-6">
               <h1 className="text-xl font-bold tracking-tight text-foreground mb-1.5">Log in to your trim account</h1>
             </div>
@@ -155,7 +155,7 @@ const LoginPage: React.FC = () => {
                 <div className="w-full border-t border-border"></div>
               </div>
               <div className="relative flex justify-center text-xs font-medium leading-6">
-                <span className="bg-card px-2 text-muted-foreground uppercase tracking-wider text-[10px]">OR</span>
+                <span className="bg-background px-2 text-muted-foreground uppercase tracking-wider text-[10px]">OR</span>
               </div>
             </div>
 
