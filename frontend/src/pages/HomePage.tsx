@@ -351,7 +351,7 @@ const HomePage: React.FC = () => {
           {/* 4. Subtitle Paragraph */}
           <motion.p
             variants={fadeUpVariant}
-            className="text-sm sm:text-base text-muted-foreground max-w-lg leading-relaxed -mt-1 sm:-mt-2"
+            className="text-sm sm:text-base text-muted-foreground max-w-lg leading-relaxed mt-3 sm:mt-5"
           >
             Paste your long URL below and get a short, shareable link instantly. No account required
             to try it out.
