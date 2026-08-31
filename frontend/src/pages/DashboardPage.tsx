@@ -933,31 +933,33 @@ const DashboardPage: React.FC = () => {
                       {displayProps.tags && url.tags && url.tags.length > 0 && (
                         <div className="relative group/tag inline-flex items-center mt-1.5">
                           <span 
-                            className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border"
-                            style={{ 
-                              borderColor: url.tags[0].color ? `${url.tags[0].color}40` : 'var(--border)',
-                              color: url.tags[0].color || 'var(--muted-foreground)',
-                              backgroundColor: url.tags[0].color ? `${url.tags[0].color}15` : 'var(--secondary)'
-                            }}
+                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-neutral-100 dark:bg-[#18181B] text-foreground border border-neutral-200/80 dark:border-[#27272A] shadow-sm"
                           >
-                            {url.tags[0].name}
-                            {url.tags.length > 1 && ` | +${url.tags.length - 1}`}
+                            <span 
+                              className="w-1.5 h-1.5 rounded-full shrink-0 shadow-sm"
+                              style={{ backgroundColor: url.tags[0].color || '#3b82f6' }}
+                            />
+                            <span>{url.tags[0].name}</span>
+                            {url.tags.length > 1 && (
+                              <span className="text-[10px] font-mono text-muted-foreground ml-0.5">
+                                +{url.tags.length - 1}
+                              </span>
+                            )}
                           </span>
                           
                           {/* Tooltip */}
                           {url.tags.length > 1 && (
-                            <div className="absolute bottom-full left-0 mb-1.5 hidden group-hover/tag:flex bg-popover shadow-lg border border-border rounded-xl p-1.5 gap-1.5 z-[60] min-w-max">
+                            <div className="absolute bottom-full left-0 mb-1.5 hidden group-hover/tag:flex items-center bg-background/95 backdrop-blur-md shadow-xl border border-border rounded-xl p-1.5 gap-1.5 z-[60] min-w-max">
                               {url.tags.map(t => (
                                 <span 
                                   key={t.id} 
-                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border"
-                                  style={{ 
-                                    borderColor: t.color ? `${t.color}40` : 'var(--border)',
-                                    color: t.color || 'var(--muted-foreground)',
-                                    backgroundColor: t.color ? `${t.color}15` : 'var(--secondary)'
-                                  }}
+                                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-neutral-100 dark:bg-[#18181B] text-foreground border border-neutral-200/80 dark:border-[#27272A] shadow-sm"
                                 >
-                                  {t.name}
+                                  <span 
+                                    className="w-1.5 h-1.5 rounded-full shrink-0 shadow-sm"
+                                    style={{ backgroundColor: t.color || '#3b82f6' }}
+                                  />
+                                  <span>{t.name}</span>
                                 </span>
                               ))}
                             </div>

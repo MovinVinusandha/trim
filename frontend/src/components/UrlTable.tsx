@@ -160,14 +160,18 @@ const UrlTable: React.FC<Props> = ({ urls, onDeleted,  onOpenQr,
                   {/* Tags */}
                   {entry.tags && entry.tags.length > 0 && (
                     <div className="hidden md:flex items-center gap-1 shrink-0 ml-1">
-                      {entry.tags.map(tag => {
-                        const colors = getTagColorClasses(tag.color);
-                        return (
-                          <span key={tag.id} className={`text-[9px] px-1.5 py-0.5 rounded border ${colors.bg} ${colors.text} ${colors.border}`}>
-                            {tag.name}
-                          </span>
-                        );
-                      })}
+                      {entry.tags.map(tag => (
+                        <span 
+                          key={tag.id} 
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-neutral-100 dark:bg-[#18181B] text-foreground border border-neutral-200/80 dark:border-[#27272A] shadow-sm"
+                        >
+                          <span 
+                            className="w-1.5 h-1.5 rounded-full shrink-0 shadow-sm"
+                            style={{ backgroundColor: tag.color || '#3b82f6' }}
+                          />
+                          <span>{tag.name}</span>
+                        </span>
+                      ))}
                     </div>
                   )}
 
