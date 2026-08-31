@@ -111,21 +111,29 @@ const CreateTagModal: React.FC<CreateTagModalProps> = ({ isOpen, onClose, onSucc
               <div className="space-y-3">
                 <label className="text-sm font-medium text-foreground">Color</label>
                 <div className="flex flex-wrap gap-2">
-                  {TAG_COLORS.map(c => (
-                    <label key={c.name} className="cursor-pointer">
-                      <input 
-                        type="radio" 
-                        name="tag-color" 
-                        value={c.name} 
-                        checked={color === c.name} 
-                        onChange={() => setColor(c.name)} 
-                        className="sr-only peer" 
-                      />
-                      <div className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-offset-background ${c.ringClass} ${c.classes}`}>
-                        {c.name.charAt(0).toUpperCase() + c.name.slice(1)}
-                      </div>
-                    </label>
-                  ))}
+                  {TAG_COLORS.map(c => {
+                    const isSelected = color === c.name;
+                    return (
+                      <label key={c.name} className="cursor-pointer">
+                        <input 
+                          type="radio" 
+                          name="tag-color" 
+                          value={c.name} 
+                          checked={isSelected} 
+                          onChange={() => setColor(c.name)} 
+                          className="sr-only" 
+                        />
+                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${
+                          isSelected 
+                            ? 'border-neutral-200/80 dark:border-[#27272A] bg-neutral-100 dark:bg-[#18181B] text-foreground shadow-sm ring-2 ring-primary/40 ring-offset-2 ring-offset-background' 
+                            : 'border-border/60 bg-background/50 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                        }`}>
+                          <span className="w-2 h-2 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: c.classes.includes('rose') ? '#f43f5e' : c.classes.includes('blue') ? '#3b82f6' : c.classes.includes('emerald') ? '#10b981' : c.classes.includes('violet') ? '#8b5cf6' : c.classes.includes('amber') ? '#f59e0b' : c.classes.includes('yellow') ? '#eab308' : '#71717a' }} />
+                          <span>{c.name.charAt(0).toUpperCase() + c.name.slice(1)}</span>
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 

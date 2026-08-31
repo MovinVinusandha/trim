@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext, useSearchParams, useNavigate } from 'react-router-dom';
-import { Search, MoreVertical, Trash2, Link as LinkIcon, Folder as FolderIcon, Pen, BarChart2 } from 'lucide-react';
+import { Search, MoreVertical, Trash2, Link as LinkIcon, Folder as FolderIcon, Pen, BarChart2, Plus } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import type { DashboardLayoutContext } from '../layouts/DashboardLayout';
 import Skeleton from 'react-loading-skeleton';
@@ -71,6 +71,27 @@ const FoldersPage: React.FC = () => {
                 </div>
               </div>
             ))
+          ) : filteredFolders.length === 0 ? (
+            <div className="col-span-full py-16 px-4 flex flex-col items-center justify-center text-center bg-background border border-border rounded-xl">
+              <div className="w-12 h-12 rounded-2xl bg-secondary/60 border border-border/80 flex items-center justify-center mb-3.5 text-muted-foreground shadow-sm">
+                <FolderIcon className="w-5 h-5 stroke-[1.75]" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground mb-1">No folders found.</h3>
+              <p className="text-xs text-muted-foreground max-w-xs mb-4">
+                {search ? 'No folders match your search query.' : 'Create folders to organize and group your shortened links.'}
+              </p>
+              {!search && (
+                <button
+                  onClick={() => {
+                    setFolderToEdit(null);
+                    setIsFolderModalOpen(true);
+                  }}
+                  className="btn-solid text-xs py-2 px-3.5 flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Create Folder
+                </button>
+              )}
+            </div>
           ) : (
             filteredFolders.map(folder => {
               const isDefault = folder.name.toLowerCase() === 'links';
@@ -87,14 +108,14 @@ const FoldersPage: React.FC = () => {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${isDefault ? 'bg-primary/10 text-primary' : 'bg-emerald-500/10 text-emerald-500'}`}>
-                        <FolderIcon className="w-5 h-5" />
+                      <div className={`p-2.5 rounded-xl border ${isDefault ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-secondary border-border/80 text-foreground'}`}>
+                        <FolderIcon className="w-4 h-4 stroke-[2]" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-medium text-foreground text-sm line-clamp-1">{folder.name}</h3>
                           {isDefault && (
-                            <span className="px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase bg-primary/10 text-primary rounded">
+                            <span className="px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase bg-primary/10 text-primary border border-primary/20 rounded">
                               Default
                             </span>
                           )}
@@ -108,7 +129,7 @@ const FoldersPage: React.FC = () => {
                           e.stopPropagation();
                           setOpenMenuId(openMenuId === folder.id ? null : folder.id);
                         }}
-                        className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md transition-colors"
+                        className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
                       >
                         <MoreVertical className="w-4 h-4" />
                       </button>
@@ -129,7 +150,7 @@ const FoldersPage: React.FC = () => {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -4, scale: 0.98 }}
                             transition={{ duration: 0.1, ease: "easeOut" }}
-                            className="absolute right-0 top-full mt-1 w-48 bg-popover border border-border rounded-xl shadow-lg z-50 p-1 divide-y divide-border"
+                            className="absolute right-0 top-full mt-1 w-44 bg-popover border border-border rounded-xl shadow-xl z-50 p-1.5 divide-y divide-border"
                           >
                             <div className="py-0.5">
                               <button
@@ -139,10 +160,10 @@ const FoldersPage: React.FC = () => {
                                   setActiveFolderId(folder.id);
                                   navigate(`/analytics/f/${slug}`);
                                 }}
-                                className="w-full flex items-center px-3 py-2 text-xs font-medium text-foreground hover:bg-secondary rounded-lg transition-colors"
+                                className="w-full flex items-center px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-secondary rounded-lg transition-colors"
                               >
-                                <div className="flex items-center gap-2.5">
-                                  <BarChart2 className="w-4 h-4 text-muted-foreground" />
+                                <div className="flex items-center gap-2">
+                                  <BarChart2 className="w-3.5 h-3.5 text-muted-foreground" />
                                   <span>Analytics</span>
                                 </div>
                               </button>
@@ -154,10 +175,10 @@ const FoldersPage: React.FC = () => {
                                     setFolderToEdit(folder);
                                     setIsFolderModalOpen(true);
                                   }}
-                                  className="w-full flex items-center px-3 py-2 text-xs font-medium text-foreground hover:bg-secondary rounded-lg transition-colors"
+                                  className="w-full flex items-center px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-secondary rounded-lg transition-colors"
                                 >
-                                  <div className="flex items-center gap-2.5">
-                                    <Pen className="w-4 h-4 text-muted-foreground" />
+                                  <div className="flex items-center gap-2">
+                                    <Pen className="w-3.5 h-3.5 text-muted-foreground" />
                                     <span>Edit</span>
                                   </div>
                                 </button>
@@ -171,10 +192,10 @@ const FoldersPage: React.FC = () => {
                                     setOpenMenuId(null);
                                     setFolderToDelete(folder);
                                   }}
-                                  className="w-full flex items-center px-3 py-2 text-xs font-medium text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
+                                  className="w-full flex items-center px-2.5 py-1.5 text-xs font-medium text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
                                 >
-                                  <div className="flex items-center gap-2.5">
-                                    <Trash2 className="w-4 h-4 text-rose-500" />
+                                  <div className="flex items-center gap-2">
+                                    <Trash2 className="w-3.5 h-3.5 text-rose-500" />
                                     <span>Delete</span>
                                   </div>
                                 </button>
@@ -189,21 +210,15 @@ const FoldersPage: React.FC = () => {
                   
                   <div className="flex items-center justify-between">
                     <div 
-                      className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-muted-foreground bg-secondary/50 border border-border rounded-md hover:bg-secondary transition-colors"
+                      className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-muted-foreground bg-secondary/50 border border-border rounded-lg hover:bg-secondary transition-colors"
                     >
                       <LinkIcon className="w-3.5 h-3.5" />
-                      {folder.linkCount || 0} {(folder.linkCount || 0) === 1 ? 'link' : 'links'}
+                      <span>{folder.linkCount || 0} {(folder.linkCount || 0) === 1 ? 'link' : 'links'}</span>
                     </div>
                   </div>
                 </motion.div>
               );
             })
-          )}
-          
-          {!isFoldersLoading && filteredFolders.length === 0 && (
-            <div className="col-span-full py-12 text-center text-muted-foreground text-sm">
-              No folders found.
-            </div>
           )}
         </div>
       </div>
@@ -211,26 +226,35 @@ const FoldersPage: React.FC = () => {
       <AnimatePresence>
       {folderToDelete && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-background max-w-sm w-full rounded-2xl p-6 shadow-2xl border border-border">
-            <h3 className="text-lg font-semibold text-foreground mb-2">Delete Folder</h3>
-            <p className="text-sm text-muted-foreground mb-6">
-              Are you sure you want to delete the "{folderToDelete.name}" folder? {folderToDelete.linkCount > 0 ? `This folder currently contains ${folderToDelete.linkCount} links. The folder will be deleted and the links will be moved out of it, but the links themselves will not be deleted.` : ''}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="bg-background max-w-sm w-full rounded-2xl p-6 shadow-2xl border border-border"
+          >
+            <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center mb-4">
+              <Trash2 className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-semibold text-foreground mb-1.5">Delete Folder</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-6">
+              Are you sure you want to delete the "{folderToDelete.name}" folder? {folderToDelete.linkCount > 0 ? `This folder currently contains ${folderToDelete.linkCount} links. The folder will be deleted and the links will be moved out of it, but the links themselves will not be deleted.` : 'This action cannot be undone.'}
             </p>
-            <div className="flex items-center justify-end gap-3">
+            <div className="flex items-center justify-end gap-2.5">
               <button 
                 onClick={() => setFolderToDelete(null)}
-                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
+                className="px-3.5 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors border border-transparent"
               >
                 Cancel
               </button>
               <button 
                 onClick={() => handleDeleteFolder(folderToDelete.id)}
-                className="px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors shadow-sm focus:outline-none"
+                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-lg transition-all shadow-sm focus:outline-none active:scale-95"
               >
                 Delete Folder
               </button>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       )}
       </AnimatePresence>
