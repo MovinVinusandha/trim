@@ -69,6 +69,7 @@ const AnalyticsPage: React.FC = () => {
 
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRangeValue>({ type: 'preset', value: '30d' });
 
@@ -108,7 +109,11 @@ const AnalyticsPage: React.FC = () => {
 
   useEffect(() => {
     const fetchAnalytics = async () => {
-      setLoading(true);
+      if (!data) {
+        setLoading(true);
+      } else {
+        setIsFetching(true);
+      }
       try {
         let endpoint = '/analytics';
         const params: any = {};
@@ -139,6 +144,7 @@ const AnalyticsPage: React.FC = () => {
         setError(err.response?.status === 404 ? 'Analytics not found or unauthorized.' : 'Failed to load analytics.');
       } finally {
         setLoading(false);
+        setIsFetching(false);
       }
     };
 
@@ -198,7 +204,7 @@ const AnalyticsPage: React.FC = () => {
   }, [folders, urls, activeTagIds, hashParam]);
 
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
         <div className="flex items-center justify-between">
@@ -248,7 +254,7 @@ const AnalyticsPage: React.FC = () => {
     );
   }
 
-  if (error || !data) {
+  if (error && !data) {
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-screen flex items-center justify-center p-4">
         <div className="bg-popover rounded-xl shadow-xl border border-border p-8 text-center max-w-md w-full">
@@ -931,7 +937,7 @@ const AnalyticsPage: React.FC = () => {
         </div>
 
         {/* Unified Master Card */}
-        <div className="bg-background border border-border rounded-xl overflow-hidden flex flex-col w-full">
+        <div className={`bg-background border border-border rounded-xl overflow-hidden flex flex-col w-full transition-opacity duration-200 ${isFetching ? 'opacity-75' : 'opacity-100'}`}>
           {/* Integrated Metric Header Bar */}
           <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border border-b border-border">
             {/* Column 1: Clicks */}
@@ -1009,7 +1015,7 @@ const AnalyticsPage: React.FC = () => {
         </div>
 
         {/* Breakdown Grids */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <section className={`grid grid-cols-1 lg:grid-cols-3 gap-6 transition-opacity duration-200 ${isFetching ? 'opacity-75' : 'opacity-100'}`}>
           
           {/* Countries */}
           <div className="bg-background border border-border rounded-xl p-0 flex flex-col overflow-hidden">
