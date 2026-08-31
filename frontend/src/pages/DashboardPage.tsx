@@ -174,9 +174,38 @@ const DashboardPage: React.FC = () => {
     [storageKey]
   );
 
-  /** Refresh live click counts via GET /url/{hash} for each entry */
+  /** Refresh live click counts via single bulk GET /url/all or individual fallback */
   const syncClickCounts = useCallback(async (entries: UrlEntry[]): Promise<UrlEntry[]> => {
     if (entries.length === 0) return entries;
+
+    if (user) {
+      try {
+        const { data: allDtos } = await axiosInstance.get<UrlDto[]>('/url/all');
+        const dtoMap = new Map<string, UrlDto>();
+        allDtos.forEach(dto => {
+          dtoMap.set(extractHash(dto.shortUrl).toLowerCase(), dto);
+        });
+
+        return entries.map(entry => {
+          const hash = extractHash(entry.shortUrl).toLowerCase();
+          const updatedDto = dtoMap.get(hash);
+          if (!updatedDto) return entry;
+          const freshClicks = updatedDto.accessed_times ?? (updatedDto as any).accessedTimes ?? (updatedDto as any).clicks ?? 0;
+          return {
+            ...entry,
+            longUrl: updatedDto.longUrl,
+            accessed_times: freshClicks,
+            updatedAt: updatedDto.updatedAt,
+            hasPassword: updatedDto.hasPassword,
+            tags: updatedDto.tags,
+            folderId: updatedDto.folderId,
+            folderName: updatedDto.folderName,
+          };
+        });
+      } catch (err) {
+        console.error('Failed bulk refresh stats', err);
+      }
+    }
 
     const updatedUrls = await Promise.all(
       entries.map(async (entry) => {
@@ -208,7 +237,7 @@ const DashboardPage: React.FC = () => {
     );
     
     return updatedUrls.filter((u): u is UrlEntry => u !== null);
-  }, []);
+  }, [user]);
 
 
   // Initial load logic on mount / user change / folderSlug change
@@ -219,24 +248,39 @@ const DashboardPage: React.FC = () => {
       setLoadingAll(true);
 
       try {
-        const tagIdParam = searchParams.get('tagId');
-        const { data } = await axiosInstance.get<UrlDto[]>('/url/all', {
-          params: {
-            folderSlug: folderSlug || undefined,
-            tagId: tagIdParam || undefined,
-            search: searchQuery || undefined
+        if (user) {
+          let url = '/url/all';
+          if (folderSlug) {
+            url = `/url/folder/slug/${folderSlug}`;
           }
-        });
-        if (isMounted) {
-          const serverUrls = data.map(mapDtoToEntry);
-          setUrls(serverUrls);
-          if (storageKey) {
-            localStorage.setItem(storageKey, JSON.stringify(serverUrls));
+          const { data: serverUrls } = await axiosInstance.get<UrlDto[]>(url);
+
+          if (isMounted) {
+            const mapped = serverUrls.map(mapDtoToEntry);
+            setUrls(mapped);
+            saveToStorage(mapped);
+          }
+        } else {
+          // Anonymous user: fallback to localStorage cache
+          if (storageKey && isMounted) {
+            const raw = localStorage.getItem(storageKey);
+            if (raw) {
+              const cached = JSON.parse(raw);
+              if (Array.isArray(cached)) {
+                setUrls(cached);
+                syncClickCounts(cached).then(fresh => {
+                  if (isMounted) {
+                    setUrls(fresh);
+                    saveToStorage(fresh);
+                  }
+                });
+              }
+            }
           }
         }
-      } catch (error) {
-        console.error('Failed to fetch URLs from server:', error);
-        // Fallback to localStorage if server fetch fails
+      } catch (err) {
+        console.error("Failed to load URLs", err);
+        // Fallback to local storage
         if (storageKey && isMounted) {
           try {
             const raw = localStorage.getItem(storageKey);
@@ -262,7 +306,7 @@ const DashboardPage: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [storageKey, triggerRefresh, folderSlug, searchParams.toString(), searchQuery]);
+  }, [storageKey, triggerRefresh, folderSlug, searchQuery, user]);
 
   // Periodically refresh click counts while the dashboard is visible
   useEffect(() => {
@@ -278,7 +322,7 @@ const DashboardPage: React.FC = () => {
       }
     };
 
-    const intervalId = window.setInterval(refreshCounts, 30_000);
+    const intervalId = window.setInterval(refreshCounts, 3_000);
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         refreshCounts();

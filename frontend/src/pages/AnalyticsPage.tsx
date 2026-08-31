@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import {
@@ -107,49 +107,72 @@ const AnalyticsPage: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      if (!data) {
-        setLoading(true);
+  const fetchAnalytics = useCallback(async (isSilent = false) => {
+    if (!isSilent && !data) {
+      setLoading(true);
+    } else if (!isSilent) {
+      setIsFetching(true);
+    }
+    try {
+      let endpoint = '/analytics';
+      const params: any = {};
+      if (dateRange.type === 'preset') {
+        params.period = dateRange.value;
       } else {
-        setIsFetching(true);
+        params.startDate = format(dateRange.start, "yyyy-MM-dd'T'HH:mm:ss");
+        params.endDate = format(dateRange.end, "yyyy-MM-dd'T'HH:mm:ss");
       }
-      try {
-        let endpoint = '/analytics';
-        const params: any = {};
-        if (dateRange.type === 'preset') {
-          params.period = dateRange.value;
-        } else {
-          params.startDate = format(dateRange.start, "yyyy-MM-dd'T'HH:mm:ss");
-          params.endDate = format(dateRange.end, "yyyy-MM-dd'T'HH:mm:ss");
-        }
-        if (tagIdParam) {
-          params.tagId = tagIdParam;
-        }
+      if (tagIdParam) {
+        params.tagId = tagIdParam;
+      }
 
-        if (hashParam) {
-          endpoint = `/analytics/${hashParam}`;
-        } else if (folderSlug) {
-          endpoint = `/analytics/folder/slug/${folderSlug}`;
-        } else if (folderIdParam) {
-          endpoint = `/analytics/folder/${folderIdParam}`;
-        } else {
-          endpoint = '/analytics';
-        }
+      if (hashParam) {
+        endpoint = `/analytics/${hashParam}`;
+      } else if (folderSlug) {
+        endpoint = `/analytics/folder/slug/${folderSlug}`;
+      } else if (folderIdParam) {
+        endpoint = `/analytics/folder/${folderIdParam}`;
+      } else {
+        endpoint = '/analytics';
+      }
 
-        const response = await axiosInstance.get<AnalyticsData>(endpoint, { params });
-        setData(response.data);
-        setError(null);
-      } catch (err: any) {
+      const response = await axiosInstance.get<AnalyticsData>(endpoint, { params });
+      setData(response.data);
+      setError(null);
+    } catch (err: any) {
+      if (!isSilent) {
         setError(err.response?.status === 404 ? 'Analytics not found or unauthorized.' : 'Failed to load analytics.');
-      } finally {
+      }
+    } finally {
+      if (!isSilent) {
         setLoading(false);
         setIsFetching(false);
       }
+    }
+  }, [hashParam, folderSlug, folderIdParam, tagIdParam, dateRange, data]);
+
+  useEffect(() => {
+    fetchAnalytics(false);
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchAnalytics(true);
+      }
+    }, 3_000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchAnalytics(true);
+      }
     };
 
-    fetchAnalytics();
-  }, [hashParam, folderSlug, folderIdParam, tagIdParam, dateRange]);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [fetchAnalytics]);
 
   const activeTagIds = useMemo(() => {
     return tagIdParam ? tagIdParam.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0) : [];

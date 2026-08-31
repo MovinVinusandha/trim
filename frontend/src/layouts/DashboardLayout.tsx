@@ -127,24 +127,43 @@ const DashboardLayout: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
-    let isMounted = true;
-    const loadUsageStats = async () => {
+    let cancelled = false;
+    const loadUsageStats = async (isBackground = false) => {
       try {
         const { data } = await axiosInstance.get('/analytics/usage');
-        if (isMounted) setNavStats({ totalClicks: data.totalClicks, linkCount: data.totalLinks });
+        if (!cancelled) setNavStats({ totalClicks: data.totalClicks, linkCount: data.totalLinks });
       } catch (err) {
         console.error("Failed to load usage stats", err);
       } finally {
-        if (isMounted) setIsStatsLoading(false);
+        if (!cancelled && !isBackground) setIsStatsLoading(false);
       }
     };
 
     if (user && user.role !== 'ROOT' && user.role !== 'ROLE_ROOT') {
-      loadUsageStats();
+      loadUsageStats(false);
+
+      const intervalId = window.setInterval(() => {
+        if (document.visibilityState === 'visible') {
+          loadUsageStats(true);
+        }
+      }, 3_000);
+
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          loadUsageStats(true);
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      return () => {
+        cancelled = true;
+        window.clearInterval(intervalId);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
     } else {
       setIsStatsLoading(false);
     }
-    return () => { isMounted = false; };
   }, [user, latestNewEntry]);
 
   const getTitle = () => {
