@@ -94,36 +94,53 @@ const DashboardLayout: React.FC = () => {
   };
 
   useEffect(() => {
-    let isMounted = true;
-    const loadTags = async () => {
+    let cancelled = false;
+    const loadTagsAndFolders = async (isBackground = false) => {
       try {
-        const { data } = await axiosInstance.get<Tag[]>('/tags');
-        if (isMounted) setTags(data);
-      } catch (err) {} finally {
-        if (isMounted) setIsTagsLoading(false);
-      }
-    };
-
-    const loadFolders = async () => {
-      try {
-        const { data } = await axiosInstance.get<Folder[]>('/folders');
-        if (isMounted) {
-          setFolders(data);
+        const [tagsRes, foldersRes] = await Promise.allSettled([
+          axiosInstance.get<Tag[]>('/tags'),
+          axiosInstance.get<Folder[]>('/folders')
+        ]);
+        if (!cancelled) {
+          if (tagsRes.status === 'fulfilled') setTags(tagsRes.value.data);
+          if (foldersRes.status === 'fulfilled') setFolders(foldersRes.value.data);
         }
-      } catch (err) {} finally {
-        if (isMounted) setIsFoldersLoading(false);
+      } catch (err) {
+        // Silent error in background
+      } finally {
+        if (!cancelled && !isBackground) {
+          setIsTagsLoading(false);
+          setIsFoldersLoading(false);
+        }
       }
     };
 
     if (user && user.role !== 'ROOT' && user.role !== 'ROLE_ROOT') {
-      loadTags();
-      loadFolders();
+      loadTagsAndFolders(false);
+
+      const intervalId = window.setInterval(() => {
+        if (document.visibilityState === 'visible') {
+          loadTagsAndFolders(true);
+        }
+      }, 3_000);
+
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          loadTagsAndFolders(true);
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      return () => {
+        cancelled = true;
+        window.clearInterval(intervalId);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
     } else {
       setIsTagsLoading(false);
       setIsFoldersLoading(false);
     }
-
-    return () => { isMounted = false; };
   }, [user]);
 
   useEffect(() => {

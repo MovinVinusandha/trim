@@ -157,8 +157,8 @@ const DashboardPage: React.FC = () => {
 
   urlsRef.current = urls;
 
-  // Scoped key based on logged in user's ID or email to prevent cross-account leak
-  const storageKey = user ? `user_urls_${user.id ?? user.email}` : null;
+  // Scoped key based on logged in user's ID or email, or guest fallback
+  const storageKey = user ? `user_urls_${user.id ?? user.email}` : 'guest_urls';
 
   /** Save URLs to localStorage for regular users */
   const saveToStorage = useCallback(
