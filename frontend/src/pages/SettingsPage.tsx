@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Copy, Check, AlertCircle, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
@@ -6,7 +6,7 @@ import Skeleton from 'react-loading-skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SettingsPage: React.FC = () => {
-  const { user, logout, loading } = useAuth();
+  const { user, logout, loading, updateUser } = useAuth();
   
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -23,6 +23,12 @@ const SettingsPage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  // Sync state if user loads after mount
+  useEffect(() => {
+    if (user?.name) setName(user.name);
+    if (user?.email) setEmail(user.email);
+  }, [user]);
+
   const userIdDisplay = (user as any)?.publicId || user?.id || 'Unknown ID';
 
   const handleUpdateName = async () => {
@@ -30,6 +36,7 @@ const SettingsPage: React.FC = () => {
     setNameMessage(null);
     try {
       await axiosInstance.put('/users/me', { name, email: user?.email });
+      if (typeof updateUser === 'function') updateUser({ name });
       setNameMessage({ type: 'success', text: 'Name updated successfully.' });
     } catch (error: any) {
       setNameMessage({ type: 'error', text: error.response?.data?.message || 'Failed to update name.' });
@@ -43,6 +50,7 @@ const SettingsPage: React.FC = () => {
     setEmailMessage(null);
     try {
       await axiosInstance.put('/users/me', { name: user?.name, email });
+      if (typeof updateUser === 'function') updateUser({ email });
       setEmailMessage({ type: 'success', text: 'Email updated successfully.' });
     } catch (error: any) {
       if (error.response?.status === 409) {
@@ -76,7 +84,7 @@ const SettingsPage: React.FC = () => {
 
   const isConfirmationMatch = confirmationText === 'confirm delete account';
 
-  if (loading) {
+  if (loading && !user) {
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-4 max-w-4xl mx-auto space-y-6">
         <div className="mb-6">

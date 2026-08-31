@@ -14,6 +14,7 @@ interface AuthContextValue {
   loading: boolean;
   login: (token: string) => Promise<void>;
   logout: () => void;
+  updateUser: (updatedUser: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -61,6 +62,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     [fetchMe]
   );
 
+  /** Update current user in local state */
+  const updateUser = useCallback((updated: Partial<User>) => {
+    setUser(prev => prev ? { ...prev, ...updated } : prev);
+  }, []);
+
   /** Called when the user clicks Logout */
   const logout = useCallback(() => {
     localStorage.removeItem('token');
@@ -69,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
