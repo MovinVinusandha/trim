@@ -338,11 +338,15 @@ const AnalyticsPage: React.FC = () => {
             <div className="relative" ref={filterRef}>
               <button 
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`flex items-center gap-2 px-3 py-1.5 border rounded-lg text-xs font-medium transition-colors ${activeFilterCount > 0 ? 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/20' : 'bg-background border-input text-foreground hover:bg-secondary'}`}
+                className={`flex items-center gap-2 px-3 py-1.5 border rounded-lg text-xs font-medium transition-all ${
+                  activeFilterCount > 0 
+                    ? 'border-neutral-200/80 dark:border-[#27272A] bg-neutral-100 dark:bg-[#18181B] text-foreground shadow-sm hover:bg-neutral-200/60 dark:hover:bg-[#202024]' 
+                    : 'bg-background border-input text-foreground hover:bg-secondary'
+                }`}
               >
-                <Filter className="w-3.5 h-3.5" />
+                <Filter className={`w-3.5 h-3.5 ${activeFilterCount > 0 ? 'text-[#0099ff]' : 'text-muted-foreground'}`} />
                 Filter
-                {activeFilterCount > 0 && <span className="bg-primary/20 text-primary text-[10px] px-1.5 py-0.5 rounded-full leading-none font-semibold">{activeFilterCount}</span>}
+                {activeFilterCount > 0 && <span className="bg-[#0099ff] text-white text-[10px] px-1.5 py-0.5 rounded-full leading-none font-semibold shadow-sm">{activeFilterCount}</span>}
                 <ChevronDown className="w-3 h-3 opacity-70" />
               </button>
 

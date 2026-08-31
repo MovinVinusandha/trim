@@ -448,11 +448,15 @@ const DashboardPage: React.FC = () => {
               <div className="relative" ref={filterRef}>
                 <button 
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
-                  className={`flex items-center gap-2 px-3 py-1.5 border rounded-lg text-xs font-medium transition-colors ${selectedFilterTags.length > 0 ? 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/20' : 'bg-background border-input text-foreground hover:bg-secondary'}`}
+                  className={`flex items-center gap-2 px-3 py-1.5 border rounded-lg text-xs font-medium transition-all ${
+                    selectedFilterTags.length > 0 
+                      ? 'border-neutral-200/80 dark:border-[#27272A] bg-neutral-100 dark:bg-[#18181B] text-foreground shadow-sm hover:bg-neutral-200/60 dark:hover:bg-[#202024]' 
+                      : 'bg-background border-input text-foreground hover:bg-secondary'
+                  }`}
                 >
-                  <Filter className="w-3.5 h-3.5" />
+                  <Filter className={`w-3.5 h-3.5 ${selectedFilterTags.length > 0 ? 'text-[#0099ff]' : 'text-muted-foreground'}`} />
                   Filter
-                  {selectedFilterTags.length > 0 && <span className="bg-primary/20 text-primary text-[10px] px-1.5 py-0.5 rounded-full leading-none font-semibold">{selectedFilterTags.length}</span>}
+                  {selectedFilterTags.length > 0 && <span className="bg-[#0099ff] text-white text-[10px] px-1.5 py-0.5 rounded-full leading-none font-semibold shadow-sm">{selectedFilterTags.length}</span>}
                   <ChevronDown className="w-3 h-3 opacity-70" />
                 </button>
 
@@ -612,24 +616,24 @@ const DashboardPage: React.FC = () => {
                             >
                               <button
                                 onClick={() => { setSortBy('dateCreated'); setIsSortMenuOpen(false); }}
-                                className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-foreground hover:bg-secondary transition-colors"
+                                className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-foreground hover:bg-neutral-100/70 dark:hover:bg-[#111114] transition-colors"
                               >
                                 <span className="flex items-center gap-2">
                                   <ArrowDownWideNarrow className="w-3.5 h-3.5 text-muted-foreground" />
                                   Date created
                                 </span>
-                                {sortBy === 'dateCreated' && <Check className="w-3.5 h-3.5 text-primary" />}
+                                {sortBy === 'dateCreated' && <Check className="w-3.5 h-3.5 text-[#0099ff] stroke-[2.5]" />}
                               </button>
                               
                               <button
                                 onClick={() => { setSortBy('totalClicks'); setIsSortMenuOpen(false); }}
-                                className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-foreground hover:bg-secondary transition-colors"
+                                className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-foreground hover:bg-neutral-100/70 dark:hover:bg-[#111114] transition-colors"
                               >
                                 <span className="flex items-center gap-2">
                                   <ArrowDownWideNarrow className="w-3.5 h-3.5 text-muted-foreground" />
                                   Total clicks
                                 </span>
-                                {sortBy === 'totalClicks' && <Check className="w-3.5 h-3.5 text-primary" />}
+                                {sortBy === 'totalClicks' && <Check className="w-3.5 h-3.5 text-[#0099ff] stroke-[2.5]" />}
                               </button>
                             </motion.div>
                           )}
@@ -642,42 +646,70 @@ const DashboardPage: React.FC = () => {
                     <div className="p-3 flex flex-col gap-2">
                       <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Display Properties</h3>
                       <div className="flex flex-wrap gap-1.5">
-                        <button className="px-2 py-1 text-xs border border-transparent rounded-lg bg-secondary text-muted-foreground font-medium cursor-not-allowed">
+                        <button 
+                          disabled={true}
+                          className="px-2.5 py-1 text-xs border rounded-lg font-medium border-neutral-200/80 dark:border-[#27272A] bg-neutral-100/60 dark:bg-[#18181B]/60 text-muted-foreground cursor-not-allowed shadow-sm"
+                          title="Always visible"
+                        >
                           Short link
                         </button>
                         <button 
                           onClick={() => setDisplayProps(prev => ({ ...prev, destinationUrl: !prev.destinationUrl }))}
-                          className={`px-2 py-1 text-xs border rounded-lg font-medium transition-colors ${displayProps.destinationUrl ? 'border-primary/40 bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground hover:bg-secondary'}`}
+                          className={`px-2.5 py-1 text-xs border rounded-lg font-medium transition-all ${
+                            displayProps.destinationUrl 
+                              ? 'border-neutral-200/80 dark:border-[#27272A] bg-neutral-100 dark:bg-[#18181B] text-foreground shadow-sm' 
+                              : 'border-border/60 bg-background/50 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                          }`}
                         >
                           Destination URL
                         </button>
                         <button 
                           onClick={() => setDisplayProps(prev => ({ ...prev, clicks: !prev.clicks }))}
-                          className={`px-2 py-1 text-xs border rounded-lg font-medium transition-colors ${displayProps.clicks ? 'border-primary/40 bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground hover:bg-secondary'}`}
+                          className={`px-2.5 py-1 text-xs border rounded-lg font-medium transition-all ${
+                            displayProps.clicks 
+                              ? 'border-neutral-200/80 dark:border-[#27272A] bg-neutral-100 dark:bg-[#18181B] text-foreground shadow-sm' 
+                              : 'border-border/60 bg-background/50 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                          }`}
                         >
                           Analytics
                         </button>
                         <button 
                           onClick={() => setDisplayProps(prev => ({ ...prev, createdAt: !prev.createdAt }))}
-                          className={`px-2 py-1 text-xs border rounded-lg font-medium transition-colors ${displayProps.createdAt ? 'border-primary/40 bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground hover:bg-secondary'}`}
+                          className={`px-2.5 py-1 text-xs border rounded-lg font-medium transition-all ${
+                            displayProps.createdAt 
+                              ? 'border-neutral-200/80 dark:border-[#27272A] bg-neutral-100 dark:bg-[#18181B] text-foreground shadow-sm' 
+                              : 'border-border/60 bg-background/50 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                          }`}
                         >
                           Created Date
                         </button>
                         <button 
                           onClick={() => setDisplayProps(prev => ({ ...prev, tags: !prev.tags }))}
-                          className={`px-2 py-1 text-xs border rounded-lg font-medium transition-colors ${displayProps.tags ? 'border-primary/40 bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground hover:bg-secondary'}`}
+                          className={`px-2.5 py-1 text-xs border rounded-lg font-medium transition-all ${
+                            displayProps.tags 
+                              ? 'border-neutral-200/80 dark:border-[#27272A] bg-neutral-100 dark:bg-[#18181B] text-foreground shadow-sm' 
+                              : 'border-border/60 bg-background/50 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                          }`}
                         >
                           Tags
                         </button>
                         <button 
                           onClick={() => setDisplayProps(prev => ({ ...prev, status: !prev.status }))}
-                          className={`px-2 py-1 text-xs border rounded-lg font-medium transition-colors ${displayProps.status ? 'border-primary/40 bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground hover:bg-secondary'}`}
+                          className={`px-2.5 py-1 text-xs border rounded-lg font-medium transition-all ${
+                            displayProps.status 
+                              ? 'border-neutral-200/80 dark:border-[#27272A] bg-neutral-100 dark:bg-[#18181B] text-foreground shadow-sm' 
+                              : 'border-border/60 bg-background/50 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                          }`}
                         >
                           Status
                         </button>
                         <button 
                           onClick={() => setDisplayProps(prev => ({ ...prev, password: !prev.password }))}
-                          className={`px-2 py-1 text-xs border rounded-lg font-medium transition-colors ${displayProps.password ? 'border-primary/40 bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground hover:bg-secondary'}`}
+                          className={`px-2.5 py-1 text-xs border rounded-lg font-medium transition-all ${
+                            displayProps.password 
+                              ? 'border-neutral-200/80 dark:border-[#27272A] bg-neutral-100 dark:bg-[#18181B] text-foreground shadow-sm' 
+                              : 'border-border/60 bg-background/50 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                          }`}
                         >
                           Password
                         </button>

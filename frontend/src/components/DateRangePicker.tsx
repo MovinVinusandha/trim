@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Calendar as CalendarIcon, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronDown, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   format, addMonths, subMonths, startOfMonth, endOfMonth, 
@@ -299,7 +299,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChang
                 <button
                   onClick={handleApplyCustom}
                   disabled={!selectionStart || !selectionEnd}
-                  className="px-3 py-1 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-lg disabled:opacity-50 transition-colors shadow-sm"
+                  className="px-3.5 py-1.5 bg-[#0099ff] hover:bg-[#0088ee] text-white text-xs font-semibold rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
                 >
                   Apply
                 </button>
@@ -307,20 +307,21 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChang
             </div>
 
             {/* Dropdown Preset List (Right Sidebar) */}
-            <div className="w-full md:w-44 border-t md:border-t-0 md:border-l border-border p-2 flex flex-col gap-1 bg-secondary/20">
+            <div className="w-full md:w-44 border-t md:border-t-0 md:border-l border-border p-2 flex flex-col gap-1 bg-secondary/10">
               {PRESETS.map(preset => {
                 const isActive = value.type === 'preset' && value.value === preset.value;
                 return (
                   <button
                     key={preset.value}
                     onClick={() => handlePresetClick(preset)}
-                    className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between ${
+                    className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-all flex items-center justify-between group ${
                       isActive 
-                        ? 'bg-primary/10 text-primary font-semibold' 
-                        : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                        ? 'bg-neutral-100 dark:bg-[#18181B] text-foreground font-medium border border-neutral-200/80 dark:border-[#27272A] shadow-sm' 
+                        : 'text-muted-foreground hover:bg-neutral-100/50 dark:hover:bg-[#111114] hover:text-foreground border border-transparent'
                     }`}
                   >
                     <span>{preset.label}</span>
+                    {isActive && <Check className="w-3.5 h-3.5 text-[#0099ff] shrink-0 stroke-[2.5]" />}
                   </button>
                 );
               })}
