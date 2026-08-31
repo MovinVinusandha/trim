@@ -48,12 +48,13 @@ vi.mock('recharts', async () => {
     ...OriginalRecharts,
     ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
     AreaChart: ({ children }: any) => <div data-testid="area-chart">{children}</div>,
+    BarChart: ({ children }: any) => <div data-testid="bar-chart">{children}</div>,
     PieChart: ({ children }: any) => <div data-testid="pie-chart">{children}</div>,
     Tooltip: ({ content }: any) => {
       if (typeof content === 'function') {
         return content({
           active: true,
-          payload: [{ value: 450 }],
+          payload: [{ value: 450, payload: { count: 450, cumulative: 450 } }],
           label: '2026-08-01T00:00:00Z',
         });
       }
@@ -339,5 +340,30 @@ describe('AnalyticsPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Analytics not found or unauthorized.')).toBeInTheDocument();
     });
+  });
+
+  it('allows switching between Timeline, Volume, and Growth chart options', async () => {
+    render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByText('Traffic Velocity Timeline')).toBeInTheDocument();
+    });
+
+    // Switch to Volume
+    const volumeBtn = screen.getByRole('button', { name: /Volume/i });
+    fireEvent.click(volumeBtn);
+    expect(screen.getByText('Period Volume Comparison')).toBeInTheDocument();
+    expect(screen.getByTestId('bar-chart')).toBeInTheDocument();
+
+    // Switch to Growth
+    const growthBtn = screen.getByRole('button', { name: /Growth/i });
+    fireEvent.click(growthBtn);
+    expect(screen.getByText('Cumulative Audience Trajectory')).toBeInTheDocument();
+    expect(screen.getByTestId('area-chart')).toBeInTheDocument();
+
+    // Switch back to Timeline
+    const timelineBtn = screen.getByRole('button', { name: /Timeline/i });
+    fireEvent.click(timelineBtn);
+    expect(screen.getByText('Traffic Velocity Timeline')).toBeInTheDocument();
   });
 });

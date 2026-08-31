@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { useOutletContext } from 'react-router-dom';
 import type { DashboardLayoutContext } from '../layouts/DashboardLayout';
@@ -10,7 +10,8 @@ import {
   ArrowLeft, MousePointerClick, Globe, Monitor, 
   Link as LinkIcon, Activity,
   Share2, Folder as FolderIcon,
-  Tag, X, Search, Filter, ChevronDown, ChevronLeft, Check
+  Tag, X, Search, Filter, ChevronDown, ChevronLeft, Check,
+  BarChart2, Layers, Zap
 } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -352,6 +353,127 @@ const AnalyticsPage: React.FC = () => {
     return list;
   }, [folders, urls, activeTagIds, hashParam]);
 
+  type ChartType = 'area' | 'bar' | 'cumulative';
+  const [chartType, setChartType] = useState<ChartType>('area');
+
+  const totalClicks = data?.totalClicks || 0;
+  const clicksByDate = data?.clicksByDate || [];
+  const clicksByCountry = data?.clicksByCountry || [];
+  const clicksByDevice = data?.clicksByDevice || [];
+  const clicksByBrowser = data?.clicksByBrowser || [];
+
+  const chartData = useMemo(() => {
+    if (!clicksByDate || clicksByDate.length === 0) return [];
+    let runningTotal = 0;
+    return clicksByDate.map((item) => {
+      runningTotal += item.count;
+      return {
+        ...item,
+        cumulative: runningTotal,
+      };
+    });
+  }, [clicksByDate]);
+
+  const peakActivity = useMemo(() => {
+    if (!clicksByDate || clicksByDate.length === 0) return null;
+    return clicksByDate.reduce((max, curr) => curr.count > max.count ? curr : max, clicksByDate[0]);
+  }, [clicksByDate]);
+
+  const formatXAxisTick = (dateStr: string) => {
+    if (!dateStr) return '';
+    try {
+      const date = parseISO(dateStr.length === 10 ? dateStr + 'T00:00:00Z' : (dateStr.endsWith('Z') ? dateStr : dateStr + 'Z'));
+      if (isNaN(date.getTime())) return dateStr;
+      if (dateRange.type === 'preset' && dateRange.value === '24h') {
+        return format(date, 'h:mm a');
+      }
+      if (dateRange.type === 'preset' && (dateRange.value === '7d' || dateRange.value === '30d')) {
+        return format(date, 'EEE, MMM d');
+      }
+      return format(date, 'MMM d');
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const formatTooltipLabel = (label: any) => {
+    const dateStr = typeof label === 'string' ? label : (label ? String(label) : '');
+    if (!dateStr) return '';
+    try {
+      const date = parseISO(dateStr.length === 10 ? dateStr + 'T00:00:00Z' : (dateStr.endsWith('Z') ? dateStr : dateStr + 'Z'));
+      if (isNaN(date.getTime())) return dateStr;
+      if (dateRange.type === 'preset' && dateRange.value === '24h') {
+        return format(date, 'EEE, MMM d, h:mm a');
+      }
+      return format(date, 'EEE, MMM d');
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const formattedLabel = formatTooltipLabel(label);
+      const dataItem = payload[0].payload || {};
+      const value = payload[0].value;
+
+      return (
+        <div className="bg-popover border border-border rounded-xl p-3 shadow-xl text-xs min-w-[150px] backdrop-blur-md">
+          <div className="text-muted-foreground pb-1.5 mb-2 border-b border-border font-medium">
+            {formattedLabel}
+          </div>
+          {chartType === 'area' && (
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5 text-foreground">
+                <span className="w-2 h-2 rounded-full bg-[#0099ff] shrink-0" />
+                <span>Clicks</span>
+              </div>
+              <span className="font-semibold text-foreground font-mono">
+                {value?.toLocaleString()}
+              </span>
+            </div>
+          )}
+          {chartType === 'bar' && (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-1.5 text-foreground">
+                  <span className="w-2 h-2 rounded-full bg-[#38bdf8] shrink-0" />
+                  <span>Volume</span>
+                </div>
+                <span className="font-semibold text-foreground font-mono">
+                  {value?.toLocaleString()}
+                </span>
+              </div>
+              {totalClicks > 0 && (
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                  <span>Share of Total</span>
+                  <span className="font-mono text-foreground font-medium">{Math.round((value / totalClicks) * 100)}%</span>
+                </div>
+              )}
+            </div>
+          )}
+          {chartType === 'cumulative' && (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-1.5 text-foreground">
+                  <span className="w-2 h-2 rounded-full bg-[#818cf8] shrink-0" />
+                  <span>Total Reach</span>
+                </div>
+                <span className="font-semibold text-foreground font-mono">
+                  {(dataItem.cumulative ?? value)?.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                <span>New in Period</span>
+                <span className="font-mono text-primary font-medium">+{dataItem.count?.toLocaleString() || 0}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+    return null;
+  };
 
   if (loading && !data) {
     return (
@@ -367,23 +489,14 @@ const AnalyticsPage: React.FC = () => {
             <div key={i} className="bg-background border border-border rounded-xl p-6 flex flex-col gap-1">
               <Skeleton width={120} height={16} />
               <div className="mt-2"><Skeleton width={80} height={36} /></div>
-              <Skeleton width={60} height={12} className="mt-1" />
             </div>
           ))}
         </section>
 
-        <section className="bg-background border border-border rounded-xl p-6 flex flex-col gap-6">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <Skeleton width={150} height={24} />
-              <div className="mt-1"><Skeleton width={200} height={16} /></div>
-            </div>
-            <Skeleton width={180} height={32} borderRadius={6} />
-          </div>
-          <div className="relative w-full h-[300px]">
-            <Skeleton height="100%" borderRadius={8} />
-          </div>
-        </section>
+        <div className="bg-background border border-border rounded-xl p-6 flex flex-col gap-4">
+          <Skeleton width={140} height={20} />
+          <Skeleton height={280} borderRadius={8} />
+        </div>
 
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
@@ -422,67 +535,6 @@ const AnalyticsPage: React.FC = () => {
       </motion.div>
     );
   }
-
-  const formatXAxisTick = (dateStr: string) => {
-    if (!dateStr) return '';
-    try {
-      const date = parseISO(dateStr.length === 10 ? dateStr + 'T00:00:00Z' : (dateStr.endsWith('Z') ? dateStr : dateStr + 'Z'));
-      if (isNaN(date.getTime())) return dateStr;
-      if (dateRange.type === 'preset' && dateRange.value === '24h') {
-        return format(date, 'h:mm a');
-      }
-      if (dateRange.type === 'preset' && (dateRange.value === '7d' || dateRange.value === '30d')) {
-        return format(date, 'EEE, MMM d');
-      }
-      return format(date, 'MMM d');
-    } catch {
-      return dateStr;
-    }
-  };
-
-  const formatTooltipLabel = (label: any) => {
-    const dateStr = typeof label === 'string' ? label : (label ? String(label) : '');
-    if (!dateStr) return '';
-    try {
-      const date = parseISO(dateStr.length === 10 ? dateStr + 'T00:00:00Z' : (dateStr.endsWith('Z') ? dateStr : dateStr + 'Z'));
-      if (isNaN(date.getTime())) return dateStr;
-      if (dateRange.type === 'preset' && dateRange.value === '24h') {
-        return format(date, 'EEE, MMM d, h:mm a');
-      }
-      return format(date, 'EEE, MMM d');
-    } catch {
-      return dateStr;
-    }
-  };
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const formattedLabel = formatTooltipLabel(label);
-      return (
-        <div className="bg-popover border border-border rounded-xl p-3 shadow-lg text-xs min-w-[140px]">
-          <div className="text-muted-foreground pb-1.5 mb-1.5 border-b border-border font-medium">
-            {formattedLabel}
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 text-foreground">
-              <span className="w-2.5 h-2.5 rounded-sm bg-primary shrink-0" />
-              <span>Clicks</span>
-            </div>
-            <span className="font-semibold text-foreground font-mono">
-              {payload[0].value?.toLocaleString()}
-            </span>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const totalClicks = data?.totalClicks || 0;
-  const clicksByDate = data?.clicksByDate || [];
-  const clicksByCountry = data?.clicksByCountry || [];
-  const clicksByDevice = data?.clicksByDevice || [];
-  const clicksByBrowser = data?.clicksByBrowser || [];
 
   return (
     <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
@@ -1088,70 +1140,208 @@ const AnalyticsPage: React.FC = () => {
         {/* Unified Master Card */}
         <div className={`bg-background border border-border rounded-xl overflow-hidden flex flex-col w-full transition-opacity duration-200 ${isFetching ? 'opacity-75' : 'opacity-100'}`}>
           {/* Integrated Metric Header Bar */}
-          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border border-b border-border">
+          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border border-b border-border">
             {/* Column 1: Clicks */}
             <div className="p-4 sm:p-5 bg-background">
               <div className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                <MousePointerClick className="w-3.5 h-3.5 text-primary" /> Clicks
+                <MousePointerClick className="w-3.5 h-3.5 text-primary" /> Total Clicks
               </div>
               <div className="text-2xl sm:text-3xl font-bold text-foreground mt-1">
                 {totalClicks.toLocaleString()}
               </div>
             </div>
 
-            {/* Column 2: Top Source */}
+            {/* Column 2: Peak Activity */}
+            <div className="p-4 sm:p-5 bg-background">
+              <div className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 text-amber-500" /> Peak Traffic
+              </div>
+              <div className="text-2xl sm:text-3xl font-bold text-foreground mt-1 flex items-baseline gap-2">
+                <span>{peakActivity ? peakActivity.count.toLocaleString() : 0}</span>
+                {peakActivity && peakActivity.count > 0 && (
+                  <span className="text-xs font-normal text-muted-foreground truncate">
+                    ({formatXAxisTick(peakActivity.date)})
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Column 3: Top Source */}
             <div className="p-4 sm:p-5 bg-background">
               <div className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                 <Share2 className="w-3.5 h-3.5 text-primary" /> Top Source
               </div>
               <div className="text-2xl sm:text-3xl font-bold text-foreground mt-1 truncate">
-                {clicksByBrowser.length > 0 ? clicksByBrowser[0].browser : 'N/A'}
+                {clicksByBrowser.length > 0 ? clicksByBrowser[0].browser : 'Direct / Organic'}
               </div>
             </div>
           </div>
 
           {/* Chart Container */}
           <div className="p-6 relative">
+            {/* Chart Mode Controls */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                {chartType === 'area' && (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-[#0099ff]" />
+                    <span>Traffic Velocity Timeline</span>
+                  </>
+                )}
+                {chartType === 'bar' && (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-[#38bdf8]" />
+                    <span>Period Volume Comparison</span>
+                  </>
+                )}
+                {chartType === 'cumulative' && (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-[#818cf8]" />
+                    <span>Cumulative Audience Trajectory</span>
+                  </>
+                )}
+              </div>
+
+              {/* Modern Segmented Control Switcher */}
+              <div className="relative flex items-center bg-secondary/50 dark:bg-[#0E0E11] p-1 rounded-xl border border-border/80 gap-1 self-start sm:self-auto shadow-inner">
+                {(['area', 'bar', 'cumulative'] as const).map((type) => {
+                  const isActive = chartType === type;
+                  const label = type === 'area' ? 'Timeline' : type === 'bar' ? 'Volume' : 'Growth';
+                  const Icon = type === 'area' ? Activity : type === 'bar' ? BarChart2 : Layers;
+                  const iconColor = type === 'area' ? 'text-[#0099ff]' : type === 'bar' ? 'text-[#38bdf8]' : 'text-[#818cf8]';
+
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setChartType(type)}
+                      className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        isActive
+                          ? 'text-foreground font-semibold'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeChartSegment"
+                          className="absolute inset-0 bg-background dark:bg-[#18181C] rounded-lg shadow-sm border border-border/80 dark:border-white/10 z-[-1]"
+                          transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                        />
+                      )}
+                      <Icon className={`w-3.5 h-3.5 ${iconColor}`} />
+                      <span>{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="relative w-full h-[300px] overflow-hidden">
-              {clicksByDate.length > 0 ? (
+              {chartData.length > 0 ? (
                 <motion.div 
-                  key={`${JSON.stringify(dateRange)}-${hashParam || 'all'}`}
-                  initial={{ opacity: 0, scaleY: 0 }}
-                  animate={{ opacity: 1, scaleY: 1 }}
-                  transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-                  style={{ transformOrigin: 'bottom center' }}
+                  key={`${chartType}-${JSON.stringify(dateRange)}-${hashParam || 'all'}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2 }}
                   className="w-full h-full"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={clicksByDate} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#0099ff" stopOpacity={0.45}/>
-                          <stop offset="65%" stopColor="#0099ff" stopOpacity={0.12}/>
-                          <stop offset="100%" stopColor="#0099ff" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <XAxis 
-                        dataKey="date" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{ fill: '#71717A', fontSize: 11 }} 
-                        tickFormatter={formatXAxisTick}
-                        minTickGap={40}
-                      />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#71717A', fontSize: 11 }} allowDecimals={false} />
-                      <Tooltip content={<CustomTooltip />} labelFormatter={formatTooltipLabel} />
-                      <Area 
-                        type="monotone" 
-                        dataKey="count" 
-                        stroke="#0099ff" 
-                        strokeWidth={2.5} 
-                        fillOpacity={1} 
-                        fill="url(#colorClicks)" 
-                        isAnimationActive={false}
-                        activeDot={{ r: 5, fill: '#ffffff', stroke: '#0099ff', strokeWidth: 2 }} 
-                      />
-                    </AreaChart>
+                    {chartType === 'area' ? (
+                      <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#0099ff" stopOpacity={0.45}/>
+                            <stop offset="65%" stopColor="#0099ff" stopOpacity={0.12}/>
+                            <stop offset="100%" stopColor="#0099ff" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <XAxis 
+                          dataKey="date" 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fill: '#71717A', fontSize: 11 }} 
+                          tickFormatter={formatXAxisTick}
+                          minTickGap={40}
+                        />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#71717A', fontSize: 11 }} allowDecimals={false} />
+                        <Tooltip 
+                          content={<CustomTooltip />} 
+                          cursor={{ stroke: '#0099ff', strokeWidth: 1.5, strokeDasharray: '4 4', strokeOpacity: 0.5 }}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="count" 
+                          stroke="#0099ff" 
+                          strokeWidth={2.5} 
+                          fillOpacity={1} 
+                          fill="url(#colorClicks)" 
+                          isAnimationActive={false}
+                          activeDot={{ r: 5, fill: '#ffffff', stroke: '#0099ff', strokeWidth: 2 }} 
+                        />
+                      </AreaChart>
+                    ) : chartType === 'bar' ? (
+                      <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="colorBar" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#38bdf8" stopOpacity={1}/>
+                            <stop offset="100%" stopColor="#0099ff" stopOpacity={0.75}/>
+                          </linearGradient>
+                        </defs>
+                        <XAxis 
+                          dataKey="date" 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fill: '#71717A', fontSize: 11 }} 
+                          tickFormatter={formatXAxisTick}
+                          minTickGap={40}
+                        />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#71717A', fontSize: 11 }} allowDecimals={false} />
+                        <Tooltip 
+                          content={<CustomTooltip />} 
+                          cursor={{ fill: 'rgba(56, 189, 248, 0.08)', radius: 8 }}
+                        />
+                        <Bar 
+                          dataKey="count" 
+                          fill="url(#colorBar)" 
+                          radius={[6, 6, 0, 0]} 
+                          maxBarSize={36}
+                          isAnimationActive={false}
+                        />
+                      </BarChart>
+                    ) : (
+                      <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#818cf8" stopOpacity={0.45}/>
+                            <stop offset="65%" stopColor="#818cf8" stopOpacity={0.12}/>
+                            <stop offset="100%" stopColor="#818cf8" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <XAxis 
+                          dataKey="date" 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fill: '#71717A', fontSize: 11 }} 
+                          tickFormatter={formatXAxisTick}
+                          minTickGap={40}
+                        />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#71717A', fontSize: 11 }} allowDecimals={false} />
+                        <Tooltip 
+                          content={<CustomTooltip />} 
+                          cursor={{ stroke: '#818cf8', strokeWidth: 1.5, strokeDasharray: '4 4', strokeOpacity: 0.5 }}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="cumulative" 
+                          stroke="#818cf8" 
+                          strokeWidth={2.5} 
+                          fillOpacity={1} 
+                          fill="url(#colorCumulative)" 
+                          isAnimationActive={false}
+                          activeDot={{ r: 5, fill: '#ffffff', stroke: '#818cf8', strokeWidth: 2 }} 
+                        />
+                      </AreaChart>
+                    )}
                   </ResponsiveContainer>
                 </motion.div>
               ) : (
