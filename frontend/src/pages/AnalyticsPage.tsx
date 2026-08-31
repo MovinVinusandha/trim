@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { useOutletContext } from 'react-router-dom';
 import type { DashboardLayoutContext } from '../layouts/DashboardLayout';
@@ -28,10 +27,137 @@ interface AnalyticsData {
   clicksByBrowser: { browser: string; count: number }[];
 }
 
-const COLORS = ['#0099ff', '#38bdf8', '#0ea5e9', '#0284c7', '#0369a1'];
+const COLORS = ['#0099ff', '#38bdf8', '#818cf8', '#34d399', '#fbbf24', '#f43f5e'];
 
 const extractHash = (shortUrl: string): string =>
   shortUrl.split('/').pop() ?? shortUrl;
+
+const DeviceDonutWheel: React.FC<{
+  data: { device: string; count: number }[];
+  totalClicks: number;
+}> = ({ data, totalClicks }) => {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  const deviceTotal = useMemo(() => {
+    return data.reduce((sum, item) => sum + item.count, 0) || totalClicks || 1;
+  }, [data, totalClicks]);
+
+  const R = 54;
+  const C = 2 * Math.PI * R; // ~339.292
+
+  let accumulatedPercent = 0;
+
+  const activeItem = hoveredIndex !== null && data[hoveredIndex] ? data[hoveredIndex] : null;
+  const activeCount = activeItem ? activeItem.count : data.reduce((sum, item) => sum + item.count, 0);
+  const activeLabel = activeItem ? activeItem.device : 'Total Clicks';
+  const activePct = activeItem ? Math.round((activeItem.count / deviceTotal) * 100) : 100;
+
+  return (
+    <div className="w-full flex flex-col items-center">
+      {/* SVG Donut Wheel */}
+      <div className="relative w-44 h-44 flex items-center justify-center my-1">
+        <svg 
+          viewBox="0 0 160 160" 
+          className="w-full h-full transform -rotate-90 origin-center select-none"
+        >
+          {/* Subtle Background Track */}
+          <circle
+            cx="80"
+            cy="80"
+            r={R}
+            fill="none"
+            className="stroke-secondary/70 dark:stroke-[#18181B]"
+            strokeWidth="14"
+          />
+
+          {/* Slices */}
+          {data.map((item, index) => {
+            const pct = item.count / deviceTotal;
+            const strokeLength = pct * C;
+            const strokeOffset = -(accumulatedPercent * C);
+            accumulatedPercent += pct;
+
+            const isHovered = hoveredIndex === index;
+            const isAnyHovered = hoveredIndex !== null;
+            const color = COLORS[index % COLORS.length];
+
+            const isSingle = data.length === 1;
+            const dashArray = isSingle
+              ? `${strokeLength} ${C - strokeLength}`
+              : `${Math.max(0.1, strokeLength - 1.5)} ${C - Math.max(0.1, strokeLength - 1.5) + 1.5}`;
+
+            return (
+              <circle
+                key={item.device}
+                cx="80"
+                cy="80"
+                r={R}
+                fill="none"
+                stroke={color}
+                strokeWidth={isHovered ? 17 : 14}
+                strokeDasharray={dashArray}
+                strokeDashoffset={strokeOffset}
+                className="transition-all duration-150 cursor-pointer"
+                style={{
+                  opacity: isAnyHovered && !isHovered ? 0.35 : 1,
+                  filter: isHovered ? `drop-shadow(0 0 6px ${color}90)` : 'none'
+                }}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+              />
+            );
+          })}
+        </svg>
+
+        {/* Centered Dynamic Hub */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center select-none">
+          <span className="text-xl font-bold font-mono tracking-tight text-foreground leading-none">
+            {activeCount.toLocaleString()}
+          </span>
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-1 truncate max-w-[85px]">
+            {activeLabel}
+          </span>
+          {activeItem && (
+            <span className="text-[11px] font-mono text-primary font-semibold leading-none mt-0.5">
+              {activePct}%
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Legend list below */}
+      <div className="w-full flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 mt-2 pt-3 border-t border-border/40">
+        {data.map((device, i) => {
+          const pct = Math.round((device.count / deviceTotal) * 100);
+          const isHovered = hoveredIndex === i;
+          const color = COLORS[i % COLORS.length];
+
+          return (
+            <button
+              key={device.device}
+              type="button"
+              onMouseEnter={() => setHoveredIndex(i)}
+              onMouseLeave={() => setHoveredIndex(null)}
+              className={`flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-md transition-all ${
+                isHovered ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <span 
+                className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm transition-transform duration-150" 
+                style={{ 
+                  backgroundColor: color,
+                  transform: isHovered ? 'scale(1.25)' : 'scale(1)'
+                }} 
+              />
+              <span className="font-medium text-foreground">{device.device}</span>
+              <span className="text-muted-foreground font-mono text-[11px]">({pct}%)</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 const AnalyticsPage: React.FC = () => {
   const { hash, folderSlug } = useParams<{ hash?: string; folderSlug?: string }>();
@@ -1069,47 +1195,25 @@ const AnalyticsPage: React.FC = () => {
 
           {/* Devices */}
           <div className="bg-background border border-border rounded-xl p-0 flex flex-col overflow-hidden">
-            <div className="p-4 border-b border-border flex items-center gap-2">
-              <Monitor className="w-4 h-4 text-primary" />
-              <h3 className="font-medium text-xs text-foreground">Devices</h3>
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Monitor className="w-4 h-4 text-primary" />
+                <h3 className="font-medium text-xs text-foreground">Devices</h3>
+              </div>
+              {clicksByDevice.length > 0 && (
+                <span className="text-[11px] text-muted-foreground font-medium">
+                  {clicksByDevice.reduce((acc, d) => acc + d.count, 0)} total
+                </span>
+              )}
             </div>
-            <div className="p-6 flex-1 flex flex-col justify-center items-center h-[300px]">
+            <div className="p-4 flex-1 flex flex-col justify-center items-center min-h-[220px]">
               {clicksByDevice.length > 0 ? (
-                <>
-                  <div className="relative w-full h-[180px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={clicksByDevice}
-                          innerRadius="70%"
-                          outerRadius="90%"
-                          paddingAngle={2}
-                          dataKey="count"
-                          nameKey="device"
-                          stroke="none"
-                        >
-                          {clicksByDevice.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip content={<CustomTooltip />} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex flex-wrap justify-center gap-3 mt-4">
-                    {clicksByDevice.map((device, i) => {
-                      const pct = totalClicks > 0 ? Math.round((device.count / totalClicks) * 100) : 0;
-                      return (
-                        <div key={device.device} className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
-                          <span className="text-xs text-muted-foreground">{device.device} ({pct}%)</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </>
+                <DeviceDonutWheel data={clicksByDevice} totalClicks={totalClicks} />
               ) : (
-                <div className="text-xs text-muted-foreground">No data</div>
+                <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <Monitor className="w-6 h-6 text-muted-foreground/40 mb-2" />
+                  <span className="text-xs text-muted-foreground">No device data available</span>
+                </div>
               )}
             </div>
           </div>
