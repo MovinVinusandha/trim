@@ -244,7 +244,7 @@ const SectionTicker = ({ number, title, commitMsg }: { number: string, title: st
         {number}
       </div>
       <div className="flex-grow flex items-center justify-between px-6 overflow-hidden">
-        <span className="text-primary font-bold truncate">
+        <span className="text-primary font-semibold text-[10px] md:text-[11px] truncate tracking-wider">
           {title}
         </span>
         <span className="text-muted-foreground truncate opacity-70 ml-4 hidden md:inline-block lowercase tracking-normal">
@@ -255,6 +255,28 @@ const SectionTicker = ({ number, title, commitMsg }: { number: string, title: st
     </div>
   </div>
 );
+
+const highlightTrim = (text: string) => {
+  const parts = text.split(/(Trim)/gi);
+  return parts.map((part, i) => 
+    part.toLowerCase() === 'trim' ? <span key={i} className="text-primary">{part}</span> : part
+  );
+};
+
+const testimonialsRow1 = [
+  { quote: 'Trim\'s Batch Creation API saved our marketing team hundreds of hours.', name: 'Sarah Jenkins', handle: 'sarahjenks' },
+  { quote: 'Trim provides real-time global event tracking in under 15ms. Incredible.', name: 'Michael Chen', handle: 'mchen_dev' },
+  { quote: 'The self-hosted Docker deployment for Trim with SSO was a breeze to set up.', name: 'David Wilson', handle: 'dwilson_ops' },
+  { quote: 'Hop tracking and malware scanning in Trim gives us total peace of mind.', name: 'Elena Rodriguez', handle: 'elenarod' }
+];
+
+const testimonialsRow2 = [
+  { quote: 'Switching to Trim from Bitly was seamless. The Analytics alone are worth it.', name: 'James Smith', handle: 'jsmith22' },
+  { quote: 'We run massive Black Friday campaigns. Trim never broke a sweat.', name: 'Anna Kowalski', handle: 'anna_k' },
+  { quote: 'Trim\'s immutable audit log is exactly what our compliance team needed.', name: 'Robert Taylor', handle: 'rtaylor_sec' },
+  { quote: 'Trim is a beautifully engineered tool. Multi-tenant mode handles our clients perfectly.', name: 'Lisa Wang', handle: 'lisawang_pm' }
+];
+
 const HomePage: React.FC = () => {
   const { token } = useAuth();
   const urlInputRef = useRef<HTMLInputElement>(null);
@@ -1141,44 +1163,53 @@ const HomePage: React.FC = () => {
 
 
             <SectionTicker number="05" title="LOVED BY MODERN TEAMS" commitMsg="movin vinusandha · [ops-220] scale infrastructure to handle bfcm holiday traffic" />
-      {/* ── Testimonials (Infinite Marquee) ─────────────── */}
+
+            {/* ── Testimonials (Infinite Marquee) ─────────────── */}
       <section className="bg-background relative overflow-hidden border-b border-border">
         <div className="max-w-7xl mx-auto border-x border-border flex flex-col relative">
-          {/* Gradient fade masks for the marquee edges */}
-          <div className="absolute left-0 top-16 bottom-0 w-16 sm:w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-16 bottom-0 w-16 sm:w-32 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-
-          <div className="px-6 py-16 text-center border-b border-border">
-             <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-               Loved by modern teams
+          
+          <div className="px-6 py-20 text-center border-b border-border bg-background relative z-20">
+             <h2 className="text-3xl md:text-4xl font-semibold text-foreground tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+               See what thousands of developers have to say
              </h2>
           </div>
           
+          <div className="relative z-10 bg-background">
+            
           <div className="flex overflow-hidden group w-full bg-background border-b border-border">
-            <div className="flex w-max motion-safe:animate-infinite-scroll-x group-hover:[animation-play-state:paused] " style={{ animationDuration: '40s' }}>
-              {[...[{'quote': 'The Batch Creation API saved our marketing team hundreds of hours.', 'company': 'Vercel'}, {'quote': 'Real-time global event tracking in under 15ms. Incredible.', 'company': 'Supabase'}, {'quote': 'The self-hosted Docker deployment with SSO was a breeze to set up.', 'company': 'Acme Corp'}, {'quote': 'Hop tracking and malware scanning gives us total peace of mind.', 'company': 'Stripe'}], ...[{'quote': 'The Batch Creation API saved our marketing team hundreds of hours.', 'company': 'Vercel'}, {'quote': 'Real-time global event tracking in under 15ms. Incredible.', 'company': 'Supabase'}, {'quote': 'The self-hosted Docker deployment with SSO was a breeze to set up.', 'company': 'Acme Corp'}, {'quote': 'Hop tracking and malware scanning gives us total peace of mind.', 'company': 'Stripe'}]].map((item, idx) => (
-                 <div key={idx} className="marquee-card p-8 md:p-12 border-r border-border flex-shrink-0 bg-card hover:bg-primary/[0.02] transition-colors flex flex-col justify-between min-h-[200px]">
-                    <blockquote className="text-sm md:text-base text-foreground font-medium mb-6 leading-relaxed">"{item.quote}"</blockquote>
-                    <div className="text-xs font-bold tracking-wider text-muted-foreground uppercase">{item.company}</div>
+            <div className="flex w-max motion-safe:animate-infinite-scroll-x group-hover:[animation-play-state:paused]  ">
+              {[...testimonialsRow1, ...testimonialsRow1].map((item, idx) => (
+                 <div key={idx} className="marquee-card p-10 lg:p-12 border-r border-border flex-shrink-0 bg-card hover:bg-primary/[0.01] transition-colors flex flex-col justify-between min-h-[250px]">
+                    <p className="text-[15px] md:text-[17px] text-foreground font-medium mb-8 leading-relaxed tracking-tight">“{highlightTrim(item.quote)}”</p>
+                    <div>
+                      <div className="text-sm font-semibold text-foreground">{item.name}</div>
+                      <div className="text-sm text-muted-foreground mt-0.5">@{item.handle}</div>
+                    </div>
                  </div>
               ))}
             </div>
           </div>
-          
           <div className="flex overflow-hidden group w-full bg-background ">
-            <div className="flex w-max motion-safe:animate-infinite-scroll-x group-hover:[animation-play-state:paused] motion-safe:[animation-direction:reverse]" style={{ animationDuration: '40s' }}>
-              {[...[{'quote': 'Switching from Bitly was seamless. The Analytics alone are worth it.', 'company': 'Netflix'}, {'quote': 'We run massive Black Friday campaigns. Trim never broke a sweat.', 'company': 'Shopify'}, {'quote': 'The immutable audit log is exactly what our compliance team needed.', 'company': 'Coinbase'}, {'quote': 'A beautifully engineered tool. Multi-tenant mode handles our clients perfectly.', 'company': 'Figma'}], ...[{'quote': 'Switching from Bitly was seamless. The Analytics alone are worth it.', 'company': 'Netflix'}, {'quote': 'We run massive Black Friday campaigns. Trim never broke a sweat.', 'company': 'Shopify'}, {'quote': 'The immutable audit log is exactly what our compliance team needed.', 'company': 'Coinbase'}, {'quote': 'A beautifully engineered tool. Multi-tenant mode handles our clients perfectly.', 'company': 'Figma'}]].map((item, idx) => (
-                 <div key={idx} className="marquee-card p-8 md:p-12 border-r border-border flex-shrink-0 bg-card hover:bg-primary/[0.02] transition-colors flex flex-col justify-between min-h-[200px]">
-                    <blockquote className="text-sm md:text-base text-foreground font-medium mb-6 leading-relaxed">"{item.quote}"</blockquote>
-                    <div className="text-xs font-bold tracking-wider text-muted-foreground uppercase">{item.company}</div>
+            <div className="flex w-max motion-safe:animate-infinite-scroll-x group-hover:[animation-play-state:paused] motion-safe:[animation-direction:reverse] ml-[-213px]">
+              {[...testimonialsRow2, ...testimonialsRow2].map((item, idx) => (
+                 <div key={idx} className="marquee-card p-10 lg:p-12 border-r border-border flex-shrink-0 bg-card hover:bg-primary/[0.01] transition-colors flex flex-col justify-between min-h-[250px]">
+                    <p className="text-[15px] md:text-[17px] text-foreground font-medium mb-8 leading-relaxed tracking-tight">“{highlightTrim(item.quote)}”</p>
+                    <div>
+                      <div className="text-sm font-semibold text-foreground">{item.name}</div>
+                      <div className="text-sm text-muted-foreground mt-0.5">@{item.handle}</div>
+                    </div>
                  </div>
               ))}
             </div>
           </div>
+          </div>
+
+          {/* Subtler Fade masks so it matches Laravel Cloud */}
+          <div className="absolute left-0 top-[220px] bottom-0 w-12 sm:w-24 bg-gradient-to-r from-background to-transparent z-20 pointer-events-none" />
+          <div className="absolute right-0 top-[220px] bottom-0 w-12 sm:w-24 bg-gradient-to-l from-background to-transparent z-20 pointer-events-none" />
         </div>
       </section>
 
-            <SectionTicker number="06" title="KNOWLEDGE BASE" commitMsg="movin vinusandha · [docs-2440] add technical faq for zero-trust architecture" />
       {/* ── FAQ Section (CSS Grid Accordion) ─────────────── */}
       <section className="bg-background relative overflow-hidden border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-24 border-x border-border">

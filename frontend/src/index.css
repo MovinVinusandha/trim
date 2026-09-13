@@ -201,17 +201,7 @@ html {
 }
 
 
-@keyframes infinite-scroll-x {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-.animate-infinite-scroll-x {
-  animation: infinite-scroll-x linear infinite;
-}
+
 
 .marquee-card {
   width: calc(100vw - 48px);

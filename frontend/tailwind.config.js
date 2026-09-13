@@ -57,10 +57,12 @@ export default {
         mono: ['Inter', 'system-ui', 'sans-serif'],
       },
       animation: {
+        'infinite-scroll-x': 'infinite-scroll-x 40s linear infinite',
         'fade-in': 'fadeIn 0.15s ease-out',
         'slide-up': 'slideUp 0.2s ease-out',
       },
       keyframes: {
+        'infinite-scroll-x': { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-50%)' } },
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
