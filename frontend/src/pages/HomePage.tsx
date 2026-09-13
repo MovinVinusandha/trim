@@ -847,6 +847,24 @@ const HomePage: React.FC = () => {
               </div>
             </div>
 
+            {/* 4. Custom Aliases (col-span-8) */}
+            <div className="col-span-1 md:col-span-8 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+              <div className="relative z-10">
+                <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
+                  <MousePointerClick className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-medium text-foreground tracking-tighter mb-1.5">Custom Aliases</h3>
+                <p className="text-xs text-muted-foreground max-w-md">
+                  Create branded short links with your own memorable custom slug, improving click-through rates.
+                </p>
+              </div>
+              {/* Nested UI: Slug editor */}
+              <div className="mt-8 flex items-center max-w-md w-full">
+                <div className="px-4 py-3 bg-secondary border border-r-0 border-border rounded-l-lg text-sm text-muted-foreground flex-shrink-0">trim.ly/</div>
+                <div className="flex-1 px-4 py-3 bg-background border border-primary/50 rounded-r-lg text-sm text-foreground shadow-[0_0_0_1px_rgba(0,153,255,0.2)]">my-custom-brand</div>
+              </div>
+            </div>
+
             {/* 3. Password Protection (col-span-4) */}
             <div className="col-span-1 md:col-span-4 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10">
@@ -865,24 +883,6 @@ const HomePage: React.FC = () => {
                   <span className="text-xs text-muted-foreground tracking-[0.3em]">••••••••</span>
                 </div>
                 <div className="w-16 h-7 rounded bg-primary/10 border border-primary/20 flex items-center justify-center text-[10px] text-primary font-medium uppercase tracking-wider">Unlock</div>
-              </div>
-            </div>
-
-            {/* 4. Custom Aliases (col-span-8) */}
-            <div className="col-span-1 md:col-span-8 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
-              <div className="relative z-10">
-                <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
-                  <MousePointerClick className="w-4 h-4" />
-                </div>
-                <h3 className="text-lg font-medium text-foreground tracking-tighter mb-1.5">Custom Aliases</h3>
-                <p className="text-xs text-muted-foreground max-w-md">
-                  Create branded short links with your own memorable custom slug, improving click-through rates.
-                </p>
-              </div>
-              {/* Nested UI: Slug editor */}
-              <div className="mt-8 flex items-center max-w-md w-full">
-                <div className="px-4 py-3 bg-secondary border border-r-0 border-border rounded-l-lg text-sm text-muted-foreground flex-shrink-0">trim.ly/</div>
-                <div className="flex-1 px-4 py-3 bg-background border border-primary/50 rounded-r-lg text-sm text-foreground shadow-[0_0_0_1px_rgba(0,153,255,0.2)]">my-custom-brand</div>
               </div>
             </div>
 
@@ -1110,19 +1110,19 @@ const HomePage: React.FC = () => {
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
         variants={fadeUpVariant}
-        className="bg-zinc-900 dark:bg-zinc-100 border-b border-zinc-800 dark:border-zinc-300 relative overflow-hidden transition-colors duration-300"
+        className="bg-zinc-950 dark:bg-zinc-900 border-b border-white/10 relative overflow-hidden transition-colors duration-300"
       >
-        <div className="max-w-7xl mx-auto px-6 py-24 border-x border-zinc-800 dark:border-zinc-300 relative z-10 flex flex-col items-center transition-colors duration-300">
+        <div className="max-w-7xl mx-auto px-6 py-24 border-x border-white/10 relative z-10 flex flex-col items-center transition-colors duration-300">
           
           {/* Subtle Ambient Glow (adapts to light/dark inversion) */}
           
           
-          <div className="w-8 h-8 rounded-md bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center mb-6 border border-zinc-700 dark:border-zinc-300 transition-colors duration-300">
+          <div className="w-8 h-8 rounded-md bg-zinc-800 text-zinc-100 flex items-center justify-center mb-6 border border-white/10 transition-colors duration-300">
             <Server className="w-4 h-4" />
           </div>
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-medium text-white dark:text-zinc-900 mb-4 tracking-tighter text-center max-w-3xl transition-colors duration-300">
-            Your own private cloud, fully managed <span className="text-zinc-400 dark:text-zinc-500 transition-colors duration-300">and isolated, with enterprise-level support.</span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-medium text-white mb-4 tracking-tighter text-center max-w-3xl transition-colors duration-300">
+            Your own private cloud, fully managed <span className="text-zinc-400 transition-colors duration-300">and isolated, with enterprise-level support.</span>
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-16 mt-12 w-full max-w-5xl">
@@ -1137,21 +1137,21 @@ const HomePage: React.FC = () => {
                ].map((item, idx) => (
                  <div key={idx} className="flex items-center gap-3">
                    <Check className="w-4 h-4 text-primary flex-shrink-0" />
-                   <span className="text-sm text-zinc-300 dark:text-zinc-700 font-medium transition-colors duration-300">{item}</span>
+                   <span className="text-sm text-zinc-300 font-medium transition-colors duration-300">{item}</span>
                  </div>
                ))}
                <div className="flex items-center gap-3 mt-6">
-                 <button className="h-10 px-5 rounded-md text-sm font-medium border border-zinc-700 dark:border-zinc-300 bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors duration-300">
+                 <button className="h-10 px-5 rounded-md text-sm font-medium border border-white/10 bg-white/10 text-white hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors duration-300">
                    Read Documentation
                  </button>
-                 <button className="h-10 px-5 rounded-md text-sm font-medium text-white dark:text-zinc-900 hover:text-zinc-300 dark:hover:text-zinc-600 transition-colors duration-300">
+                 <button className="h-10 px-5 rounded-md text-sm font-medium text-white hover:text-zinc-300 transition-colors duration-300">
                    Talk to Sales
                  </button>
                </div>
             </div>
 
             {/* Admin Vault Mockup (Always Dark because terminals are dark) */}
-            <div className="border border-zinc-800 dark:border-zinc-300 bg-[#0A0A10] rounded-lg overflow-hidden shadow-2xl relative transition-colors duration-300">
+            <div className="border border-white/10 bg-[#0A0A10] rounded-lg overflow-hidden shadow-2xl relative transition-colors duration-300">
                <div className="h-10 border-b border-white/10 bg-white/[0.02] flex items-center justify-between px-4">
                  <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-medium flex items-center gap-2"><ShieldAlert className="w-3 h-3 text-rose-500" /> Admin Security Vault</div>
                </div>
