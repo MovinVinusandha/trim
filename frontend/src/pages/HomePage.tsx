@@ -36,13 +36,31 @@ import { useAuth } from '../context/AuthContext';
 import type { UrlSend } from '../types';
 
 const fadeUpVariant: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+  hidden: { opacity: 0, y: 50 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
 };
 
+// Parent is NEVER invisible — only children animate.
+// Opacity stays 1 so the section is always in the layout/visible.
+// The parent just controls WHEN children start their stagger sequence.
 const staggerContainer: Variants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.12 } },
+  hidden: { opacity: 1 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.12, delayChildren: 0.0 } },
+};
+
+const cardVariant: Variants = {
+  hidden: { opacity: 0, y: 50, scale: 0.97 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
+};
+
+const slideLeftVariant: Variants = {
+  hidden: { opacity: 0, x: -30 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
+};
+
+const scaleInVariant: Variants = {
+  hidden: { opacity: 0, scale: 0.85 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
 };
 
 interface ShortenedResult {
@@ -95,7 +113,7 @@ interface FeatureCardProps {
   desc: string;
 }
 const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, desc }) => (
-  <div className="p-6 sm:p-8 bg-background flex flex-col items-start gap-4 transition-colors group hover:bg-secondary/40">
+  <motion.div variants={cardVariant} whileHover={{ y: -3, transition: { duration: 0.2 } }} className="p-6 sm:p-8 bg-background flex flex-col items-start gap-4 transition-colors group hover:bg-secondary/40">
     <div className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-border flex items-center justify-center group-hover:text-foreground group-hover:border-border transition-colors">
       {icon}
     </div>
@@ -108,7 +126,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, desc }) => (
       </h3>
       <p className="text-muted-foreground text-xs leading-relaxed mt-1.5">{desc}</p>
     </div>
-  </div>
+  </motion.div>
 );
 
 // ── Pricing card (Arcane Connected Cell) ─────────────────────────────────────
@@ -132,7 +150,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
   highlighted,
   onCtaClick,
 }) => (
-  <div className="p-8 sm:p-10 bg-background flex flex-col justify-between transition-colors hover:bg-secondary/20">
+  <motion.div variants={cardVariant} whileHover={{ y: -3, transition: { duration: 0.2 } }} className="p-8 sm:p-10 bg-background flex flex-col justify-between transition-colors hover:bg-secondary/20">
     <div>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -156,17 +174,19 @@ const PricingCard: React.FC<PricingCardProps> = ({
       {description && <p className="text-xs mt-2 text-muted-foreground">{description}</p>}
     </div>
     <ul className="flex flex-col gap-3 my-8">
-      {features.map((f) => (
-        <li key={f} className="flex items-center gap-3 text-xs text-muted-foreground">
+      {features.map((f, i) => (
+        <motion.li key={f} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.07, duration: 0.35 }} className="flex items-center gap-3 text-xs text-muted-foreground">
           <div className="w-4 h-4 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground flex-shrink-0">
             <Check className="w-2.5 h-2.5" />
           </div>
           <span>{f}</span>
-        </li>
+        </motion.li>
       ))}
     </ul>
     {onCtaClick ? (
-      <button
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.97 }}
         type="button"
         onClick={onCtaClick}
         className={`w-full text-center px-6 py-2.5 rounded-md font-medium text-xs transition-colors ${
@@ -174,18 +194,20 @@ const PricingCard: React.FC<PricingCardProps> = ({
         }`}
       >
         {cta}
-      </button>
+      </motion.button>
     ) : (
-      <Link
-        to={ctaLink}
-        className={`w-full text-center px-6 py-2.5 rounded-md font-medium text-xs transition-colors ${
-          highlighted ? 'btn-solid' : 'btn-secondary'
-        }`}
-      >
-        {cta}
-      </Link>
+      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+        <Link
+          to={ctaLink}
+          className={`w-full text-center px-6 py-2.5 rounded-md font-medium text-xs transition-colors ${
+            highlighted ? 'btn-solid' : 'btn-secondary'
+          }`}
+        >
+          {cta}
+        </Link>
+      </motion.div>
     )}
-  </div>
+  </motion.div>
 );
 
 // ── Testimonial card (Arcane Review Cell) ────────────────────────────────────
@@ -556,11 +578,13 @@ const HomePage: React.FC = () => {
                   placeholder="Paste your long URL here…"
                 />
               </div>
-              <button
+              <motion.button
                 id="home-shorten-submit"
                 type="submit"
                 disabled={loading}
-                className="btn-solid px-5 py-2.5 text-xs font-medium flex items-center justify-center gap-2 flex-shrink-0 disabled:opacity-60 transition-all active:scale-[0.98] rounded-md"
+                whileHover={{ scale: loading ? 1 : 1.02 }}
+                whileTap={{ scale: loading ? 1 : 0.97 }}
+                className="btn-solid px-5 py-2.5 text-xs font-medium flex items-center justify-center gap-2 flex-shrink-0 disabled:opacity-60 transition-all rounded-md"
               >
                 {loading ? (
                   <>
@@ -573,7 +597,7 @@ const HomePage: React.FC = () => {
                     <span>Shorten it</span>
                   </>
                 )}
-              </button>
+              </motion.button>
             </form>
 
             {/* Error */}
@@ -657,7 +681,7 @@ const HomePage: React.FC = () => {
       <motion.section
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: '-100px' }}
+        viewport={{ once: true, amount: 0.2 }}
         variants={fadeUpVariant}
         className="bg-background relative w-full border-b border-border"
       >
@@ -708,12 +732,12 @@ const HomePage: React.FC = () => {
         id="features"
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: '-100px' }}
-        variants={fadeUpVariant}
+        viewport={{ once: true, amount: 0.2 }}
+        variants={staggerContainer}
         className="bg-background border-b border-border"
       >
         <div className="max-w-7xl mx-auto px-6 py-16 border-x border-border">
-          <div className="text-center mb-10">
+          <motion.div variants={fadeUpVariant} className="text-center mb-10">
             <h2
               className="text-2xl sm:text-3xl font-medium text-foreground mb-3 tracking-tighter"
              
@@ -723,11 +747,11 @@ const HomePage: React.FC = () => {
             <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto">
               Powerful link management with real-time analytics, custom domains, and team collaboration.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-[1px] bg-border rounded-lg overflow-hidden border border-border shadow-sm auto-rows-[minmax(280px,_auto)]">
+          <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-12 gap-[1px] bg-border rounded-lg overflow-hidden border border-border shadow-sm auto-rows-[minmax(280px,_auto)]">
             {/* 1. Dashboard (col-span-8) */}
-            <div className="col-span-1 md:col-span-4 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+            <motion.div variants={cardVariant} className="col-span-1 md:col-span-4 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10">
                 <div className="w-8 h-8 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center mb-3">
                   <Folder className="w-4 h-4" />
@@ -770,10 +794,10 @@ const HomePage: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* 2. Analytics (col-span-4) */}
-            <div className="col-span-1 md:col-span-8 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+            <motion.div variants={cardVariant} className="col-span-1 md:col-span-8 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10">
                 <div className="w-8 h-8 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center mb-3">
                   <BarChart3 className="w-4 h-4" />
@@ -861,10 +885,10 @@ const HomePage: React.FC = () => {
                   </motion.div>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* 4. Custom Aliases (col-span-8) */}
-            <div className="col-span-1 md:col-span-8 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+            <motion.div variants={cardVariant} className="col-span-1 md:col-span-8 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10">
                 <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
                   <MousePointerClick className="w-4 h-4" />
@@ -879,10 +903,10 @@ const HomePage: React.FC = () => {
                 <div className="px-4 py-3 bg-secondary border border-r-0 border-border rounded-l-lg text-sm text-muted-foreground flex-shrink-0">trim.ly/</div>
                 <div className="flex-1 px-4 py-3 bg-background border border-primary/50 rounded-r-lg text-sm text-foreground shadow-[0_0_0_1px_rgba(0,153,255,0.2)]">my-custom-brand</div>
               </div>
-            </div>
+            </motion.div>
 
             {/* 3. Password Protection (col-span-4) */}
-            <div className="col-span-1 md:col-span-4 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+            <motion.div variants={cardVariant} className="col-span-1 md:col-span-4 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10">
                 <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
                   <Shield className="w-4 h-4" />
@@ -900,10 +924,10 @@ const HomePage: React.FC = () => {
                 </div>
                 <div className="w-16 h-7 rounded bg-primary/10 border border-primary/20 flex items-center justify-center text-[10px] text-primary font-medium uppercase tracking-wider">Unlock</div>
               </div>
-            </div>
+            </motion.div>
 
             {/* 5. UTM Templates (col-span-4) */}
-            <div className="col-span-1 md:col-span-4 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+            <motion.div variants={cardVariant} className="col-span-1 md:col-span-4 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10">
                 <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
                   <Tag className="w-4 h-4" />
@@ -924,10 +948,10 @@ const HomePage: React.FC = () => {
                   <div className="h-6 flex-1 bg-secondary rounded border border-border px-2 flex items-center"><span className="text-xs text-foreground">email</span></div>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* 6. Campaigns (col-span-8) */}
-            <div className="col-span-1 md:col-span-8 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+            <motion.div variants={cardVariant} className="col-span-1 md:col-span-8 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10">
                 <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
                   <Folder className="w-4 h-4" />
@@ -960,10 +984,10 @@ const HomePage: React.FC = () => {
                     <div className="h-6 px-3 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-[10px] font-medium flex items-center">ENDED</div>
                  </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* 7. Link Check (col-span-12) */}
-            <div className="col-span-1 md:col-span-12 bg-card p-5 sm:p-8 flex flex-col md:flex-row items-center gap-8 relative group transition-colors hover:bg-primary/[0.02]">
+            <motion.div variants={cardVariant} className="col-span-1 md:col-span-12 bg-card p-5 sm:p-8 flex flex-col md:flex-row items-center gap-8 relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10 flex-1">
                 <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
                   <Check className="w-4 h-4" />
@@ -1004,8 +1028,8 @@ const HomePage: React.FC = () => {
                    </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </motion.section>
 
@@ -1015,24 +1039,24 @@ const HomePage: React.FC = () => {
       <motion.section
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: '-100px' }}
-        variants={fadeUpVariant}
+        viewport={{ once: true, amount: 0.2 }}
+        variants={staggerContainer}
         className="bg-background border-b border-border"
       >
         <div className="max-w-7xl mx-auto px-6 py-16 border-x border-border">
-          <div className="text-center mb-10">
+          <motion.div variants={fadeUpVariant} className="text-center mb-10">
             <h2 className="text-2xl sm:text-3xl font-medium text-foreground mb-2 tracking-tighter">
               Built for Scale and Speed
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto">
               Robust APIs for programmatic control, global edge networks for sub-15ms redirects, and seamless integrations with your stack.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-[1px] bg-border rounded-lg overflow-hidden border border-border shadow-sm">
+          <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-12 gap-[1px] bg-border rounded-lg overflow-hidden border border-border shadow-sm">
             
             {/* 1. Real-Time Event Stream (col-span-8) */}
-            <div className="col-span-1 md:col-span-8 bg-card p-6 flex flex-col justify-between group hover:bg-primary/[0.02] transition-colors relative">
+            <motion.div variants={cardVariant} className="col-span-1 md:col-span-8 bg-card p-6 flex flex-col justify-between group hover:bg-primary/[0.02] transition-colors relative">
               <div className="mb-5 relative z-10">
                 <div className="w-8 h-8 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center mb-3">
                   <Activity className="w-4 h-4" />
@@ -1043,10 +1067,10 @@ const HomePage: React.FC = () => {
                 </p>
               </div>
               <LiveEventStream />
-            </div>
+            </motion.div>
 
             {/* 2. Global Edge Network (col-span-4) */}
-            <div className="col-span-1 md:col-span-4 bg-card p-6 flex flex-col justify-between group hover:bg-primary/[0.02] transition-colors relative overflow-hidden">
+            <motion.div variants={cardVariant} className="col-span-1 md:col-span-4 bg-card p-6 flex flex-col justify-between group hover:bg-primary/[0.02] transition-colors relative overflow-hidden">
               <div className="mb-5 relative z-10">
                 <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
                   <Globe2 className="w-4 h-4" />
@@ -1088,10 +1112,10 @@ const HomePage: React.FC = () => {
                   ))}
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* 3. Integrations (col-span-12) */}
-            <div className="col-span-1 md:col-span-12 bg-card p-4 flex flex-col md:flex-row items-center justify-between group hover:bg-primary/[0.02] transition-colors relative">
+            <motion.div variants={cardVariant} className="col-span-1 md:col-span-12 bg-card p-4 flex flex-col md:flex-row items-center justify-between group hover:bg-primary/[0.02] transition-colors relative">
               <div className="flex items-center gap-3 mb-3 md:mb-0">
                 <div className="w-6 h-6 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center">
                   <Workflow className="w-3 h-3" />
@@ -1113,9 +1137,9 @@ const HomePage: React.FC = () => {
                   </div>
                 ))}
               </div>
-            </div>
+            </motion.div>
 
-          </div>
+          </motion.div>
         </div>
       </motion.section>
 
@@ -1124,8 +1148,8 @@ const HomePage: React.FC = () => {
       <motion.section
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: '-100px' }}
-        variants={fadeUpVariant}
+        viewport={{ once: true, amount: 0.2 }}
+        variants={staggerContainer}
         className="bg-zinc-950 dark:bg-zinc-900 border-b border-white/10 relative overflow-hidden transition-colors duration-300"
       >
         <div className="max-w-7xl mx-auto px-6 py-24 border-x border-white/10 relative z-10 flex flex-col items-center transition-colors duration-300">
@@ -1133,17 +1157,17 @@ const HomePage: React.FC = () => {
           {/* Subtle Ambient Glow (adapts to light/dark inversion) */}
           
           
-          <div className="w-8 h-8 rounded-md bg-zinc-800 text-zinc-100 flex items-center justify-center mb-5 border border-white/10 transition-colors duration-300">
+          <motion.div variants={scaleInVariant} className="w-8 h-8 rounded-md bg-zinc-800 text-zinc-100 flex items-center justify-center mb-5 border border-white/10 transition-colors duration-300">
             <Server className="w-4 h-4" />
-          </div>
+          </motion.div>
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-medium text-white mb-3 tracking-tighter text-center max-w-3xl transition-colors duration-300">
+          <motion.h2 variants={fadeUpVariant} className="text-3xl sm:text-4xl lg:text-5xl font-medium text-white mb-3 tracking-tighter text-center max-w-3xl transition-colors duration-300">
             Your own private cloud, fully managed <span className="text-zinc-400 transition-colors duration-300">and isolated, with enterprise-level support.</span>
-          </h2>
+          </motion.h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-16 mt-12 w-full max-w-5xl">
+          <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-16 mt-12 w-full max-w-5xl">
             {/* Checkmarks */}
-            <div className="flex flex-col justify-center gap-4">
+            <motion.div variants={fadeUpVariant} className="flex flex-col justify-center gap-4">
                {[
                  'Self-Host via Docker or use Multi-Tenant Hosted',
                  'Admin Security Vault with Live .env Sync',
@@ -1151,23 +1175,23 @@ const HomePage: React.FC = () => {
                  'System Maintenance Mode & Panic Switch',
                  'Advanced RBAC & Threat Intelligence'
                ].map((item, idx) => (
-                 <div key={idx} className="flex items-center gap-3">
+                 <motion.div key={idx} variants={slideLeftVariant} className="flex items-center gap-3">
                    <Check className="w-4 h-4 text-primary flex-shrink-0" />
                    <span className="text-sm text-zinc-300 font-medium transition-colors duration-300">{item}</span>
-                 </div>
+                 </motion.div>
                ))}
                <div className="flex items-center gap-3 mt-6">
-                 <button className="h-10 px-5 rounded-md text-sm font-medium border border-white/10 bg-white/10 text-white hover:bg-white/20 transition-colors duration-300">
+                 <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }} className="h-10 px-5 rounded-md text-sm font-medium border border-white/10 bg-white/10 text-white hover:bg-white/20 transition-colors duration-300">
                    Read Documentation
-                 </button>
-                 <button className="h-10 px-5 rounded-md text-sm font-medium text-zinc-300 hover:text-white transition-colors duration-300">
+                 </motion.button>
+                 <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }} className="h-10 px-5 rounded-md text-sm font-medium text-zinc-300 hover:text-white transition-colors duration-300">
                    Talk to Sales
-                 </button>
+                 </motion.button>
                </div>
-            </div>
+            </motion.div>
 
             {/* Admin Vault Mockup (Always Dark because terminals are dark) */}
-            <div className="border border-white/10 bg-[#0A0A10] rounded-lg overflow-hidden shadow-2xl relative transition-colors duration-300">
+            <motion.div variants={cardVariant} className="border border-white/10 bg-[#0A0A10] rounded-lg overflow-hidden shadow-2xl relative transition-colors duration-300">
                <div className="h-10 border-b border-white/10 bg-white/[0.02] flex items-center justify-between px-4">
                  <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-medium flex items-center gap-2"><ShieldAlert className="w-3 h-3 text-rose-500" /> Admin Security Vault</div>
                </div>
@@ -1192,8 +1216,8 @@ const HomePage: React.FC = () => {
                    &gt; System ready.
                  </div>
                </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </motion.section>
       <SectionTicker number="04" title="SCALABLE PRICING" commitMsg="movin vinusandha · [ops-304] provision open-source multi-tenant clusters" />
@@ -1202,13 +1226,13 @@ const HomePage: React.FC = () => {
         id="pricing"
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: '-100px' }}
-        variants={fadeUpVariant}
+        viewport={{ once: true, amount: 0.2 }}
+        variants={staggerContainer}
         className="bg-background relative overflow-hidden border-b border-border"
       >
         <div className="max-w-7xl mx-auto border-x border-border">
           {/* Header Row */}
-          <div className="py-8 md:py-12 px-6 text-center relative">
+          <motion.div variants={fadeUpVariant} className="py-8 md:py-12 px-6 text-center relative">
             <h2 className="text-xl sm:text-3xl font-semibold text-foreground mb-3 tracking-tighter">
               Free and Open
             </h2>
@@ -1216,14 +1240,14 @@ const HomePage: React.FC = () => {
               Trim is free to use with no limits. Self-host it yourself or use our hosted version.
             </p>
             <QuarterCircle className="absolute top-0 right-0 w-12 h-12 text-border opacity-40 pointer-events-none" flip />
-          </div>
+          </motion.div>
 
           {/* Pricing Grid - Box within a Box */}
           <div className="border-y border-border w-full bg-zinc-50/50 dark:bg-zinc-900/10">
-            <div className="max-w-4xl mx-auto border-x border-border grid grid-cols-1 md:grid-cols-2 bg-background relative shadow-[0_0_40px_rgba(0,0,0,0.02)] dark:shadow-none">
+            <motion.div variants={staggerContainer} className="max-w-4xl mx-auto border-x border-border grid grid-cols-1 md:grid-cols-2 bg-background relative shadow-[0_0_40px_rgba(0,0,0,0.02)] dark:shadow-none">
               
               {/* Anonymous User Column */}
-              <div className="border-b md:border-b-0 md:border-r border-border p-5 md:p-8 flex flex-col justify-between group hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors relative">
+              <motion.div variants={cardVariant} className="border-b md:border-b-0 md:border-r border-border p-5 md:p-8 flex flex-col justify-between group hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors relative">
                 <div>
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-6 h-6 rounded-md border border-border bg-background text-foreground flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
@@ -1246,17 +1270,19 @@ const HomePage: React.FC = () => {
                     ))}
                   </ul>
                 </div>
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
                   type="button"
                   onClick={handleTryItNow}
                   className="w-full text-center px-4 py-2 rounded-md font-medium text-xs border border-border bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shadow-sm"
                 >
                   Try it now
-                </button>
-              </div>
+                </motion.button>
+              </motion.div>
 
               {/* Registered User Column */}
-              <div className="p-5 md:p-8 flex flex-col justify-between group relative overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/20 hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
+              <motion.div variants={cardVariant} className="p-5 md:p-8 flex flex-col justify-between group relative overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/20 hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
                 
                 <div>
                   <div className="flex items-center justify-between mb-4">
@@ -1285,18 +1311,20 @@ const HomePage: React.FC = () => {
                     ))}
                   </ul>
                 </div>
-                <Link
-                  to={token ? '/dashboard' : '/register'}
-                  className="w-full text-center px-4 py-2 rounded-md font-medium text-xs bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-md block"
-                >
-                  {token ? 'Go to Dashboard' : 'Create free account'}
-                </Link>
-              </div>
-            </div>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+                  <Link
+                    to={token ? '/dashboard' : '/register'}
+                    className="w-full text-center px-4 py-2 rounded-md font-medium text-xs bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-md block"
+                  >
+                    {token ? 'Go to Dashboard' : 'Create free account'}
+                  </Link>
+                </motion.div>
+              </motion.div>
+            </motion.div>
           </div>
           
           {/* Footer Row */}
-          <div className="py-6 text-center relative overflow-hidden">
+          <motion.div variants={fadeUpVariant} className="py-6 text-center relative overflow-hidden">
             <p className="text-xs text-muted-foreground relative z-10">
               Want to self-host this application? Check out the{' '}
               <a
@@ -1310,7 +1338,7 @@ const HomePage: React.FC = () => {
               repository.
             </p>
             <QuarterCircle className="absolute bottom-0 left-0 w-16 h-16 text-border opacity-40 pointer-events-none" />
-          </div>
+          </motion.div>
         </div>
       </motion.section>
 
@@ -1319,16 +1347,22 @@ const HomePage: React.FC = () => {
             <SectionTicker number="05" title="LOVED BY MODERN TEAMS" commitMsg="movin vinusandha · [ops-220] scale infrastructure to handle bfcm holiday traffic" />
 
             {/* ── Testimonials (Infinite Marquee) ─────────────── */}
-      <section className="bg-background relative overflow-hidden border-b border-border">
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+        variants={staggerContainer}
+        className="bg-background relative overflow-hidden border-b border-border"
+      >
         <div className="max-w-7xl mx-auto border-x border-border flex flex-col relative">
           
-          <div className="px-6 py-20 text-center border-b border-border bg-background relative z-20">
+          <motion.div variants={fadeUpVariant} className="px-6 py-20 text-center border-b border-border bg-background relative z-20">
              <h2 className="text-3xl md:text-4xl font-medium text-foreground tracking-tighter">
                See what thousands of developers have to say
              </h2>
-          </div>
+          </motion.div>
           
-          <div className="relative z-10 bg-background">
+          <motion.div variants={fadeUpVariant} className="relative z-10 bg-background">
             
           <div className="flex overflow-hidden group w-full bg-background border-b border-border">
             <div className="flex w-max motion-safe:animate-infinite-scroll-x group-hover:[animation-play-state:paused]  ">
@@ -1356,28 +1390,34 @@ const HomePage: React.FC = () => {
               ))}
             </div>
           </div>
-          </div>
+          </motion.div>
 
           {/* Subtler Fade masks so it matches Laravel Cloud */}
           <div className="absolute left-0 top-[220px] bottom-0 w-12 sm:w-24 bg-gradient-to-r from-background to-transparent z-20 pointer-events-none" />
           <div className="absolute right-0 top-[220px] bottom-0 w-12 sm:w-24 bg-gradient-to-l from-background to-transparent z-20 pointer-events-none" />
         </div>
-      </section>
+      </motion.section>
 
       {/* ── FAQ Section (CSS Grid Accordion) ─────────────── */}
-      <section className="bg-background relative overflow-hidden border-b border-border">
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+        variants={staggerContainer}
+        className="bg-background relative overflow-hidden border-b border-border"
+      >
         <div className="max-w-7xl mx-auto px-6 py-24 border-x border-border">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
-            <div className="col-span-1 md:col-span-4">
+            <motion.div variants={fadeUpVariant} className="col-span-1 md:col-span-4">
               <h2 className="text-2xl sm:text-3xl font-medium text-foreground tracking-tighter mb-3">
                 Frequently asked questions
               </h2>
               <p className="text-sm text-muted-foreground">
                 Everything you need to know about Trim's architecture, security, and global edge network.
               </p>
-            </div>
+            </motion.div>
             
-            <div className="col-span-1 md:col-span-8 border-t border-border">
+            <motion.div variants={fadeUpVariant} className="col-span-1 md:col-span-8 border-t border-border">
               <FaqItem 
                 question="How fast is the Global Edge Network?" 
                 answer="Our distributed edge nodes ensure sub-15ms redirect speeds worldwide. No matter where your users are located, Trim routes them through the closest data center for hyper-optimized hop times." 
@@ -1394,12 +1434,18 @@ const HomePage: React.FC = () => {
                 question="Is the Admin Security Vault included?" 
                 answer="Yes, all enterprise and self-hosted deployments include the Admin Security Vault. This provides Immutable Audit Logs, Proactive Malware Scanning, Live .env Sync, and a one-click Panic Switch to instantly quarantine all active links during a threat." 
               />
-            </div>
+            </motion.div>
           </div>
         </div>
-      </section>
+      </motion.section>
       {/* ── Final CTA Banner & Footer (With Crisp Dot Matrix) ─── */}
-      <footer className="relative w-full flex flex-col items-center overflow-hidden border-t border-border bg-background">
+      <motion.footer
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.1 }}
+        variants={staggerContainer}
+        className="relative w-full flex flex-col items-center overflow-hidden border-t border-border bg-background"
+      >
         
         {/* CTA Block (Full Width Wrapper) */}
         <div className="relative w-full flex flex-col items-center justify-center pt-24 pb-0 border-b border-border overflow-hidden bg-background">
@@ -1410,24 +1456,26 @@ const HomePage: React.FC = () => {
           <div className="pointer-events-none absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-primary/10 rounded-full blur-[140px]" />
 
           {/* The CTA Block */}
-          <div className="flex flex-col items-center gap-5 z-10 relative px-6 text-center mb-16">
-            <h2 className="text-3xl sm:text-5xl font-medium tracking-tighter text-foreground">
+          <motion.div variants={staggerContainer} className="flex flex-col items-center gap-5 z-10 relative px-6 text-center mb-16">
+            <motion.h2 variants={fadeUpVariant} className="text-3xl sm:text-5xl font-medium tracking-tighter text-foreground">
               Ready to manage your links?
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground max-w-md">
+            </motion.h2>
+            <motion.p variants={fadeUpVariant} className="text-xs sm:text-sm text-muted-foreground max-w-md">
               Join thousands of teams and developers who organize, secure, and track their links with Trim.
-            </p>
-            <Link
-              to={token ? '/dashboard' : '/register'}
-              className="group btn-solid px-8 py-3 text-xs font-medium shadow-lg mt-2 inline-flex items-center gap-2"
-            >
-              <span>{token ? 'Go to Dashboard' : 'Get Started'}</span>
-              <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 ease-out group-hover:translate-x-1" />
-            </Link>
-          </div>
+            </motion.p>
+            <motion.div variants={fadeUpVariant} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+              <Link
+                to={token ? '/dashboard' : '/register'}
+                className="group btn-solid px-8 py-3 text-xs font-medium shadow-lg mt-2 inline-flex items-center gap-2"
+              >
+                <span>{token ? 'Go to Dashboard' : 'Get Started'}</span>
+                <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 ease-out group-hover:translate-x-1" />
+              </Link>
+            </motion.div>
+          </motion.div>
 
           {/* The Massive Logo Watermark */}
-          <div className="w-full max-w-[1600px] mx-auto flex justify-center items-end mt-auto px-4 translate-y-12 relative z-0">
+          <motion.div variants={fadeUpVariant} className="w-full max-w-[1600px] mx-auto flex justify-center items-end mt-auto px-4 translate-y-12 relative z-0">
             <svg
             className="w-full h-auto text-foreground/[0.04]"
             viewBox="0 0 401 163"
@@ -1456,11 +1504,11 @@ const HomePage: React.FC = () => {
               fill="currentColor"
             />
           </svg>
-          </div>
+          </motion.div>
         </div>
 
         {/* Structured Multi-Column Navigation Grid */}
-        <div className="w-full max-w-7xl mx-auto relative z-10 bg-background">
+        <motion.div variants={fadeUpVariant} className="w-full max-w-7xl mx-auto relative z-10 bg-background">
           <div className="grid grid-cols-2 lg:grid-cols-5 divide-y lg:divide-y-0 lg:divide-x divide-border">
             
             {/* Brand / Logo Column */}
@@ -1512,10 +1560,10 @@ const HomePage: React.FC = () => {
             </div>
 
           </div>
-        </div>
+        </motion.div>
           
         {/* Bottom Copyright Bar - Expanded to full width */}
-        <div className="w-full border-t border-border bg-background relative z-10">
+        <motion.div variants={fadeUpVariant} className="w-full border-t border-border bg-background relative z-10">
           <div className="max-w-7xl mx-auto p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
              <p className="text-xs text-muted-foreground">
                &copy; {new Date().getFullYear()} Trim. All rights reserved.
@@ -1524,8 +1572,8 @@ const HomePage: React.FC = () => {
                Designed in <Zap className="w-3 h-3 text-red-500 mx-0.5" /> Open Source
              </p>
           </div>
-        </div>
-      </footer>
+        </motion.div>
+      </motion.footer>
     </div>
   );
 };
