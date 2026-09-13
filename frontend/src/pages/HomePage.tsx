@@ -236,6 +236,25 @@ const FaqItem = ({ question, answer }: { question: string, answer: React.ReactNo
     </div>
   );
 };
+
+const SectionTicker = ({ number, title, commitMsg }: { number: string, title: string, commitMsg: string }) => (
+  <div className="bg-background relative border-b border-border w-full hidden md:block">
+    <div className="max-w-7xl mx-auto border-x border-border flex items-stretch h-12 text-[11px] font-mono tracking-widest uppercase">
+      <div className="w-12 lg:w-16 flex-shrink-0 border-r border-border flex items-center justify-center text-muted-foreground opacity-60">
+        {number}
+      </div>
+      <div className="flex-grow flex items-center justify-between px-6 overflow-hidden">
+        <span className="text-primary font-bold truncate">
+          {title}
+        </span>
+        <span className="text-muted-foreground truncate opacity-70 ml-4 hidden md:inline-block lowercase tracking-normal">
+          {commitMsg}
+        </span>
+      </div>
+      <div className="w-12 lg:w-16 flex-shrink-0 border-l border-border bg-hatch"></div>
+    </div>
+  </div>
+);
 const HomePage: React.FC = () => {
   const { token } = useAuth();
   const urlInputRef = useRef<HTMLInputElement>(null);
@@ -566,6 +585,9 @@ const HomePage: React.FC = () => {
         </div>
       </motion.section>
 
+
+
+            <SectionTicker number="01" title="CORE ARCHITECTURE" commitMsg="movin vinusandha · [feat-101] initialize robust link management system" />
       {/* ── Unified Features Bento Grid ───────────────────────────────── */}
       <motion.section
         id="features"
@@ -807,6 +829,7 @@ const HomePage: React.FC = () => {
       </motion.section>
 
       
+            <SectionTicker number="02" title="BUILT BY DEVELOPERS FOR DEVELOPERS" commitMsg="movin vinusandha · [core-742] deploy global edge nodes for sub-15ms hop routing" />
       {/* ── Advanced Tech Super-Grid (API, Globe, Integrations) ──────── */}
       <motion.section
         initial="hidden"
@@ -933,6 +956,7 @@ const HomePage: React.FC = () => {
         </div>
       </motion.section>
 
+            <SectionTicker number="03" title="ENTERPRISE GRADE SECURITY" commitMsg="movin vinusandha · [sec-990] implement admin vault and panic switch quarantine" />
       {/* ── Self-Hosted & Enterprise (High-Contrast Inversion) ────────────── */}
       <motion.section
         initial="hidden"
@@ -1009,6 +1033,7 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </motion.section>
+      <SectionTicker number="04" title="SCALABLE PRICING" commitMsg="movin vinusandha · [ops-304] provision open-source multi-tenant clusters" />
 {/* ── Pricing / Free & Open (Bento Redesign) ─────────── */}
       <motion.section
         id="pricing"
@@ -1115,6 +1140,7 @@ const HomePage: React.FC = () => {
 
 
 
+            <SectionTicker number="05" title="LOVED BY MODERN TEAMS" commitMsg="movin vinusandha · [ops-220] scale infrastructure to handle bfcm holiday traffic" />
       {/* ── Testimonials (Infinite Marquee) ─────────────── */}
       <section className="bg-background relative overflow-hidden border-b border-border">
         <div className="max-w-7xl mx-auto border-x border-border flex flex-col relative">
@@ -1152,6 +1178,7 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
+            <SectionTicker number="06" title="KNOWLEDGE BASE" commitMsg="movin vinusandha · [docs-2440] add technical faq for zero-trust architecture" />
       {/* ── FAQ Section (CSS Grid Accordion) ─────────────── */}
       <section className="bg-background relative overflow-hidden border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-24 border-x border-border">

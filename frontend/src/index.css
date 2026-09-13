@@ -226,3 +226,24 @@ html {
     width: calc((min(100vw, 1280px) - 48px) / 3);
   }
 }
+
+@layer utilities {
+  .bg-hatch {
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      rgba(0, 0, 0, 0.05) 4px,
+      rgba(0, 0, 0, 0.05) 5px
+    );
+  }
+  .dark .bg-hatch {
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      rgba(255, 255, 255, 0.06) 4px,
+      rgba(255, 255, 255, 0.06) 5px
+    );
+  }
+}
