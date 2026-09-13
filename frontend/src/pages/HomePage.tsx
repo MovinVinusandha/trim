@@ -15,6 +15,16 @@ import {
   Shield,
   Zap,
   Sparkles,
+  Terminal,
+  Globe2,
+  Code,
+  Server,
+  Activity,
+  Hexagon,
+  Database,
+  Workflow,
+  ShieldAlert,
+  Plus,
 } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import BrandLogo from '../components/BrandLogo';
@@ -198,6 +208,34 @@ const TestimonialCard: React.FC<TestimonialProps> = ({ quote, name, role, initia
 );
 
 // ── Main component ────────────────────────────────────────────────────────────
+
+const FaqItem = ({ question, answer }: { question: string, answer: React.ReactNode }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="border-b border-border">
+      <button 
+        onClick={() => setIsOpen(!isOpen)} 
+        className="w-full flex justify-between items-center py-6 text-left group"
+        aria-expanded={isOpen}
+      >
+        <span className="text-sm md:text-base font-medium text-foreground group-hover:text-primary transition-colors">{question}</span>
+        <span className="relative flex items-center justify-center w-5 h-5 ml-4 flex-shrink-0 text-muted-foreground group-hover:text-primary transition-colors">
+          <span className={`absolute w-full h-0.5 bg-current transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+          <span className={`absolute w-full h-0.5 bg-current transition-transform duration-300 ${isOpen ? 'rotate-0' : 'rotate-90'}`} />
+        </span>
+      </button>
+      <div 
+        className={`grid transition-[grid-template-rows] duration-300 ease-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+      >
+        <div className="overflow-hidden">
+          <div className="pb-6 text-sm text-muted-foreground leading-relaxed">
+            {answer}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 const HomePage: React.FC = () => {
   const { token } = useAuth();
   const urlInputRef = useRef<HTMLInputElement>(null);
@@ -248,17 +286,15 @@ const HomePage: React.FC = () => {
       className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary/20 selection:text-primary"
       style={{ fontFamily: "'Inter', 'Space Grotesk', sans-serif" }}
     >
-      {/* ── Navbar ────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 h-14 flex items-center justify-between relative">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <Link to="/" className="flex items-center gap-2">
-              <BrandLogo className="h-8 w-auto text-foreground" />
-            </Link>
-          </div>
+      {/* ── Fixed Minimalist Navigation ──────────────────────────────── */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 h-14 flex items-center justify-between relative border-x border-border">
+          {/* Left: Logo */}
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <BrandLogo className="h-5 w-auto text-foreground" />
+          </Link>
 
-          {/* Nav links (desktop - exactly centered) */}
+          {/* Center: Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8 text-xs font-medium text-muted-foreground absolute left-1/2 -translate-x-1/2">
             <a href="#features" className="hover:text-foreground transition-colors">
               Features
@@ -301,23 +337,25 @@ const HomePage: React.FC = () => {
         </div>
       </header>
 
+      <main>
       {/* ── Hero Section ──────────────────────────────────────────── */}
       <section
         id="hero"
-        className="relative overflow-hidden min-h-[85vh] flex flex-col items-center justify-center pt-8 pb-16"
+        className="relative overflow-hidden pt-28 pb-16 border-b border-border"
       >
         {/* Crisp Visible Dot Matrix */}
         <DotMatrix />
 
         {/* Subtle Ambient Radial Glow */}
         <div className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[300px] bg-primary/10 rounded-full blur-[120px]" />
-
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={staggerContainer}
-          className="relative z-10 w-full max-w-3xl mx-auto px-6 text-center py-12 flex flex-col items-center gap-6 sm:gap-7"
-        >
+        
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-12 flex flex-col items-center gap-6 sm:gap-7 border-x border-border">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+            className="w-full max-w-3xl mx-auto text-center flex flex-col items-center gap-6 sm:gap-7"
+          >
           {/* 1. Badge */}
           <motion.div
             variants={fadeUpVariant}
@@ -363,7 +401,7 @@ const HomePage: React.FC = () => {
           <motion.div variants={fadeUpVariant} className="w-full max-w-2xl mt-1">
             <form
               onSubmit={handleShorten}
-              className="flex flex-col sm:flex-row gap-2 p-1.5 sm:p-2 bg-card border border-border rounded-xl shadow-xl shadow-black/5 dark:shadow-black/40"
+              className="flex flex-col sm:flex-row gap-2 p-1.5 sm:p-2 bg-card border border-border rounded-lg shadow-sm focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/50 transition-all group"
             >
               <div className="flex-1 relative flex items-center">
                 <Link2 className="absolute left-3.5 w-4 h-4 text-muted-foreground pointer-events-none flex-shrink-0" />
@@ -386,7 +424,7 @@ const HomePage: React.FC = () => {
                 id="home-shorten-submit"
                 type="submit"
                 disabled={loading}
-                className="group btn-solid px-5 py-2.5 text-xs font-semibold flex items-center justify-center gap-2 flex-shrink-0 disabled:opacity-60 transition-all active:scale-[0.98]"
+                className="btn-solid px-5 py-2.5 text-xs font-semibold flex items-center justify-center gap-2 flex-shrink-0 disabled:opacity-60 transition-all active:scale-[0.98] rounded-md"
               >
                 {loading ? (
                   <>
@@ -404,7 +442,7 @@ const HomePage: React.FC = () => {
 
             {/* Error */}
             {error && (
-              <div className="mt-3 flex items-center gap-2.5 bg-rose-500/10 border border-rose-500/30 rounded-xl px-4 py-2.5 text-left">
+              <div className="mt-3 flex items-center gap-2.5 bg-rose-500/10 border border-rose-500/30 rounded-lg px-4 py-2.5 text-left shadow-sm">
                 <AlertCircle className="w-4 h-4 text-rose-500 flex-shrink-0" />
                 <p className="text-rose-500 text-xs font-medium">{error}</p>
               </div>
@@ -412,7 +450,7 @@ const HomePage: React.FC = () => {
 
             {/* Result */}
             {generatedUrl && (
-              <div className="mt-3 p-4 bg-card border border-border rounded-xl text-left shadow-md">
+              <div className="mt-3 p-4 bg-card border border-border rounded-lg text-left shadow-sm">
                 <p className="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider mb-2">
                   Your short link is ready
                 </p>
@@ -429,7 +467,7 @@ const HomePage: React.FC = () => {
                   <button
                     id="home-copy-btn"
                     onClick={copyToClipboard}
-                    className="btn-secondary text-xs flex items-center gap-1.5 py-1.5 px-3"
+                    className="btn-secondary text-xs flex items-center gap-1.5 py-1.5 px-3 rounded-md"
                   >
                     {copied ? (
                       <>
@@ -475,7 +513,9 @@ const HomePage: React.FC = () => {
             </p>
           </motion.div>
         </motion.div>
+        </div>
       </section>
+      </main>
 
       {/* ── Trusted by Section ──────────────── */}
       <motion.section
@@ -483,9 +523,9 @@ const HomePage: React.FC = () => {
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
         variants={fadeUpVariant}
-        className="w-full bg-background border-y border-border overflow-hidden relative py-14 flex flex-col justify-center"
+        className="w-full bg-background border-b border-border overflow-hidden relative flex flex-col justify-center"
       >
-        <div className="relative z-10 w-full max-w-5xl px-6 mx-auto flex flex-col items-center gap-8">
+        <div className="relative z-10 w-full max-w-7xl px-6 py-24 mx-auto flex flex-col items-center gap-8 border-x border-border">
           <h2
             className="text-muted-foreground text-xs font-semibold uppercase tracking-widest text-center"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
@@ -526,230 +566,533 @@ const HomePage: React.FC = () => {
         </div>
       </motion.section>
 
-      {/* ── Feature Showcase 1 — Dashboard ──────────────────────── */}
+      {/* ── Unified Features Bento Grid ───────────────────────────────── */}
       <motion.section
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-100px' }}
-        variants={fadeUpVariant}
-        className="py-20 bg-background"
         id="features"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-100px' }}
+        variants={fadeUpVariant}
+        className="bg-background border-b border-border"
       >
-        <div className="w-full max-w-screen-xl mx-auto grid grid-cols-1 lg:grid-cols-2 items-center gap-12 lg:gap-8 px-4 sm:px-6 lg:px-8 py-8">
-          {/* Screenshot */}
-          <div className="relative w-full">
-            <img
-              src="/figma/dashboard_screenshot.png"
-              alt="Trim dashboard showing link management"
-              className="w-full h-auto rounded-xl"
-            />
-          </div>
-
-          {/* Text */}
-          <div className="flex flex-col gap-6 items-start text-left w-full max-w-lg lg:ml-auto">
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-muted-foreground" /> Workspace Organization
-            </div>
+        <div className="max-w-7xl mx-auto px-6 py-16 border-x border-border">
+          <div className="text-center mb-10">
             <h2
-              className="text-3xl sm:text-4xl font-bold text-foreground leading-tight"
+              className="text-2xl sm:text-3xl font-bold text-foreground mb-3 tracking-tight"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
-              Organize links with
-              <br />
-              Folders &amp; Tags
+              Everything you need, in one place.
             </h2>
-            <p className="text-muted-foreground leading-relaxed text-sm">
-              Keep your links tidy with powerful folder organization and tag labeling. Filter your
-              entire link library by folder or tag in seconds — no more digging through a messy
-              list.
+            <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto">
+              Powerful link management with real-time analytics, custom domains, and team collaboration.
             </p>
-            <ul className="flex flex-col gap-2.5 text-xs text-muted-foreground items-start text-left">
-              {[
-                'Nested folders for every project',
-                'Color-coded tags for quick filtering',
-                'Bulk actions on selected links',
-              ].map((f) => (
-                <li key={f} className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-foreground flex-shrink-0" />
-                  <span>{f}</span>
-                </li>
-              ))}
-            </ul>
-            <Link
-              to="/register"
-              className="group btn-solid inline-flex items-center gap-2"
-            >
-              <span>Sign up for free</span>
-              <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 ease-out group-hover:translate-x-1" />
-            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-[1px] bg-border rounded-xl overflow-hidden border border-border shadow-sm auto-rows-[minmax(280px,_auto)]">
+            {/* 1. Dashboard (col-span-8) */}
+            <div className="col-span-1 md:col-span-8 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+              <div className="relative z-10">
+                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center mb-3">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">Workspace Organization</h3>
+                <p className="text-xs text-muted-foreground max-w-md">
+                  Organize links with Folders & Tags. Keep your workspace tidy and filter your entire library in seconds.
+                </p>
+              </div>
+              {/* Nested UI: Dashboard mockup */}
+              <div className="mt-8 relative w-full h-[220px] border border-border rounded-lg bg-background/50 overflow-hidden shadow-sm flex flex-col group-hover:border-primary/30 transition-colors">
+                <div className="h-8 border-b border-border bg-card/80 flex items-center px-4 gap-2 flex-shrink-0">
+                  <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+                  <div className="ml-4 h-3 w-32 bg-secondary rounded-sm" />
+                </div>
+                <div className="flex h-full">
+                  <div className="w-32 border-r border-border p-3 flex flex-col gap-2 flex-shrink-0">
+                    <div className="h-3 w-full bg-secondary rounded-sm" />
+                    <div className="h-3 w-3/4 bg-secondary rounded-sm mt-2" />
+                    <div className="h-3 w-4/5 bg-secondary rounded-sm" />
+                    <div className="h-3 w-2/3 bg-secondary rounded-sm" />
+                  </div>
+                  <div className="flex-1 p-4 flex flex-col gap-3">
+                    <div className="flex items-center justify-between p-3 border border-border rounded bg-card shadow-sm">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="h-3 w-32 bg-foreground/20 rounded-sm" />
+                        <div className="h-2 w-48 bg-muted-foreground/20 rounded-sm" />
+                      </div>
+                      <div className="h-5 w-16 rounded-full bg-primary/20" />
+                    </div>
+                    <div className="flex items-center justify-between p-3 border border-border rounded bg-card shadow-sm">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="h-3 w-24 bg-foreground/20 rounded-sm" />
+                        <div className="h-2 w-40 bg-muted-foreground/20 rounded-sm" />
+                      </div>
+                      <div className="h-5 w-16 rounded-full bg-primary/20" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Analytics (col-span-4) */}
+            <div className="col-span-1 md:col-span-4 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+              <div className="relative z-10">
+                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center mb-3">
+                  <BarChart3 className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">Deep Analytics</h3>
+                <p className="text-xs text-muted-foreground">
+                  Track clicks, devices, browsers, and geographic data in real-time.
+                </p>
+              </div>
+              {/* Nested UI: Mini chart */}
+              <div className="mt-8 flex items-end gap-1.5 h-32 w-full pt-4 border-b border-border">
+                {[40, 70, 45, 90, 65, 85, 100, 60, 75].map((h, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ height: '0%' }}
+                    whileInView={{ height: `${h}%` }}
+                    transition={{ duration: 0.5, delay: i * 0.05 }}
+                    className="flex-1 bg-primary rounded-t-sm group-hover:bg-primary/80 transition-colors"
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* 3. Password Protection (col-span-4) */}
+            <div className="col-span-1 md:col-span-4 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+              <div className="relative z-10">
+                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center mb-3">
+                  <Shield className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">Password Protection</h3>
+                <p className="text-xs text-muted-foreground">
+                  Secure sensitive links behind a password so only the right people can access them.
+                </p>
+              </div>
+              {/* Nested UI: Lock input */}
+              <div className="mt-8 p-3 border border-border rounded-lg bg-background flex items-center gap-2 shadow-sm group-hover:border-primary/30 transition-colors">
+                <Shield className="w-4 h-4 text-muted-foreground" />
+                <div className="h-7 w-full bg-secondary rounded flex-1 flex items-center px-2">
+                  <span className="text-xs text-muted-foreground tracking-[0.3em]">••••••••</span>
+                </div>
+                <div className="w-16 h-7 rounded bg-primary/10 border border-primary/20 flex items-center justify-center text-[10px] text-primary font-bold uppercase tracking-wider">Unlock</div>
+              </div>
+            </div>
+
+            {/* 4. Custom Aliases (col-span-8) */}
+            <div className="col-span-1 md:col-span-8 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+              <div className="relative z-10">
+                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center mb-3">
+                  <MousePointerClick className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">Custom Aliases</h3>
+                <p className="text-xs text-muted-foreground max-w-md">
+                  Create branded short links with your own memorable custom slug, improving click-through rates.
+                </p>
+              </div>
+              {/* Nested UI: Slug editor */}
+              <div className="mt-8 flex items-center max-w-md w-full">
+                <div className="px-4 py-3 bg-secondary border border-r-0 border-border rounded-l-lg text-sm text-muted-foreground flex-shrink-0">trim.ly/</div>
+                <div className="flex-1 px-4 py-3 bg-background border border-primary/50 rounded-r-lg text-sm text-foreground shadow-[0_0_0_1px_rgba(0,153,255,0.2)]">my-custom-brand</div>
+              </div>
+            </div>
+
+            {/* 5. UTM Templates (col-span-4) */}
+            <div className="col-span-1 md:col-span-4 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+              <div className="relative z-10">
+                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center mb-3">
+                  <Tag className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">UTM Templates</h3>
+                <p className="text-xs text-muted-foreground">
+                  Build and save UTM parameter templates to keep your marketing campaigns consistent.
+                </p>
+              </div>
+              {/* Nested UI: UTM Builder */}
+              <div className="mt-8 flex flex-col gap-2 p-4 border border-border rounded-lg bg-background/50 shadow-sm group-hover:border-primary/30 transition-colors">
+                <div className="flex items-center gap-2">
+                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider w-16">Source</div>
+                  <div className="h-6 flex-1 bg-secondary rounded border border-border px-2 flex items-center"><span className="text-xs text-foreground">newsletter</span></div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider w-16">Medium</div>
+                  <div className="h-6 flex-1 bg-secondary rounded border border-border px-2 flex items-center"><span className="text-xs text-foreground">email</span></div>
+                </div>
+              </div>
+            </div>
+
+            {/* 6. Campaigns (col-span-8) */}
+            <div className="col-span-1 md:col-span-8 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+              <div className="relative z-10">
+                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center mb-3">
+                  <Folder className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">Campaign Management</h3>
+                <p className="text-xs text-muted-foreground max-w-md">
+                  Group links into unified campaigns. Track aggregate performance and ROI across multiple channels at once.
+                </p>
+              </div>
+              {/* Nested UI: Campaign List */}
+              <div className="mt-8 flex flex-col gap-3 p-4 border border-border rounded-lg bg-background/50 shadow-sm group-hover:border-primary/30 transition-colors">
+                 <div className="flex items-center justify-between p-3 border border-border rounded bg-card">
+                    <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-md bg-rose-500/10 text-rose-500 flex items-center justify-center"><Sparkles className="w-4 h-4" /></div>
+                       <div>
+                         <div className="text-sm font-semibold text-foreground">Black Friday 2026</div>
+                         <div className="text-[10px] text-muted-foreground">14 links • 45.2k clicks</div>
+                       </div>
+                    </div>
+                    <div className="h-6 px-3 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-bold flex items-center">ACTIVE</div>
+                 </div>
+                 <div className="flex items-center justify-between p-3 border border-border rounded bg-card opacity-60">
+                    <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-md bg-secondary text-muted-foreground flex items-center justify-center"><Folder className="w-4 h-4" /></div>
+                       <div>
+                         <div className="text-sm font-semibold text-foreground">Summer Sale</div>
+                         <div className="text-[10px] text-muted-foreground">8 links • 12.1k clicks</div>
+                       </div>
+                    </div>
+                    <div className="h-6 px-3 rounded-full bg-secondary text-muted-foreground text-[10px] font-bold flex items-center">ENDED</div>
+                 </div>
+              </div>
+            </div>
+
+            {/* 7. Link Check (col-span-12) */}
+            <div className="col-span-1 md:col-span-12 bg-card p-5 sm:p-8 flex flex-col md:flex-row items-center gap-8 relative group transition-colors hover:bg-primary/[0.02]">
+              <div className="relative z-10 flex-1">
+                <div className="w-8 h-8 rounded-md bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3">
+                  <Check className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">Automated Link Check</h3>
+                <p className="text-xs text-muted-foreground max-w-xl">
+                  Trim automatically scans your destination URLs for malware, phishing, and broken links, ensuring your audience always lands safely.
+                </p>
+              </div>
+              {/* Nested UI: Link Scan */}
+              <div className="w-full md:w-96 p-4 border border-border rounded-lg bg-background/50 shadow-sm flex flex-col gap-3 group-hover:border-emerald-500/30 transition-colors relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-0.5 bg-emerald-500/20">
+                  <motion.div 
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '100%' }}
+                    transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                    className="h-full w-1/3 bg-emerald-500"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="text-xs text-muted-foreground font-mono truncate">https://example.com/very/long/path...</div>
+                  <div className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded flex items-center gap-1">
+                    <Check className="w-3 h-3" /> SECURE
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                   <div className="bg-card border border-border rounded p-2 text-center">
+                     <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Status</div>
+                     <div className="text-xs font-semibold text-foreground">200 OK</div>
+                   </div>
+                   <div className="bg-card border border-border rounded p-2 text-center">
+                     <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Malware</div>
+                     <div className="text-xs font-semibold text-emerald-500">Passed</div>
+                   </div>
+                   <div className="bg-card border border-border rounded p-2 text-center">
+                     <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Phishing</div>
+                     <div className="text-xs font-semibold text-emerald-500">Passed</div>
+                   </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </motion.section>
 
-      {/* ── Feature Showcase 2 — Analytics ──────────────────────── */}
+      
+      {/* ── Advanced Tech Super-Grid (API, Globe, Integrations) ──────── */}
       <motion.section
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
         variants={fadeUpVariant}
-        className="py-20 bg-background border-y border-border"
+        className="bg-background border-b border-border"
       >
-        <div className="w-full max-w-screen-xl mx-auto grid grid-cols-1 lg:grid-cols-2 items-center gap-12 lg:gap-8 px-4 sm:px-6 lg:px-8 py-8">
-          {/* Text */}
-          <div className="flex flex-col gap-6 items-start text-left w-full max-w-lg lg:mr-auto order-last lg:order-first">
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              <BarChart3 className="w-3.5 h-3.5 text-muted-foreground" /> Advanced Tracking
-            </div>
-            <h2
-              className="text-3xl sm:text-4xl font-bold text-foreground leading-tight"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-            >
-              Deep click analytics
-              <br />
-              for every link
+        <div className="max-w-7xl mx-auto px-6 py-16 border-x border-border">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              Built for Scale and Speed
             </h2>
-            <p className="text-muted-foreground leading-relaxed text-sm">
-              See exactly who is clicking your links — broken down by device, browser, country, and
-              city. Spot trends at a glance with clean, interactive charts.
+            <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto">
+              Robust APIs for programmatic control, global edge networks for sub-15ms redirects, and seamless integrations with your stack.
             </p>
-            <ul className="flex flex-col gap-2.5 text-xs text-muted-foreground items-start text-left">
-              {[
-                'Real-time click tracking',
-                'Device & browser breakdown',
-                'Geographic heatmap by country',
-                'Time-series click chart with period filters',
-              ].map((f) => (
-                <li key={f} className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-foreground flex-shrink-0" />
-                  <span>{f}</span>
-                </li>
-              ))}
-            </ul>
-            <Link
-              to="/register"
-              className="group btn-solid inline-flex items-center gap-2"
-            >
-              <span>Create your first link</span>
-              <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 ease-out group-hover:translate-x-1" />
-            </Link>
           </div>
 
-          {/* Screenshot */}
-          <div className="relative w-full">
-            <img
-              src="/figma/analytics_screenshot.png"
-              alt="Trim analytics showing click charts"
-              className="w-full h-auto rounded-xl"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-[1px] bg-border rounded-xl overflow-hidden border border-border shadow-sm">
+            
+            {/* 1. Developer API (col-span-8) */}
+            <div className="col-span-1 md:col-span-8 bg-card p-6 flex flex-col justify-between group hover:bg-primary/[0.02] transition-colors relative">
+              <div className="mb-8 relative z-10">
+                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center mb-3">
+                  <Terminal className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">Developer API</h3>
+                <p className="text-xs text-muted-foreground max-w-md">
+                  Automate marketing workflows with our REST API. Batch create links, update destinations on the fly, and manage campaigns.
+                </p>
+              </div>
+              {/* Tight Code Editor Mockup */}
+              <div className="rounded-lg overflow-hidden border border-border shadow-sm bg-[#0F111A] relative z-10">
+                <div className="h-6 bg-[#181A25] border-b border-white/5 flex items-center px-3 gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-rose-500/80" />
+                  <div className="w-2 h-2 rounded-full bg-amber-500/80" />
+                  <div className="w-2 h-2 rounded-full bg-emerald-500/80" />
+                  <div className="mx-auto text-[9px] text-white/40 font-mono flex items-center gap-1.5">
+                    <Code className="w-2.5 h-2.5" /> batch_create.sh
+                  </div>
+                </div>
+                <div className="p-3 text-[10px] font-mono leading-relaxed overflow-x-auto text-emerald-400">
+                  <span className="text-rose-400">curl</span> -X POST https://api.trim.ly/v1/links/batch \<br/>
+                  &nbsp;&nbsp;-H <span className="text-amber-300">"Authorization: Bearer trim_live_xxx"</span> \<br/>
+                  &nbsp;&nbsp;-d <span className="text-amber-300">{"'{\"campaign\": \"bf2026\", \"links\": [...] }'"}</span>
+                </div>
+                <div className="p-2.5 text-[9px] font-mono leading-relaxed bg-[#08090E] border-t border-white/5 text-white/60">
+                  <span className="text-emerald-400">201 Created</span> (12ms) - {'{"status":"success","created":1500}'}
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Global Edge Network (col-span-4) */}
+            <div className="col-span-1 md:col-span-4 bg-card p-6 flex flex-col justify-between group hover:bg-primary/[0.02] transition-colors relative overflow-hidden">
+              <div className="mb-6 relative z-10">
+                <div className="w-8 h-8 rounded-md bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3">
+                  <Globe2 className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">Global Edge Network</h3>
+                <p className="text-xs text-muted-foreground">
+                  Track clicks globally in real-time. Sub-15ms redirects worldwide.
+                </p>
+              </div>
+              {/* Compact Globe & Event Stream */}
+              <div className="relative w-full aspect-square mt-auto flex flex-col justify-end">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48">
+                  <div className="absolute inset-0 rounded-full border border-border border-dashed animate-[spin_60s_linear_infinite]" />
+                  <div className="absolute inset-4 rounded-full border border-primary/20 bg-background/50 shadow-[inset_0_0_50px_rgba(0,153,255,0.1)] backdrop-blur-sm" />
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(0,153,255,0.4),transparent_50%)] rounded-full mix-blend-screen opacity-50" />
+                  <Globe2 className="w-10 h-10 text-primary/30 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                </div>
+                
+                {/* Event Stream Overlay */}
+                <div className="relative z-10 flex flex-col gap-1.5 mt-20">
+                  {[
+                    { city: 'Tokyo, JP', color: 'bg-emerald-500' },
+                    { city: 'London, UK', color: 'bg-primary' },
+                    { city: 'New York, US', color: 'bg-amber-500' },
+                  ].map((event, idx) => (
+                    <motion.div 
+                      key={idx}
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.15 }}
+                      className="px-2.5 py-1.5 border border-border rounded-md bg-card/90 backdrop-blur shadow-sm flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={`w-1.5 h-1.5 rounded-full ${event.color}`} />
+                        <div className="text-[10px] font-semibold text-foreground">{event.city}</div>
+                      </div>
+                      <div className="text-[8px] text-muted-foreground font-mono">Just now</div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Integrations (col-span-12) */}
+            <div className="col-span-1 md:col-span-12 bg-card p-4 flex flex-col md:flex-row items-center justify-between group hover:bg-primary/[0.02] transition-colors relative">
+              <div className="flex items-center gap-3 mb-4 md:mb-0">
+                <div className="w-6 h-6 rounded-md bg-secondary text-muted-foreground flex items-center justify-center">
+                  <Workflow className="w-3 h-3" />
+                </div>
+                <div className="text-xs font-bold text-foreground">Seamless Integrations</div>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8">
+                {[
+                  { name: 'Slack', icon: Hexagon },
+                  { name: 'Zapier', icon: Workflow },
+                  { name: 'GitHub', icon: Code },
+                  { name: 'Discord', icon: Server },
+                  { name: 'Raycast', icon: Terminal },
+                  { name: 'Webhooks', icon: Activity },
+                ].map((integration, idx) => (
+                  <div key={idx} className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                    <integration.icon className="w-4 h-4" />
+                    <span className="text-[10px] font-semibold uppercase tracking-wider hidden sm:block">{integration.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
       </motion.section>
 
-      {/* ── Check all features grid (Arcane Connected Bento Box) ─── */}
+      {/* ── Self-Hosted & Enterprise (High-Contrast Inversion) ────────────── */}
       <motion.section
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
         variants={fadeUpVariant}
-        className="py-20 bg-background border-b border-border"
+        className="bg-zinc-900 dark:bg-zinc-100 border-b border-zinc-800 dark:border-zinc-300 relative overflow-hidden transition-colors duration-300"
       >
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2
-              className="text-3xl sm:text-4xl font-bold text-foreground mb-2"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-            >
-              Check all features
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Everything you need to create, manage, and analyze your links.
-            </p>
+        <div className="max-w-7xl mx-auto px-6 py-24 border-x border-zinc-800 dark:border-zinc-300 relative z-10 flex flex-col items-center transition-colors duration-300">
+          
+          {/* Subtle Ambient Glow (adapts to light/dark inversion) */}
+          <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/20 dark:bg-primary/10 rounded-full blur-[150px] saturate-200" />
+          
+          <div className="w-8 h-8 rounded-md bg-zinc-800 dark:bg-zinc-200 text-zinc-100 dark:text-zinc-900 flex items-center justify-center mb-6 border border-zinc-700 dark:border-zinc-300 transition-colors duration-300">
+            <Server className="w-4 h-4" />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[1px] bg-border rounded-2xl overflow-hidden border border-border shadow-sm">
-            <FeatureCard
-              icon={<Zap className="w-4 h-4" />}
-              title="Instant shortening"
-              desc="Generate a short link in milliseconds — no account required."
-            />
-            <FeatureCard
-              icon={<BarChart3 className="w-4 h-4" />}
-              title="Click analytics"
-              desc="Track clicks, devices, browsers, and geographic data in real-time."
-            />
-            <FeatureCard
-              icon={<Folder className="w-4 h-4" />}
-              title="Folders"
-              desc="Organize your links into folders for any project or campaign."
-            />
-            <FeatureCard
-              icon={<Tag className="w-4 h-4" />}
-              title="Tags"
-              desc="Label links with tags and filter your library instantly."
-            />
-            <FeatureCard
-              icon={<Shield className="w-4 h-4" />}
-              title="Password protection"
-              desc="Secure sensitive links behind a password so only the right people can access them."
-            />
-            <FeatureCard
-              icon={<MousePointerClick className="w-4 h-4" />}
-              title="Custom aliases"
-              desc="Create branded short links with your own memorable custom slug."
-            />
+
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white dark:text-zinc-900 mb-4 tracking-tight text-center max-w-3xl transition-colors duration-300" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            Your own private cloud, fully managed <span className="text-zinc-400 dark:text-zinc-500 transition-colors duration-300">and isolated, with enterprise-level support.</span>
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-16 mt-12 w-full max-w-5xl">
+            {/* Checkmarks */}
+            <div className="flex flex-col justify-center gap-4">
+               {[
+                 'Self-Host via Docker or use Multi-Tenant Hosted',
+                 'Admin Security Vault with Live .env Sync',
+                 'Immutable Audit Log & Tamper-Evident Trails',
+                 'System Maintenance Mode & Panic Switch',
+                 'Advanced RBAC & Threat Intelligence'
+               ].map((item, idx) => (
+                 <div key={idx} className="flex items-center gap-3">
+                   <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                   <span className="text-sm text-zinc-300 dark:text-zinc-700 font-medium transition-colors duration-300">{item}</span>
+                 </div>
+               ))}
+               <div className="flex items-center gap-3 mt-6">
+                 <button className="h-10 px-5 rounded-md text-sm font-medium border border-zinc-700 dark:border-zinc-300 bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors duration-300">
+                   Read Documentation
+                 </button>
+                 <button className="h-10 px-5 rounded-md text-sm font-medium text-white dark:text-zinc-900 hover:text-zinc-300 dark:hover:text-zinc-600 transition-colors duration-300">
+                   Talk to Sales
+                 </button>
+               </div>
+            </div>
+
+            {/* Admin Vault Mockup (Always Dark because terminals are dark) */}
+            <div className="border border-zinc-800 dark:border-zinc-300 bg-[#0A0A10] rounded-xl overflow-hidden shadow-2xl relative transition-colors duration-300">
+               <div className="h-10 border-b border-white/10 bg-white/[0.02] flex items-center justify-between px-4">
+                 <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold flex items-center gap-2"><ShieldAlert className="w-3 h-3 text-rose-500" /> Admin Security Vault</div>
+               </div>
+               <div className="p-5 flex flex-col gap-4">
+                 <div className="flex items-center justify-between p-3 rounded-lg border border-white/10 bg-white/[0.02]">
+                   <div>
+                     <div className="text-sm font-bold text-white">Live .env Sync</div>
+                     <div className="text-[10px] text-zinc-400">Synchronize deployment secrets.</div>
+                   </div>
+                   <div className="w-8 h-4 rounded-full bg-primary/20 flex items-center justify-end p-0.5"><div className="w-3 h-3 rounded-full bg-primary" /></div>
+                 </div>
+                 <div className="flex items-center justify-between p-3 rounded-lg border border-rose-500/20 bg-rose-500/5">
+                   <div>
+                     <div className="text-sm font-bold text-rose-400">Panic Switch</div>
+                     <div className="text-[10px] text-rose-400/60">Immediately quarantine all traffic.</div>
+                   </div>
+                   <button className="px-3 py-1 bg-rose-500 text-white text-[10px] font-bold rounded hover:bg-rose-600 transition-colors">ENGAGE</button>
+                 </div>
+                 <div className="p-3 text-[10px] font-mono text-zinc-500 bg-black/50 rounded border border-white/5">
+                   &gt; docker-compose up -d<br/>
+                   &gt; Initializing multi-tenant isolation...<br/>
+                   &gt; System ready.
+                 </div>
+               </div>
+            </div>
           </div>
         </div>
       </motion.section>
-
-      {/* ── Pricing / Free & Open (Arcane Connected Box) ─────────── */}
+{/* ── Pricing / Free & Open (Bento Redesign) ─────────── */}
       <motion.section
         id="pricing"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
         variants={fadeUpVariant}
-        className="py-20 bg-background relative overflow-hidden border-b border-border"
+        className="bg-background relative overflow-hidden border-b border-border"
       >
-        <div className="max-w-6xl mx-auto px-6 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 py-16 relative z-10 border-x border-border">
           <h2
-            className="text-3xl sm:text-4xl font-bold text-foreground text-center mb-2"
+            className="text-2xl sm:text-3xl font-bold text-foreground text-center mb-2 tracking-tight"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
             Free and Open
           </h2>
-          <p className="text-center text-muted-foreground text-xs sm:text-sm mb-12 max-w-xl mx-auto">
+          <p className="text-center text-muted-foreground text-xs sm:text-sm mb-10 max-w-2xl mx-auto">
             Trim is free to use with no limits. Self-host it yourself or use our hosted version.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-[1px] bg-border rounded-2xl overflow-hidden border border-border max-w-3xl mx-auto shadow-sm">
-            <PricingCard
-              tier="Anonymous User"
-              description=""
-              price="Free"
-              features={[
-                'Instant short links',
-                '24-hour link expiration',
-                'Basic QR Code generation',
-              ]}
-              cta="Try it now"
-              onCtaClick={handleTryItNow}
-            />
-            <PricingCard
-              tier="Registered User"
-              price="Free"
-              description=""
-              features={[
-                'Password protection',
-                'Folders & Custom Tags',
-                'Deep Analytics & Tracking',
-                'Permanent, non-expiring links',
-              ]}
-              cta={token ? 'Go to Dashboard' : 'Create free account'}
-              ctaLink={token ? '/dashboard' : '/register'}
-              highlighted
-            />
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-[1px] bg-border rounded-xl overflow-hidden border border-border shadow-sm max-w-4xl mx-auto">
+            <div className="col-span-1 md:col-span-6 bg-card p-6 sm:p-8 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 rounded-md bg-secondary text-muted-foreground flex items-center justify-center">
+                    <Zap className="w-3 h-3" />
+                  </div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Anonymous User</p>
+                </div>
+                <p className="text-3xl font-bold text-foreground tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Free</p>
+                <p className="text-xs mt-2 text-muted-foreground">Perfect for quick, one-off links without an account.</p>
+              </div>
+              <ul className="flex flex-col gap-2.5 my-6">
+                {['Instant short links', '24-hour link expiration', 'Basic QR Code generation'].map((f) => (
+                  <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Check className="w-3 h-3 text-primary flex-shrink-0" />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                onClick={handleTryItNow}
+                className="w-full text-center px-4 py-2 rounded-md font-bold text-xs btn-secondary transition-colors"
+              >
+                Try it now
+              </button>
+            </div>
+
+            <div className="col-span-1 md:col-span-6 bg-card p-6 sm:p-8 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+              <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-primary/40 via-primary to-primary/40" />
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+                      <Sparkles className="w-3 h-3" />
+                    </div>
+                    <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Registered User</p>
+                  </div>
+                  <span className="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                    Recommended
+                  </span>
+                </div>
+                <p className="text-3xl font-bold text-foreground tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Free</p>
+                <p className="text-xs mt-2 text-muted-foreground">Everything you need for advanced link management.</p>
+              </div>
+              <ul className="flex flex-col gap-2.5 my-6">
+                {['Password protection', 'Folders & Custom Tags', 'Deep Analytics & Tracking', 'Permanent, non-expiring links'].map((f) => (
+                  <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Check className="w-3 h-3 text-primary flex-shrink-0" />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to={token ? '/dashboard' : '/register'}
+                className="w-full text-center px-4 py-2 rounded-md font-bold text-xs btn-solid transition-colors"
+              >
+                {token ? 'Go to Dashboard' : 'Create free account'}
+              </Link>
+            </div>
           </div>
 
-          <p className="text-center text-xs text-muted-foreground mt-10">
+          <p className="text-center text-xs text-muted-foreground mt-12">
             Want to self-host this application? Check out the{' '}
             <a
               href="https://github.com/MovinVinusandha/URL-Shortener"
@@ -763,7 +1106,6 @@ const HomePage: React.FC = () => {
           </p>
         </div>
 
-        {/* Decorative quarter circles */}
         <QuarterCircle className="absolute bottom-0 left-0 w-32 h-32 text-border opacity-40 pointer-events-none" />
         <QuarterCircle
           className="absolute top-0 right-0 w-24 h-24 text-border opacity-40 pointer-events-none"
@@ -771,50 +1113,79 @@ const HomePage: React.FC = () => {
         />
       </motion.section>
 
-      {/* ── Testimonials (Arcane Connected Review Box) ─────────────── */}
-      <motion.section
-        id="testimonials"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-100px' }}
-        variants={fadeUpVariant}
-        className="py-20 bg-background"
-      >
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2
-              className="text-3xl sm:text-4xl font-bold text-foreground mb-2"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-            >
-              Honest reviews from our customers
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              See what modern developers and product teams think about Trim.
-            </p>
+
+
+      {/* ── Testimonials (Infinite Marquee) ─────────────── */}
+      <section className="bg-background relative overflow-hidden border-b border-border">
+        <div className="max-w-7xl mx-auto border-x border-border flex flex-col relative">
+          {/* Gradient fade masks for the marquee edges */}
+          <div className="absolute left-0 top-16 bottom-0 w-16 sm:w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-16 bottom-0 w-16 sm:w-32 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+
+          <div className="px-6 py-16 text-center border-b border-border">
+             <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+               Loved by modern teams
+             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-border rounded-2xl overflow-hidden border border-border shadow-sm">
-            <TestimonialCard
-              quote="Trim replaced four different link management tools for us. The analytics alone are worth it — country breakdowns, device splits, all in one dashboard."
-              name="Sarah M."
-              role="Product Lead · Vercel"
-              initials="SM"
-            />
-            <TestimonialCard
-              quote="We needed password-protected links for client deliverables. Trim nailed it. Setup took minutes and the custom aliases look so much more professional."
-              name="James K."
-              role="Freelance Developer"
-              initials="JK"
-            />
-            <TestimonialCard
-              quote="The folder and tag system is the best I've used. I can filter 500+ links by campaign in seconds. The self-hosting option sealed the deal for my team."
-              name="Ayla R."
-              role="Growth Engineer · Linear"
-              initials="AR"
-            />
+          
+          <div className="flex overflow-hidden group w-full bg-background border-b border-border">
+            <div className="flex w-max motion-safe:animate-infinite-scroll-x group-hover:[animation-play-state:paused] " style={{ animationDuration: '40s' }}>
+              {[...[{'quote': 'The Batch Creation API saved our marketing team hundreds of hours.', 'company': 'Vercel'}, {'quote': 'Real-time global event tracking in under 15ms. Incredible.', 'company': 'Supabase'}, {'quote': 'The self-hosted Docker deployment with SSO was a breeze to set up.', 'company': 'Acme Corp'}, {'quote': 'Hop tracking and malware scanning gives us total peace of mind.', 'company': 'Stripe'}], ...[{'quote': 'The Batch Creation API saved our marketing team hundreds of hours.', 'company': 'Vercel'}, {'quote': 'Real-time global event tracking in under 15ms. Incredible.', 'company': 'Supabase'}, {'quote': 'The self-hosted Docker deployment with SSO was a breeze to set up.', 'company': 'Acme Corp'}, {'quote': 'Hop tracking and malware scanning gives us total peace of mind.', 'company': 'Stripe'}]].map((item, idx) => (
+                 <div key={idx} className="marquee-card p-8 md:p-12 border-r border-border flex-shrink-0 bg-card hover:bg-primary/[0.02] transition-colors flex flex-col justify-between min-h-[200px]">
+                    <blockquote className="text-sm md:text-base text-foreground font-medium mb-6 leading-relaxed">"{item.quote}"</blockquote>
+                    <div className="text-xs font-bold tracking-wider text-muted-foreground uppercase">{item.company}</div>
+                 </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex overflow-hidden group w-full bg-background ">
+            <div className="flex w-max motion-safe:animate-infinite-scroll-x group-hover:[animation-play-state:paused] motion-safe:[animation-direction:reverse]" style={{ animationDuration: '40s' }}>
+              {[...[{'quote': 'Switching from Bitly was seamless. The Analytics alone are worth it.', 'company': 'Netflix'}, {'quote': 'We run massive Black Friday campaigns. Trim never broke a sweat.', 'company': 'Shopify'}, {'quote': 'The immutable audit log is exactly what our compliance team needed.', 'company': 'Coinbase'}, {'quote': 'A beautifully engineered tool. Multi-tenant mode handles our clients perfectly.', 'company': 'Figma'}], ...[{'quote': 'Switching from Bitly was seamless. The Analytics alone are worth it.', 'company': 'Netflix'}, {'quote': 'We run massive Black Friday campaigns. Trim never broke a sweat.', 'company': 'Shopify'}, {'quote': 'The immutable audit log is exactly what our compliance team needed.', 'company': 'Coinbase'}, {'quote': 'A beautifully engineered tool. Multi-tenant mode handles our clients perfectly.', 'company': 'Figma'}]].map((item, idx) => (
+                 <div key={idx} className="marquee-card p-8 md:p-12 border-r border-border flex-shrink-0 bg-card hover:bg-primary/[0.02] transition-colors flex flex-col justify-between min-h-[200px]">
+                    <blockquote className="text-sm md:text-base text-foreground font-medium mb-6 leading-relaxed">"{item.quote}"</blockquote>
+                    <div className="text-xs font-bold tracking-wider text-muted-foreground uppercase">{item.company}</div>
+                 </div>
+              ))}
+            </div>
           </div>
         </div>
-      </motion.section>
+      </section>
 
+      {/* ── FAQ Section (CSS Grid Accordion) ─────────────── */}
+      <section className="bg-background relative overflow-hidden border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 py-24 border-x border-border">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+            <div className="col-span-1 md:col-span-4">
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                Frequently asked questions
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Everything you need to know about Trim's architecture, security, and global edge network.
+              </p>
+            </div>
+            
+            <div className="col-span-1 md:col-span-8 border-t border-border">
+              <FaqItem 
+                question="How fast is the Global Edge Network?" 
+                answer="Our distributed edge nodes ensure sub-15ms redirect speeds worldwide. No matter where your users are located, Trim routes them through the closest data center for hyper-optimized hop times." 
+              />
+              <FaqItem 
+                question="How does Real-Time Event Tracking work?" 
+                answer="Every click is instantly streamed to your dashboard using Server-Sent Events (SSE). You can watch traffic unfold on our interactive 3D Globe, complete with hop tracking, device OS, and geographic data." 
+              />
+              <FaqItem 
+                question="Can I self-host Trim?" 
+                answer="Yes. Trim offers a dual-deployment model. You can self-host via our official Docker images or use our fully managed Multi-Tenant Cloud. Both modes share the exact same enterprise feature set." 
+              />
+              <FaqItem 
+                question="Is the Admin Security Vault included?" 
+                answer="Yes, all enterprise and self-hosted deployments include the Admin Security Vault. This provides Immutable Audit Logs, Proactive Malware Scanning, Live .env Sync, and a one-click Panic Switch to instantly quarantine all active links during a threat." 
+              />
+            </div>
+          </div>
+        </div>
+      </section>
       {/* ── Final CTA Banner & Footer (With Crisp Dot Matrix) ─── */}
       <footer className="relative w-full flex flex-col items-center pt-24 pb-0 overflow-hidden border-t border-border mt-16 bg-background">
         {/* Crisp Visible Dot Matrix in End Section */}

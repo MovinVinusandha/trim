@@ -200,3 +200,29 @@ html {
   }
 }
 
+
+@keyframes infinite-scroll-x {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.animate-infinite-scroll-x {
+  animation: infinite-scroll-x linear infinite;
+}
+
+.marquee-card {
+  width: calc(100vw - 48px);
+}
+@media (min-width: 640px) {
+  .marquee-card {
+    width: calc((min(100vw, 1280px) - 48px) / 2);
+  }
+}
+@media (min-width: 1024px) {
+  .marquee-card {
+    width: calc((min(100vw, 1280px) - 48px) / 3);
+  }
+}
