@@ -408,33 +408,40 @@ const HomePage: React.FC = () => {
       style={{ fontFamily: "'Inter', 'Space Grotesk', sans-serif" }}
     >
       {/* ── Fixed Minimalist Navigation ──────────────────────────────── */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 h-14 flex items-center justify-between relative border-x border-border">
+                        {/* 1. Navbar Glass Background Layer (Separate so it doesn't break mix-blend-mode) */}
+      <div className="fixed top-0 left-0 right-0 h-14 z-40 backdrop-blur-md pointer-events-none" />
+
+      {/* 2. Navbar Content Layer (Strictly mix-blend-difference, NO backdrop filters here) */}
+      <header className="fixed top-0 left-0 right-0 h-14 z-50 mix-blend-difference text-white pointer-events-none border-b border-[#1A1814]">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 h-full flex items-center justify-between pointer-events-auto">
+          
           {/* Left: Logo */}
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <BrandLogo className="h-5 w-auto text-foreground" />
+            <BrandLogo className="h-5 w-auto text-white" />
           </Link>
 
           {/* Center: Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-8 text-xs font-medium text-muted-foreground absolute left-1/2 -translate-x-1/2">
-            <a href="#features" className="hover:text-foreground transition-colors">
+          <nav className="hidden md:flex items-center gap-8 text-[13px] font-medium absolute left-1/2 -translate-x-1/2">
+            <a href="#features" className="hover:opacity-70 transition-opacity">
               Features
             </a>
-            <a href="#pricing" className="hover:text-foreground transition-colors">
+            <a href="#pricing" className="hover:opacity-70 transition-opacity">
               Pricing
             </a>
-            <a href="#testimonials" className="hover:text-foreground transition-colors">
+            <a href="#testimonials" className="hover:opacity-70 transition-opacity">
               Reviews
             </a>
           </nav>
 
-          {/* Auth buttons & Theme toggle */}
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
+          {/* Auth buttons */}
+          <div className="flex items-center gap-4">
+            <div className="hover:opacity-70 transition-opacity">
+              <ThemeToggle className="!bg-transparent !border-transparent !text-white hover:!opacity-70" />
+            </div>
             {token ? (
               <Link
                 to="/dashboard"
-                className="btn-solid"
+                className="inline-flex items-center justify-center rounded-md text-[13px] font-medium px-4 py-1.5 border border-white hover:bg-white hover:text-black transition-colors"
               >
                 Dashboard
               </Link>
@@ -442,15 +449,15 @@ const HomePage: React.FC = () => {
               <>
                 <Link
                   to="/login"
-                  className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
+                  className="text-[13px] font-medium hover:opacity-70 transition-opacity px-2 py-1"
                 >
-                  Login
+                  Sign in
                 </Link>
                 <Link
                   to="/register"
-                  className="btn-solid"
+                  className="inline-flex items-center justify-center rounded-md text-[13px] font-medium px-4 py-1.5 bg-white text-black hover:opacity-90 transition-opacity"
                 >
-                  Get Started
+                  Sign up
                 </Link>
               </>
             )}
@@ -470,7 +477,7 @@ const HomePage: React.FC = () => {
         {/* Subtle Ambient Radial Glow */}
         
         
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-12 flex flex-col items-center gap-6 sm:gap-7 border-x border-border">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-12 flex flex-col items-center gap-6 sm:gap-7">
           <motion.div
             initial="hidden"
             animate="visible"
@@ -1141,10 +1148,10 @@ const HomePage: React.FC = () => {
                  </div>
                ))}
                <div className="flex items-center gap-3 mt-6">
-                 <button className="h-10 px-5 rounded-md text-sm font-medium border border-white/10 bg-white/10 text-white hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors duration-300">
+                 <button className="h-10 px-5 rounded-md text-sm font-medium border border-white/10 bg-white/10 text-white hover:bg-white/20 transition-colors duration-300">
                    Read Documentation
                  </button>
-                 <button className="h-10 px-5 rounded-md text-sm font-medium text-white hover:text-zinc-300 transition-colors duration-300">
+                 <button className="h-10 px-5 rounded-md text-sm font-medium text-zinc-300 hover:text-white transition-colors duration-300">
                    Talk to Sales
                  </button>
                </div>
@@ -1165,12 +1172,12 @@ const HomePage: React.FC = () => {
                  </div>
                  <div className="flex items-center justify-between p-3 rounded-md border border-rose-500/20 bg-rose-500/5">
                    <div>
-                     <div className="text-sm font-medium text-foreground">Panic Switch</div>
-                     <div className="text-[10px] text-foreground/60">Immediately quarantine all traffic.</div>
+                     <div className="text-sm font-medium text-rose-100">Panic Switch</div>
+                     <div className="text-[10px] text-rose-100/60">Immediately quarantine all traffic.</div>
                    </div>
                    <button className="px-3 py-1 bg-rose-500 text-white text-[10px] font-medium rounded hover:bg-rose-600 transition-colors">ENGAGE</button>
                  </div>
-                 <div className="p-3 text-[10px] font-mono text-zinc-500 bg-black/50 rounded border border-white/5">
+                 <div className="p-3 text-[10px] font-mono text-zinc-300 bg-black/50 rounded border border-white/5">
                    &gt; docker-compose up -d<br/>
                    &gt; Initializing multi-tenant isolation...<br/>
                    &gt; System ready.
