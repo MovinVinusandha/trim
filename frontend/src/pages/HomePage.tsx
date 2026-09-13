@@ -659,44 +659,42 @@ const HomePage: React.FC = () => {
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
         variants={fadeUpVariant}
-        className="w-full bg-background border-b border-border overflow-hidden relative flex flex-col justify-center"
+        className="bg-background relative w-full border-b border-border"
       >
-        <div className="relative z-10 w-full max-w-7xl px-6 py-24 mx-auto flex flex-col items-center gap-8 border-x border-border">
-          <h2
-            className="text-muted-foreground text-xs font-medium uppercase tracking-widest text-center"
-           
-          >
-            Trusted by modern teams and developers
-          </h2>
-          <div className="w-full flex flex-col gap-8">
-            <div className="w-full flex justify-center">
-              <img
-                src="/figma/row1.svg"
-                alt="Trusted brand logos"
-                className="w-full max-w-[933px] h-[34px] brightness-0 opacity-60 dark:invert dark:opacity-75 transition-opacity hover:opacity-100"
-              />
+        <div className="max-w-7xl mx-auto border-x border-border">
+          <div className="grid grid-cols-1 lg:grid-cols-5 divide-y lg:divide-y-0 lg:divide-x divide-border border-b border-transparent">
+            {/* Title Cell */}
+            <div className="col-span-1 p-6 flex items-center justify-center lg:justify-start bg-background z-10 relative">
+              <h2 className="text-muted-foreground text-xs font-medium uppercase tracking-widest text-center lg:text-left">
+                Trusted by modern teams and developers
+              </h2>
             </div>
-            <div className="w-full flex justify-between items-center px-4 md:px-10">
-              <img
-                src="/figma/logo2.svg"
-                alt="Logo 2"
-                className="h-[28px] w-auto brightness-0 opacity-60 dark:invert dark:opacity-75 transition-opacity hover:opacity-100"
-              />
-              <img
-                src="/figma/logo3.svg"
-                alt="Logo 3"
-                className="h-[26px] w-auto brightness-0 opacity-60 dark:invert dark:opacity-75 transition-opacity hover:opacity-100"
-              />
-              <img
-                src="/figma/logo4.svg"
-                alt="Logo 4"
-                className="h-[26px] w-auto brightness-0 opacity-60 dark:invert dark:opacity-75 transition-opacity hover:opacity-100"
-              />
-              <img
-                src="/figma/natroma.svg"
-                alt="Natroma"
-                className="h-[28px] w-auto brightness-0 opacity-60 dark:invert dark:opacity-75 transition-opacity hover:opacity-100"
-              />
+            
+            {/* Scrolling Logos Marquee */}
+            <div className="col-span-1 lg:col-span-4 overflow-hidden flex bg-background group">
+              <div className="flex w-max motion-safe:animate-infinite-scroll-x group-hover:[animation-play-state:paused]">
+                {[
+                  "/figma/logo2.svg",
+                  "/figma/logo3.svg",
+                  "/figma/logo4.svg",
+                  "/figma/natroma.svg",
+                  "/figma/logo2.svg",
+                  "/figma/logo3.svg",
+                  "/figma/logo4.svg",
+                  "/figma/natroma.svg"
+                ].map((src, idx) => (
+                  <div 
+                    key={idx} 
+                    className="w-[200px] lg:w-[250px] p-6 md:p-8 flex items-center justify-center border-r border-border hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors shrink-0"
+                  >
+                    <img
+                      src={src}
+                      alt="Partner Logo"
+                      className="max-h-[28px] w-auto brightness-0 dark:invert"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
