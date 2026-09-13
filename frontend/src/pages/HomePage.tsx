@@ -1399,36 +1399,36 @@ const HomePage: React.FC = () => {
         </div>
       </section>
       {/* ── Final CTA Banner & Footer (With Crisp Dot Matrix) ─── */}
-      <footer className="relative w-full flex flex-col items-center pt-24 pb-0 overflow-hidden border-t border-border mt-16 bg-background">
-        {/* Crisp Visible Dot Matrix in End Section */}
-        <DotMatrix fadeMask={false} className="opacity-70" />
+      <footer className="relative w-full flex flex-col items-center overflow-hidden border-t border-border bg-background">
+        
+        {/* CTA Block (Full Width Wrapper) */}
+        <div className="relative w-full flex flex-col items-center justify-center pt-24 pb-0 border-b border-border overflow-hidden bg-background">
+          {/* Crisp Visible Dot Matrix in End Section */}
+          <DotMatrix fadeMask={false} className="opacity-70" />
 
-        {/* Ambient Subtle Glow */}
-        <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-primary/10 rounded-full blur-[140px]" />
+          {/* Ambient Subtle Glow */}
+          <div className="pointer-events-none absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-primary/10 rounded-full blur-[140px]" />
 
-        {/* The CTA Block */}
-        <div className="flex flex-col items-center gap-5 z-10 mb-16 relative px-6 text-center">
-          <h2
-            className="text-3xl sm:text-5xl font-medium tracking-tighter text-foreground"
-           
-          >
-            Ready to manage your links?
-          </h2>
-          <p className="text-xs sm:text-sm text-muted-foreground max-w-md">
-            Join thousands of teams and developers who organize, secure, and track their links with Trim.
-          </p>
-          <Link
-            to={token ? '/dashboard' : '/register'}
-            className="group btn-solid px-8 py-3 text-xs font-medium shadow-lg mt-2 inline-flex items-center gap-2"
-          >
-            <span>{token ? 'Go to Dashboard' : 'Get Started'}</span>
-            <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 ease-out group-hover:translate-x-1" />
-          </Link>
-        </div>
+          {/* The CTA Block */}
+          <div className="flex flex-col items-center gap-5 z-10 relative px-6 text-center mb-16">
+            <h2 className="text-3xl sm:text-5xl font-medium tracking-tighter text-foreground">
+              Ready to manage your links?
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground max-w-md">
+              Join thousands of teams and developers who organize, secure, and track their links with Trim.
+            </p>
+            <Link
+              to={token ? '/dashboard' : '/register'}
+              className="group btn-solid px-8 py-3 text-xs font-medium shadow-lg mt-2 inline-flex items-center gap-2"
+            >
+              <span>{token ? 'Go to Dashboard' : 'Get Started'}</span>
+              <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 ease-out group-hover:translate-x-1" />
+            </Link>
+          </div>
 
-        {/* The Massive Logo Watermark */}
-        <div className="w-full max-w-[1600px] mx-auto flex justify-center items-end mt-auto px-4 translate-y-12 relative z-0">
-          <svg
+          {/* The Massive Logo Watermark */}
+          <div className="w-full max-w-[1600px] mx-auto flex justify-center items-end mt-auto px-4 translate-y-12 relative z-0">
+            <svg
             className="w-full h-auto text-foreground/[0.04]"
             viewBox="0 0 401 163"
             fill="none"
@@ -1456,143 +1456,73 @@ const HomePage: React.FC = () => {
               fill="currentColor"
             />
           </svg>
+          </div>
         </div>
 
-        {/* Bottom Navigation & Links Section */}
-        <div className="w-full relative z-10 border-t border-border bg-background/95 backdrop-blur-md pt-16 pb-8">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            {/* Upper Columns Row */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12">
-              {/* Left Bio Column */}
-              <div className="md:col-span-5 flex flex-col items-start gap-4">
-                <Link to="/" className="flex items-center gap-2">
-                  <BrandLogo className="h-7 w-auto text-foreground" />
-                </Link>
-                <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">
-                  Modern, fast, and open-source URL shortener with comprehensive analytics, custom tags, and folder management.
+        {/* Structured Multi-Column Navigation Grid */}
+        <div className="w-full max-w-7xl mx-auto relative z-10 bg-background">
+          <div className="grid grid-cols-2 lg:grid-cols-5 divide-y lg:divide-y-0 lg:divide-x divide-border">
+            
+            {/* Brand / Logo Column */}
+            <div className="col-span-2 lg:col-span-2 p-8 md:p-12 flex flex-col justify-between h-full">
+              <div>
+                <div className="flex items-center mb-6">
+                  <BrandLogo className="h-8 w-auto text-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground max-w-xs">
+                  The brutalist, open-source link management platform for modern developers and enterprise teams.
                 </p>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/20 bg-secondary text-foreground text-xs font-medium mt-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  All Systems Operational
-                </div>
               </div>
-
-              {/* Navigation Columns */}
-              <div className="md:col-span-7 grid grid-cols-3 gap-8">
-                {/* Column 1: PRODUCT */}
-                <div className="flex flex-col gap-3">
-                  <p className="text-[11px] font-medium text-foreground uppercase tracking-wider">
-                    Product
-                  </p>
-                  <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
-                    <li>
-                      <a href="#features" className="hover:text-foreground transition-colors">
-                        Overview
-                      </a>
-                    </li>
-                    <li>
-                      <a href="#pricing" className="hover:text-foreground transition-colors">
-                        Plans
-                      </a>
-                    </li>
-                    <li>
-                      <a href="#testimonials" className="hover:text-foreground transition-colors">
-                        Customer Reviews
-                      </a>
-                    </li>
-                    <li>
-                      <Link to="/dashboard" className="hover:text-foreground transition-colors">
-                        Link Manager
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Column 2: RESOURCES */}
-                <div className="flex flex-col gap-3">
-                  <p className="text-[11px] font-medium text-foreground uppercase tracking-wider">
-                    Resources
-                  </p>
-                  <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
-                    <li>
-                      <a
-                        href="https://github.com/MovinVinusandha/URL-Shortener"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:text-foreground transition-colors"
-                      >
-                        GitHub Repo
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="https://github.com/MovinVinusandha/URL-Shortener#readme"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:text-foreground transition-colors"
-                      >
-                        Documentation
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="https://github.com/MovinVinusandha/URL-Shortener#docker-compose"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:text-foreground transition-colors"
-                      >
-                        Self-Hosting
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Column 3: LEGAL */}
-                <div className="flex flex-col gap-3">
-                  <p className="text-[11px] font-medium text-foreground uppercase tracking-wider">
-                    Legal
-                  </p>
-                  <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
-                    <li>
-                      <Link to="/privacy-policy" className="hover:text-foreground transition-colors">
-                        Privacy Policy
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/terms-and-conditions" className="hover:text-foreground transition-colors">
-                        Terms &amp; Conditions
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/settings/security" className="hover:text-foreground transition-colors">
-                        Security
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Row */}
-            <div className="border-t border-border pt-6 flex flex-col sm:flex-row justify-between items-center text-xs text-muted-foreground">
-              <p>© Copyright 2026, All Rights Reserved</p>
-              <div className="flex items-center gap-6 mt-4 sm:mt-0">
-                <Link to="/privacy-policy" className="hover:text-foreground transition-colors">
-                  Privacy Policy
-                </Link>
-                <Link to="/terms-and-conditions" className="hover:text-foreground transition-colors">
-                  Terms &amp; Conditions
-                </Link>
-                <a
-                  href="https://github.com/MovinVinusandha/URL-Shortener"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-foreground transition-colors inline-flex items-center gap-1.5"
-                >
-                  <GithubIcon className="w-3.5 h-3.5" /> GitHub
+              <div className="mt-12 flex items-center gap-4">
+                <a href="https://github.com/MovinVinusandha/URL-Shortener" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <GithubIcon className="w-5 h-5" />
+                </a>
+                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Globe2 className="w-5 h-5" />
                 </a>
               </div>
             </div>
+
+            {/* Product Column */}
+            <div className="col-span-1 p-8 md:p-12 flex flex-col gap-4">
+              <h4 className="text-foreground font-mono text-xs uppercase tracking-widest mb-4">Product</h4>
+              <a href="#" className="text-muted-foreground hover:text-primary text-sm transition-colors">Features</a>
+              <a href="#pricing" className="text-muted-foreground hover:text-primary text-sm transition-colors">Pricing</a>
+              <a href="#" className="text-muted-foreground hover:text-primary text-sm transition-colors">Changelog</a>
+              <a href="#" className="text-muted-foreground hover:text-primary text-sm transition-colors">Documentation</a>
+              <a href="#" className="text-muted-foreground hover:text-primary text-sm transition-colors">API Reference</a>
+            </div>
+
+            {/* Resources Column */}
+            <div className="col-span-1 p-8 md:p-12 flex flex-col gap-4">
+              <h4 className="text-foreground font-mono text-xs uppercase tracking-widest mb-4">Resources</h4>
+              <a href="#" className="text-muted-foreground hover:text-primary text-sm transition-colors">Community</a>
+              <a href="#" className="text-muted-foreground hover:text-primary text-sm transition-colors">Blog</a>
+              <a href="#" className="text-muted-foreground hover:text-primary text-sm transition-colors">Open Source</a>
+              <a href="#" className="text-muted-foreground hover:text-primary text-sm transition-colors">Brand Assets</a>
+            </div>
+
+            {/* Company Column */}
+            <div className="col-span-1 p-8 md:p-12 flex flex-col gap-4">
+              <h4 className="text-foreground font-mono text-xs uppercase tracking-widest mb-4">Company</h4>
+              <a href="#" className="text-muted-foreground hover:text-primary text-sm transition-colors">About Us</a>
+              <a href="#" className="text-muted-foreground hover:text-primary text-sm transition-colors">Careers</a>
+              <a href="#" className="text-muted-foreground hover:text-primary text-sm transition-colors">Privacy Policy</a>
+              <a href="#" className="text-muted-foreground hover:text-primary text-sm transition-colors">Terms of Service</a>
+            </div>
+
+          </div>
+        </div>
+          
+        {/* Bottom Copyright Bar - Expanded to full width */}
+        <div className="w-full border-t border-border bg-background relative z-10">
+          <div className="max-w-7xl mx-auto p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+             <p className="text-xs text-muted-foreground">
+               &copy; {new Date().getFullYear()} Trim. All rights reserved.
+             </p>
+             <p className="text-xs text-muted-foreground flex items-center gap-1">
+               Designed in <Zap className="w-3 h-3 text-red-500 mx-0.5" /> Open Source
+             </p>
           </div>
         </div>
       </footer>
