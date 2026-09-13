@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, type Variants } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
   Link2,
   Copy,
@@ -25,6 +25,9 @@ import {
   Workflow,
   ShieldAlert,
   Plus,
+  Laptop,
+  Smartphone,
+  MapPin
 } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import BrandLogo from '../components/BrandLogo';
@@ -93,13 +96,13 @@ interface FeatureCardProps {
 }
 const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, desc }) => (
   <div className="p-6 sm:p-8 bg-background flex flex-col items-start gap-4 transition-colors group hover:bg-secondary/40">
-    <div className="w-9 h-9 rounded-full bg-secondary text-muted-foreground border border-border flex items-center justify-center group-hover:text-foreground group-hover:border-border transition-colors">
+    <div className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-border flex items-center justify-center group-hover:text-foreground group-hover:border-border transition-colors">
       {icon}
     </div>
     <div>
       <h3
-        className="font-semibold text-sm tracking-tight text-foreground transition-colors"
-        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        className="font-medium text-sm tracking-tighter text-foreground transition-colors"
+       
       >
         {title}
       </h3>
@@ -133,20 +136,20 @@ const PricingCard: React.FC<PricingCardProps> = ({
     <div>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-secondary text-muted-foreground border border-border flex items-center justify-center">
+          <div className="w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-border flex items-center justify-center">
             {highlighted ? <Sparkles className="w-3.5 h-3.5" /> : <Zap className="w-3.5 h-3.5" />}
           </div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{tier}</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{tier}</p>
         </div>
         {highlighted && (
-          <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-secondary text-muted-foreground border border-border">
+          <span className="text-[10px] uppercase font-medium tracking-wider px-2.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-border">
             Recommended
           </span>
         )}
       </div>
       <p
-        className="text-4xl font-bold text-foreground mt-4 tracking-tight"
-        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        className="text-4xl font-medium text-foreground mt-4 tracking-tighter"
+       
       >
         {price}
       </p>
@@ -166,7 +169,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
       <button
         type="button"
         onClick={onCtaClick}
-        className={`w-full text-center px-6 py-2.5 rounded-lg font-semibold text-xs transition-colors ${
+        className={`w-full text-center px-6 py-2.5 rounded-md font-medium text-xs transition-colors ${
           highlighted ? 'btn-solid' : 'btn-secondary'
         }`}
       >
@@ -175,7 +178,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
     ) : (
       <Link
         to={ctaLink}
-        className={`w-full text-center px-6 py-2.5 rounded-lg font-semibold text-xs transition-colors ${
+        className={`w-full text-center px-6 py-2.5 rounded-md font-medium text-xs transition-colors ${
           highlighted ? 'btn-solid' : 'btn-secondary'
         }`}
       >
@@ -196,11 +199,11 @@ const TestimonialCard: React.FC<TestimonialProps> = ({ quote, name, role, initia
   <div className="p-8 bg-background flex flex-col justify-between gap-6 hover:bg-secondary/20 transition-colors">
     <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">"{quote}"</p>
     <div className="flex items-center gap-3 pt-4 border-t border-border">
-      <div className="w-8 h-8 rounded-full bg-secondary text-foreground border border-border flex items-center justify-center text-xs font-bold flex-shrink-0">
+      <div className="w-8 h-8 rounded-full bg-secondary text-foreground border border-border flex items-center justify-center text-xs font-medium flex-shrink-0">
         {initials}
       </div>
       <div>
-        <p className="text-xs font-semibold text-foreground">{name}</p>
+        <p className="text-xs font-medium text-foreground">{name}</p>
         <p className="text-[11px] text-muted-foreground">{role}</p>
       </div>
     </div>
@@ -244,7 +247,7 @@ const SectionTicker = ({ number, title, commitMsg }: { number: string, title: st
         {number}
       </div>
       <div className="flex-grow flex items-center justify-between px-6 overflow-hidden">
-        <span className="text-primary font-semibold text-[10px] md:text-[11px] truncate tracking-wider">
+        <span className="text-primary font-medium text-[10px] md:text-[11px] truncate tracking-wider">
           {title}
         </span>
         <span className="text-muted-foreground truncate opacity-70 ml-4 hidden md:inline-block lowercase tracking-normal">
@@ -276,6 +279,83 @@ const testimonialsRow2 = [
   { quote: 'Trim\'s immutable audit log is exactly what our compliance team needed.', name: 'Robert Taylor', handle: 'rtaylor_sec' },
   { quote: 'Trim is a beautifully engineered tool. Multi-tenant mode handles our clients perfectly.', name: 'Lisa Wang', handle: 'lisawang_pm' }
 ];
+
+
+const generateRandomEvent = () => {
+  const ids = ['/67E9BA7E', '/96107F21', '/A1B2C3D4', '/FF9922AA', '/XY987654'];
+  const countries = ['Local', 'US', 'UK', 'DE', 'FR', 'JP'];
+  const devices = ['Desktop', 'Mobile', 'Tablet'];
+  
+  return {
+    id: Math.random().toString(36).substr(2, 9),
+    date: `Sep 13 at ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
+    link: ids[Math.floor(Math.random() * ids.length)],
+    dest: 'https://github.com/dubinc/d...',
+    country: countries[Math.floor(Math.random() * countries.length)],
+    device: devices[Math.floor(Math.random() * devices.length)],
+  };
+};
+
+const LiveEventStream = () => {
+  const [events, setEvents] = React.useState(() => [
+    generateRandomEvent(),
+    generateRandomEvent(),
+    generateRandomEvent(),
+    generateRandomEvent()
+  ]);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setEvents(prev => {
+        const newEvents = [generateRandomEvent(), ...prev];
+        return newEvents.slice(0, 4); // Keep exactly 4 full lines visible
+      });
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="w-full border border-border rounded-lg shadow-sm bg-card overflow-hidden text-[11px] flex flex-col relative z-10">
+      <div className="grid grid-cols-[3fr_3.5fr_2fr_2.5fr] border-b border-border bg-muted/20 font-medium text-muted-foreground">
+        <div className="px-3 py-2 flex items-center gap-1.5">Date <span className="text-primary text-[10px]">↑↓</span></div>
+        <div className="px-3 py-2 border-l border-border">Link</div>
+        <div className="px-3 py-2 border-l border-border">Country</div>
+        <div className="px-3 py-2 border-l border-border">Device</div>
+      </div>
+      
+      <div className="flex flex-col relative bg-card">
+        <AnimatePresence initial={false}>
+          {events.map((event) => (
+            <motion.div
+              key={event.id}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 53 }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <div className="grid grid-cols-[3fr_3.5fr_2fr_2.5fr] border-b border-border hover:bg-primary/[0.03] transition-colors group cursor-default bg-card h-[53px]">
+                <div className="px-3 py-2.5 truncate text-muted-foreground flex items-center h-full">{event.date}</div>
+                <div className="px-3 py-2.5 border-l border-border truncate flex flex-col justify-center gap-0.5 h-full">
+                  <span className="font-semibold text-foreground leading-none">{event.link}</span>
+                  <span className="text-[9px] text-muted-foreground/60 truncate leading-none mt-1">{event.dest}</span>
+                </div>
+                <div className="px-3 py-2.5 border-l border-border truncate flex items-center gap-1.5 text-muted-foreground h-full">
+                  <MapPin className="w-3 h-3 opacity-50" />
+                  {event.country}
+                </div>
+                <div className="px-3 py-2.5 border-l border-border truncate flex items-center gap-1.5 text-muted-foreground h-full">
+                  {event.device === 'Mobile' ? <Smartphone className="w-3 h-3 opacity-50" /> : <Laptop className="w-3 h-3 opacity-50" />}
+                  {event.device}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
 
 const HomePage: React.FC = () => {
   const { token } = useAuth();
@@ -388,7 +468,7 @@ const HomePage: React.FC = () => {
         <DotMatrix />
 
         {/* Subtle Ambient Radial Glow */}
-        <div className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[300px] bg-primary/10 rounded-full blur-[120px]" />
+        
         
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-12 flex flex-col items-center gap-6 sm:gap-7 border-x border-border">
           <motion.div
@@ -400,12 +480,9 @@ const HomePage: React.FC = () => {
           {/* 1. Badge */}
           <motion.div
             variants={fadeUpVariant}
-            className="group inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border bg-card/80 backdrop-blur-sm text-xs font-medium text-muted-foreground shadow-sm hover:border-border/80 hover:text-foreground transition-colors cursor-pointer"
+            className="group inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md border border-border bg-card/80 backdrop-blur-sm text-[11px] uppercase tracking-widest font-semibold text-muted-foreground shadow-sm hover:border-border/80 hover:text-foreground transition-colors cursor-pointer"
           >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-            </span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-foreground opacity-50" />
             <span>Fast · Free · No signup needed</span>
             <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 ease-out group-hover:translate-x-1 text-muted-foreground group-hover:text-foreground" />
           </motion.div>
@@ -418,14 +495,14 @@ const HomePage: React.FC = () => {
           {/* 3. Headline */}
           <motion.h1
             variants={fadeUpVariant}
-            className="text-4xl sm:text-6xl lg:text-7xl font-bold text-foreground leading-[1.08] tracking-tight max-w-2xl"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            className="text-5xl sm:text-6xl lg:text-[5rem] font-medium text-foreground leading-none tracking-tighter max-w-2xl"
+           
           >
             Shorten, track &amp;
             <br />
             <span className="relative">
               manage your links{' '}
-              <span className="absolute -bottom-1.5 left-0 right-0 h-1 rounded-full bg-primary/30" />
+              
             </span>
           </motion.h1>
 
@@ -442,7 +519,7 @@ const HomePage: React.FC = () => {
           <motion.div variants={fadeUpVariant} className="w-full max-w-2xl mt-1">
             <form
               onSubmit={handleShorten}
-              className="flex flex-col sm:flex-row gap-2 p-1.5 sm:p-2 bg-card border border-border rounded-lg shadow-sm focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/50 transition-all group"
+              className="flex flex-col sm:flex-row gap-2 p-1.5 sm:p-2 bg-card border border-border rounded-md shadow-sm focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/50 transition-all group"
             >
               <div className="flex-1 relative flex items-center">
                 <Link2 className="absolute left-3.5 w-4 h-4 text-muted-foreground pointer-events-none flex-shrink-0" />
@@ -465,7 +542,7 @@ const HomePage: React.FC = () => {
                 id="home-shorten-submit"
                 type="submit"
                 disabled={loading}
-                className="btn-solid px-5 py-2.5 text-xs font-semibold flex items-center justify-center gap-2 flex-shrink-0 disabled:opacity-60 transition-all active:scale-[0.98] rounded-md"
+                className="btn-solid px-5 py-2.5 text-xs font-medium flex items-center justify-center gap-2 flex-shrink-0 disabled:opacity-60 transition-all active:scale-[0.98] rounded-md"
               >
                 {loading ? (
                   <>
@@ -474,7 +551,7 @@ const HomePage: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <Zap className="w-3.5 h-3.5 transition-transform duration-200 ease-out group-hover:scale-125 group-hover:-rotate-12 group-hover:fill-current" />
+                    <Zap className="w-3.5 h-3.5 transition-transform duration-200 ease-out group-hover:scale-125  group-hover:fill-current" />
                     <span>Shorten it</span>
                   </>
                 )}
@@ -483,7 +560,7 @@ const HomePage: React.FC = () => {
 
             {/* Error */}
             {error && (
-              <div className="mt-3 flex items-center gap-2.5 bg-rose-500/10 border border-rose-500/30 rounded-lg px-4 py-2.5 text-left shadow-sm">
+              <div className="mt-3 flex items-center gap-2.5 bg-rose-500/10 border border-rose-500/30 rounded-md px-4 py-2.5 text-left shadow-sm">
                 <AlertCircle className="w-4 h-4 text-rose-500 flex-shrink-0" />
                 <p className="text-rose-500 text-xs font-medium">{error}</p>
               </div>
@@ -491,8 +568,8 @@ const HomePage: React.FC = () => {
 
             {/* Result */}
             {generatedUrl && (
-              <div className="mt-3 p-4 bg-card border border-border rounded-lg text-left shadow-sm">
-                <p className="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider mb-2">
+              <div className="mt-3 p-4 bg-card border border-border rounded-md text-left shadow-sm">
+                <p className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider mb-2">
                   Your short link is ready
                 </p>
                 <div className="flex items-center gap-3">
@@ -500,7 +577,7 @@ const HomePage: React.FC = () => {
                     href={generatedUrl.shortUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 text-foreground font-semibold text-sm hover:underline flex items-center gap-1.5 min-w-0"
+                    className="flex-1 text-foreground font-medium text-sm hover:underline flex items-center gap-1.5 min-w-0"
                   >
                     <span className="truncate">{generatedUrl.shortUrl}</span>
                     <ExternalLink className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground" />
@@ -534,7 +611,7 @@ const HomePage: React.FC = () => {
                   Go to your{' '}
                   <Link
                     to="/dashboard"
-                    className="font-semibold text-foreground underline hover:no-underline"
+                    className="font-medium text-foreground underline hover:no-underline"
                   >
                     dashboard
                   </Link>{' '}
@@ -544,7 +621,7 @@ const HomePage: React.FC = () => {
                 <>
                   <Link
                     to="/register"
-                    className="font-semibold text-foreground underline hover:no-underline"
+                    className="font-medium text-foreground underline hover:no-underline"
                   >
                     Create a free account
                   </Link>{' '}
@@ -568,8 +645,8 @@ const HomePage: React.FC = () => {
       >
         <div className="relative z-10 w-full max-w-7xl px-6 py-24 mx-auto flex flex-col items-center gap-8 border-x border-border">
           <h2
-            className="text-muted-foreground text-xs font-semibold uppercase tracking-widest text-center"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            className="text-muted-foreground text-xs font-medium uppercase tracking-widest text-center"
+           
           >
             Trusted by modern teams and developers
           </h2>
@@ -622,8 +699,8 @@ const HomePage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 py-16 border-x border-border">
           <div className="text-center mb-10">
             <h2
-              className="text-2xl sm:text-3xl font-bold text-foreground mb-3 tracking-tight"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              className="text-2xl sm:text-3xl font-medium text-foreground mb-3 tracking-tighter"
+             
             >
               Everything you need, in one place.
             </h2>
@@ -632,24 +709,24 @@ const HomePage: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-[1px] bg-border rounded-xl overflow-hidden border border-border shadow-sm auto-rows-[minmax(280px,_auto)]">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-[1px] bg-border rounded-lg overflow-hidden border border-border shadow-sm auto-rows-[minmax(280px,_auto)]">
             {/* 1. Dashboard (col-span-8) */}
             <div className="col-span-1 md:col-span-8 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10">
-                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center mb-3">
+                <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
                   <Sparkles className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">Workspace Organization</h3>
+                <h3 className="text-lg font-medium text-foreground tracking-tighter mb-1.5">Workspace Organization</h3>
                 <p className="text-xs text-muted-foreground max-w-md">
                   Organize links with Folders & Tags. Keep your workspace tidy and filter your entire library in seconds.
                 </p>
               </div>
               {/* Nested UI: Dashboard mockup */}
-              <div className="mt-8 relative w-full h-[220px] border border-border rounded-lg bg-background/50 overflow-hidden shadow-sm flex flex-col group-hover:border-primary/30 transition-colors">
+              <div className="mt-8 relative w-full h-[220px] border border-border rounded-md bg-background/50 overflow-hidden shadow-sm flex flex-col group-hover:border-primary/30 transition-colors">
                 <div className="h-8 border-b border-border bg-card/80 flex items-center px-4 gap-2 flex-shrink-0">
-                  <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/30" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/30" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/30" />
                   <div className="ml-4 h-3 w-32 bg-secondary rounded-sm" />
                 </div>
                 <div className="flex h-full">
@@ -682,10 +759,10 @@ const HomePage: React.FC = () => {
             {/* 2. Analytics (col-span-4) */}
             <div className="col-span-1 md:col-span-4 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10">
-                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center mb-3">
+                <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
                   <BarChart3 className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">Deep Analytics</h3>
+                <h3 className="text-lg font-medium text-foreground tracking-tighter mb-1.5">Deep Analytics</h3>
                 <p className="text-xs text-muted-foreground">
                   Track clicks, devices, browsers, and geographic data in real-time.
                 </p>
@@ -707,31 +784,31 @@ const HomePage: React.FC = () => {
             {/* 3. Password Protection (col-span-4) */}
             <div className="col-span-1 md:col-span-4 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10">
-                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center mb-3">
+                <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
                   <Shield className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">Password Protection</h3>
+                <h3 className="text-lg font-medium text-foreground tracking-tighter mb-1.5">Password Protection</h3>
                 <p className="text-xs text-muted-foreground">
                   Secure sensitive links behind a password so only the right people can access them.
                 </p>
               </div>
               {/* Nested UI: Lock input */}
-              <div className="mt-8 p-3 border border-border rounded-lg bg-background flex items-center gap-2 shadow-sm group-hover:border-primary/30 transition-colors">
+              <div className="mt-8 p-3 border border-border rounded-md bg-background flex items-center gap-2 shadow-sm group-hover:border-primary/30 transition-colors">
                 <Shield className="w-4 h-4 text-muted-foreground" />
                 <div className="h-7 w-full bg-secondary rounded flex-1 flex items-center px-2">
                   <span className="text-xs text-muted-foreground tracking-[0.3em]">••••••••</span>
                 </div>
-                <div className="w-16 h-7 rounded bg-primary/10 border border-primary/20 flex items-center justify-center text-[10px] text-primary font-bold uppercase tracking-wider">Unlock</div>
+                <div className="w-16 h-7 rounded bg-primary/10 border border-primary/20 flex items-center justify-center text-[10px] text-primary font-medium uppercase tracking-wider">Unlock</div>
               </div>
             </div>
 
             {/* 4. Custom Aliases (col-span-8) */}
             <div className="col-span-1 md:col-span-8 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10">
-                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center mb-3">
+                <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
                   <MousePointerClick className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">Custom Aliases</h3>
+                <h3 className="text-lg font-medium text-foreground tracking-tighter mb-1.5">Custom Aliases</h3>
                 <p className="text-xs text-muted-foreground max-w-md">
                   Create branded short links with your own memorable custom slug, improving click-through rates.
                 </p>
@@ -746,22 +823,22 @@ const HomePage: React.FC = () => {
             {/* 5. UTM Templates (col-span-4) */}
             <div className="col-span-1 md:col-span-4 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10">
-                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center mb-3">
+                <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
                   <Tag className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">UTM Templates</h3>
+                <h3 className="text-lg font-medium text-foreground tracking-tighter mb-1.5">UTM Templates</h3>
                 <p className="text-xs text-muted-foreground">
                   Build and save UTM parameter templates to keep your marketing campaigns consistent.
                 </p>
               </div>
               {/* Nested UI: UTM Builder */}
-              <div className="mt-8 flex flex-col gap-2 p-4 border border-border rounded-lg bg-background/50 shadow-sm group-hover:border-primary/30 transition-colors">
+              <div className="mt-8 flex flex-col gap-2 p-4 border border-border rounded-md bg-background/50 shadow-sm group-hover:border-primary/30 transition-colors">
                 <div className="flex items-center gap-2">
-                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider w-16">Source</div>
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider w-16">Source</div>
                   <div className="h-6 flex-1 bg-secondary rounded border border-border px-2 flex items-center"><span className="text-xs text-foreground">newsletter</span></div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider w-16">Medium</div>
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider w-16">Medium</div>
                   <div className="h-6 flex-1 bg-secondary rounded border border-border px-2 flex items-center"><span className="text-xs text-foreground">email</span></div>
                 </div>
               </div>
@@ -770,35 +847,35 @@ const HomePage: React.FC = () => {
             {/* 6. Campaigns (col-span-8) */}
             <div className="col-span-1 md:col-span-8 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10">
-                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center mb-3">
+                <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
                   <Folder className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">Campaign Management</h3>
+                <h3 className="text-lg font-medium text-foreground tracking-tighter mb-1.5">Campaign Management</h3>
                 <p className="text-xs text-muted-foreground max-w-md">
                   Group links into unified campaigns. Track aggregate performance and ROI across multiple channels at once.
                 </p>
               </div>
               {/* Nested UI: Campaign List */}
-              <div className="mt-8 flex flex-col gap-3 p-4 border border-border rounded-lg bg-background/50 shadow-sm group-hover:border-primary/30 transition-colors">
+              <div className="mt-8 flex flex-col gap-3 p-4 border border-border rounded-md bg-background/50 shadow-sm group-hover:border-primary/30 transition-colors">
                  <div className="flex items-center justify-between p-3 border border-border rounded bg-card">
                     <div className="flex items-center gap-3">
                        <div className="w-8 h-8 rounded-md bg-rose-500/10 text-rose-500 flex items-center justify-center"><Sparkles className="w-4 h-4" /></div>
                        <div>
-                         <div className="text-sm font-semibold text-foreground">Black Friday 2026</div>
+                         <div className="text-sm font-medium text-foreground">Black Friday 2026</div>
                          <div className="text-[10px] text-muted-foreground">14 links • 45.2k clicks</div>
                        </div>
                     </div>
-                    <div className="h-6 px-3 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-bold flex items-center">ACTIVE</div>
+                    <div className="h-6 px-3 rounded-full bg-secondary text-foreground text-[10px] font-medium flex items-center">ACTIVE</div>
                  </div>
                  <div className="flex items-center justify-between p-3 border border-border rounded bg-card opacity-60">
                     <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-md bg-secondary text-muted-foreground flex items-center justify-center"><Folder className="w-4 h-4" /></div>
+                       <div className="w-8 h-8 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center"><Folder className="w-4 h-4" /></div>
                        <div>
-                         <div className="text-sm font-semibold text-foreground">Summer Sale</div>
+                         <div className="text-sm font-medium text-foreground">Summer Sale</div>
                          <div className="text-[10px] text-muted-foreground">8 links • 12.1k clicks</div>
                        </div>
                     </div>
-                    <div className="h-6 px-3 rounded-full bg-secondary text-muted-foreground text-[10px] font-bold flex items-center">ENDED</div>
+                    <div className="h-6 px-3 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-[10px] font-medium flex items-center">ENDED</div>
                  </div>
               </div>
             </div>
@@ -806,16 +883,16 @@ const HomePage: React.FC = () => {
             {/* 7. Link Check (col-span-12) */}
             <div className="col-span-1 md:col-span-12 bg-card p-5 sm:p-8 flex flex-col md:flex-row items-center gap-8 relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10 flex-1">
-                <div className="w-8 h-8 rounded-md bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3">
+                <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
                   <Check className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">Automated Link Check</h3>
+                <h3 className="text-lg font-medium text-foreground tracking-tighter mb-1.5">Automated Link Check</h3>
                 <p className="text-xs text-muted-foreground max-w-xl">
                   Trim automatically scans your destination URLs for malware, phishing, and broken links, ensuring your audience always lands safely.
                 </p>
               </div>
               {/* Nested UI: Link Scan */}
-              <div className="w-full md:w-96 p-4 border border-border rounded-lg bg-background/50 shadow-sm flex flex-col gap-3 group-hover:border-emerald-500/30 transition-colors relative overflow-hidden">
+              <div className="w-full md:w-96 p-4 border border-border rounded-md bg-background/50 shadow-sm flex flex-col gap-3 group-hover:border-emerald-500/30 transition-colors relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-0.5 bg-emerald-500/20">
                   <motion.div 
                     initial={{ x: '-100%' }}
@@ -826,22 +903,22 @@ const HomePage: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="text-xs text-muted-foreground font-mono truncate">https://example.com/very/long/path...</div>
-                  <div className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded flex items-center gap-1">
+                  <div className="text-[10px] font-medium text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded flex items-center gap-1">
                     <Check className="w-3 h-3" /> SECURE
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                    <div className="bg-card border border-border rounded p-2 text-center">
                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Status</div>
-                     <div className="text-xs font-semibold text-foreground">200 OK</div>
+                     <div className="text-xs font-medium text-foreground">200 OK</div>
                    </div>
                    <div className="bg-card border border-border rounded p-2 text-center">
                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Malware</div>
-                     <div className="text-xs font-semibold text-emerald-500">Passed</div>
+                     <div className="text-xs font-medium text-emerald-500">Passed</div>
                    </div>
                    <div className="bg-card border border-border rounded p-2 text-center">
                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Phishing</div>
-                     <div className="text-xs font-semibold text-emerald-500">Passed</div>
+                     <div className="text-xs font-medium text-emerald-500">Passed</div>
                    </div>
                 </div>
               </div>
@@ -862,7 +939,7 @@ const HomePage: React.FC = () => {
       >
         <div className="max-w-7xl mx-auto px-6 py-16 border-x border-border">
           <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            <h2 className="text-2xl sm:text-3xl font-medium text-foreground mb-2 tracking-tighter">
               Built for Scale and Speed
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto">
@@ -870,47 +947,29 @@ const HomePage: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-[1px] bg-border rounded-xl overflow-hidden border border-border shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-[1px] bg-border rounded-lg overflow-hidden border border-border shadow-sm">
             
-            {/* 1. Developer API (col-span-8) */}
+            {/* 1. Real-Time Event Stream (col-span-8) */}
             <div className="col-span-1 md:col-span-8 bg-card p-6 flex flex-col justify-between group hover:bg-primary/[0.02] transition-colors relative">
-              <div className="mb-8 relative z-10">
-                <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center mb-3">
-                  <Terminal className="w-4 h-4" />
+              <div className="mb-6 relative z-10">
+                <div className="w-8 h-8 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center mb-3">
+                  <Activity className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">Developer API</h3>
+                <h3 className="text-lg font-medium text-foreground tracking-tighter mb-1.5">Real-Time Event Stream</h3>
                 <p className="text-xs text-muted-foreground max-w-md">
-                  Automate marketing workflows with our REST API. Batch create links, update destinations on the fly, and manage campaigns.
+                  Application logs, usage, metrics, and geographic tracking codes, all visible in the dashboard in real-time.
                 </p>
               </div>
-              {/* Tight Code Editor Mockup */}
-              <div className="rounded-lg overflow-hidden border border-border shadow-sm bg-[#0F111A] relative z-10">
-                <div className="h-6 bg-[#181A25] border-b border-white/5 flex items-center px-3 gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-rose-500/80" />
-                  <div className="w-2 h-2 rounded-full bg-amber-500/80" />
-                  <div className="w-2 h-2 rounded-full bg-emerald-500/80" />
-                  <div className="mx-auto text-[9px] text-white/40 font-mono flex items-center gap-1.5">
-                    <Code className="w-2.5 h-2.5" /> batch_create.sh
-                  </div>
-                </div>
-                <div className="p-3 text-[10px] font-mono leading-relaxed overflow-x-auto text-emerald-400">
-                  <span className="text-rose-400">curl</span> -X POST https://api.trim.ly/v1/links/batch \<br/>
-                  &nbsp;&nbsp;-H <span className="text-amber-300">"Authorization: Bearer trim_live_xxx"</span> \<br/>
-                  &nbsp;&nbsp;-d <span className="text-amber-300">{"'{\"campaign\": \"bf2026\", \"links\": [...] }'"}</span>
-                </div>
-                <div className="p-2.5 text-[9px] font-mono leading-relaxed bg-[#08090E] border-t border-white/5 text-white/60">
-                  <span className="text-emerald-400">201 Created</span> (12ms) - {'{"status":"success","created":1500}'}
-                </div>
-              </div>
+              <LiveEventStream />
             </div>
 
             {/* 2. Global Edge Network (col-span-4) */}
             <div className="col-span-1 md:col-span-4 bg-card p-6 flex flex-col justify-between group hover:bg-primary/[0.02] transition-colors relative overflow-hidden">
               <div className="mb-6 relative z-10">
-                <div className="w-8 h-8 rounded-md bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3">
+                <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
                   <Globe2 className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-bold text-foreground tracking-tight mb-1.5">Global Edge Network</h3>
+                <h3 className="text-lg font-medium text-foreground tracking-tighter mb-1.5">Global Edge Network</h3>
                 <p className="text-xs text-muted-foreground">
                   Track clicks globally in real-time. Sub-15ms redirects worldwide.
                 </p>
@@ -940,7 +999,7 @@ const HomePage: React.FC = () => {
                     >
                       <div className="flex items-center gap-2">
                         <div className={`w-1.5 h-1.5 rounded-full ${event.color}`} />
-                        <div className="text-[10px] font-semibold text-foreground">{event.city}</div>
+                        <div className="text-[10px] font-medium text-foreground">{event.city}</div>
                       </div>
                       <div className="text-[8px] text-muted-foreground font-mono">Just now</div>
                     </motion.div>
@@ -952,10 +1011,10 @@ const HomePage: React.FC = () => {
             {/* 3. Integrations (col-span-12) */}
             <div className="col-span-1 md:col-span-12 bg-card p-4 flex flex-col md:flex-row items-center justify-between group hover:bg-primary/[0.02] transition-colors relative">
               <div className="flex items-center gap-3 mb-4 md:mb-0">
-                <div className="w-6 h-6 rounded-md bg-secondary text-muted-foreground flex items-center justify-center">
+                <div className="w-6 h-6 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center">
                   <Workflow className="w-3 h-3" />
                 </div>
-                <div className="text-xs font-bold text-foreground">Seamless Integrations</div>
+                <div className="text-xs font-medium text-foreground">Seamless Integrations</div>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8">
                 {[
@@ -968,7 +1027,7 @@ const HomePage: React.FC = () => {
                 ].map((integration, idx) => (
                   <div key={idx} className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors cursor-pointer">
                     <integration.icon className="w-4 h-4" />
-                    <span className="text-[10px] font-semibold uppercase tracking-wider hidden sm:block">{integration.name}</span>
+                    <span className="text-[10px] font-medium uppercase tracking-wider hidden sm:block">{integration.name}</span>
                   </div>
                 ))}
               </div>
@@ -990,13 +1049,13 @@ const HomePage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 py-24 border-x border-zinc-800 dark:border-zinc-300 relative z-10 flex flex-col items-center transition-colors duration-300">
           
           {/* Subtle Ambient Glow (adapts to light/dark inversion) */}
-          <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/20 dark:bg-primary/10 rounded-full blur-[150px] saturate-200" />
           
-          <div className="w-8 h-8 rounded-md bg-zinc-800 dark:bg-zinc-200 text-zinc-100 dark:text-zinc-900 flex items-center justify-center mb-6 border border-zinc-700 dark:border-zinc-300 transition-colors duration-300">
+          
+          <div className="w-8 h-8 rounded-md bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center mb-6 border border-zinc-700 dark:border-zinc-300 transition-colors duration-300">
             <Server className="w-4 h-4" />
           </div>
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white dark:text-zinc-900 mb-4 tracking-tight text-center max-w-3xl transition-colors duration-300" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-medium text-white dark:text-zinc-900 mb-4 tracking-tighter text-center max-w-3xl transition-colors duration-300">
             Your own private cloud, fully managed <span className="text-zinc-400 dark:text-zinc-500 transition-colors duration-300">and isolated, with enterprise-level support.</span>
           </h2>
           
@@ -1026,24 +1085,24 @@ const HomePage: React.FC = () => {
             </div>
 
             {/* Admin Vault Mockup (Always Dark because terminals are dark) */}
-            <div className="border border-zinc-800 dark:border-zinc-300 bg-[#0A0A10] rounded-xl overflow-hidden shadow-2xl relative transition-colors duration-300">
+            <div className="border border-zinc-800 dark:border-zinc-300 bg-[#0A0A10] rounded-lg overflow-hidden shadow-2xl relative transition-colors duration-300">
                <div className="h-10 border-b border-white/10 bg-white/[0.02] flex items-center justify-between px-4">
-                 <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold flex items-center gap-2"><ShieldAlert className="w-3 h-3 text-rose-500" /> Admin Security Vault</div>
+                 <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-medium flex items-center gap-2"><ShieldAlert className="w-3 h-3 text-rose-500" /> Admin Security Vault</div>
                </div>
                <div className="p-5 flex flex-col gap-4">
-                 <div className="flex items-center justify-between p-3 rounded-lg border border-white/10 bg-white/[0.02]">
+                 <div className="flex items-center justify-between p-3 rounded-md border border-white/10 bg-white/[0.02]">
                    <div>
-                     <div className="text-sm font-bold text-white">Live .env Sync</div>
+                     <div className="text-sm font-medium text-white">Live .env Sync</div>
                      <div className="text-[10px] text-zinc-400">Synchronize deployment secrets.</div>
                    </div>
                    <div className="w-8 h-4 rounded-full bg-primary/20 flex items-center justify-end p-0.5"><div className="w-3 h-3 rounded-full bg-primary" /></div>
                  </div>
-                 <div className="flex items-center justify-between p-3 rounded-lg border border-rose-500/20 bg-rose-500/5">
+                 <div className="flex items-center justify-between p-3 rounded-md border border-rose-500/20 bg-rose-500/5">
                    <div>
-                     <div className="text-sm font-bold text-rose-400">Panic Switch</div>
-                     <div className="text-[10px] text-rose-400/60">Immediately quarantine all traffic.</div>
+                     <div className="text-sm font-medium text-foreground">Panic Switch</div>
+                     <div className="text-[10px] text-foreground/60">Immediately quarantine all traffic.</div>
                    </div>
-                   <button className="px-3 py-1 bg-rose-500 text-white text-[10px] font-bold rounded hover:bg-rose-600 transition-colors">ENGAGE</button>
+                   <button className="px-3 py-1 bg-rose-500 text-white text-[10px] font-medium rounded hover:bg-rose-600 transition-colors">ENGAGE</button>
                  </div>
                  <div className="p-3 text-[10px] font-mono text-zinc-500 bg-black/50 rounded border border-white/5">
                    &gt; docker-compose up -d<br/>
@@ -1067,8 +1126,8 @@ const HomePage: React.FC = () => {
       >
         <div className="max-w-7xl mx-auto px-6 py-16 relative z-10 border-x border-border">
           <h2
-            className="text-2xl sm:text-3xl font-bold text-foreground text-center mb-2 tracking-tight"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            className="text-2xl sm:text-3xl font-medium text-foreground text-center mb-2 tracking-tighter"
+           
           >
             Free and Open
           </h2>
@@ -1076,16 +1135,16 @@ const HomePage: React.FC = () => {
             Trim is free to use with no limits. Self-host it yourself or use our hosted version.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-[1px] bg-border rounded-xl overflow-hidden border border-border shadow-sm max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-[1px] bg-border rounded-lg overflow-hidden border border-border shadow-sm max-w-4xl mx-auto">
             <div className="col-span-1 md:col-span-6 bg-card p-6 sm:p-8 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-6 h-6 rounded-md bg-secondary text-muted-foreground flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center">
                     <Zap className="w-3 h-3" />
                   </div>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Anonymous User</p>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Anonymous User</p>
                 </div>
-                <p className="text-3xl font-bold text-foreground tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Free</p>
+                <p className="text-3xl font-medium text-foreground tracking-tighter">Free</p>
                 <p className="text-xs mt-2 text-muted-foreground">Perfect for quick, one-off links without an account.</p>
               </div>
               <ul className="flex flex-col gap-2.5 my-6">
@@ -1099,7 +1158,7 @@ const HomePage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleTryItNow}
-                className="w-full text-center px-4 py-2 rounded-md font-bold text-xs btn-secondary transition-colors"
+                className="w-full text-center px-4 py-2 rounded-md font-medium text-xs btn-secondary transition-colors"
               >
                 Try it now
               </button>
@@ -1110,16 +1169,16 @@ const HomePage: React.FC = () => {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-md bg-secondary text-foreground flex items-center justify-center">
                       <Sparkles className="w-3 h-3" />
                     </div>
-                    <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Registered User</p>
+                    <p className="text-[10px] font-medium text-primary uppercase tracking-wider">Registered User</p>
                   </div>
-                  <span className="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                  <span className="text-[9px] uppercase font-medium tracking-wider px-2 py-0.5 rounded-full bg-secondary text-foreground">
                     Recommended
                   </span>
                 </div>
-                <p className="text-3xl font-bold text-foreground tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Free</p>
+                <p className="text-3xl font-medium text-foreground tracking-tighter">Free</p>
                 <p className="text-xs mt-2 text-muted-foreground">Everything you need for advanced link management.</p>
               </div>
               <ul className="flex flex-col gap-2.5 my-6">
@@ -1132,7 +1191,7 @@ const HomePage: React.FC = () => {
               </ul>
               <Link
                 to={token ? '/dashboard' : '/register'}
-                className="w-full text-center px-4 py-2 rounded-md font-bold text-xs btn-solid transition-colors"
+                className="w-full text-center px-4 py-2 rounded-md font-medium text-xs btn-solid transition-colors"
               >
                 {token ? 'Go to Dashboard' : 'Create free account'}
               </Link>
@@ -1145,7 +1204,7 @@ const HomePage: React.FC = () => {
               href="https://github.com/MovinVinusandha/URL-Shortener"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold text-foreground underline hover:no-underline inline-flex items-center gap-1"
+              className="font-medium text-foreground underline hover:no-underline inline-flex items-center gap-1"
             >
               <GithubIcon className="w-3.5 h-3.5" /> GitHub
             </a>{' '}
@@ -1169,7 +1228,7 @@ const HomePage: React.FC = () => {
         <div className="max-w-7xl mx-auto border-x border-border flex flex-col relative">
           
           <div className="px-6 py-20 text-center border-b border-border bg-background relative z-20">
-             <h2 className="text-3xl md:text-4xl font-semibold text-foreground tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+             <h2 className="text-3xl md:text-4xl font-medium text-foreground tracking-tighter">
                See what thousands of developers have to say
              </h2>
           </div>
@@ -1180,9 +1239,9 @@ const HomePage: React.FC = () => {
             <div className="flex w-max motion-safe:animate-infinite-scroll-x group-hover:[animation-play-state:paused]  ">
               {[...testimonialsRow1, ...testimonialsRow1].map((item, idx) => (
                  <div key={idx} className="marquee-card p-10 lg:p-12 border-r border-border flex-shrink-0 bg-card hover:bg-primary/[0.01] transition-colors flex flex-col justify-between min-h-[250px]">
-                    <p className="text-[15px] md:text-[17px] text-foreground font-medium mb-8 leading-relaxed tracking-tight">“{highlightTrim(item.quote)}”</p>
+                    <p className="text-[15px] md:text-[17px] text-foreground font-medium mb-8 leading-relaxed tracking-tighter">“{highlightTrim(item.quote)}”</p>
                     <div>
-                      <div className="text-sm font-semibold text-foreground">{item.name}</div>
+                      <div className="text-sm font-medium text-foreground">{item.name}</div>
                       <div className="text-sm text-muted-foreground mt-0.5">@{item.handle}</div>
                     </div>
                  </div>
@@ -1193,9 +1252,9 @@ const HomePage: React.FC = () => {
             <div className="flex w-max motion-safe:animate-infinite-scroll-x group-hover:[animation-play-state:paused] motion-safe:[animation-direction:reverse] ml-[-213px]">
               {[...testimonialsRow2, ...testimonialsRow2].map((item, idx) => (
                  <div key={idx} className="marquee-card p-10 lg:p-12 border-r border-border flex-shrink-0 bg-card hover:bg-primary/[0.01] transition-colors flex flex-col justify-between min-h-[250px]">
-                    <p className="text-[15px] md:text-[17px] text-foreground font-medium mb-8 leading-relaxed tracking-tight">“{highlightTrim(item.quote)}”</p>
+                    <p className="text-[15px] md:text-[17px] text-foreground font-medium mb-8 leading-relaxed tracking-tighter">“{highlightTrim(item.quote)}”</p>
                     <div>
-                      <div className="text-sm font-semibold text-foreground">{item.name}</div>
+                      <div className="text-sm font-medium text-foreground">{item.name}</div>
                       <div className="text-sm text-muted-foreground mt-0.5">@{item.handle}</div>
                     </div>
                  </div>
@@ -1215,7 +1274,7 @@ const HomePage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 py-24 border-x border-border">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
             <div className="col-span-1 md:col-span-4">
-              <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              <h2 className="text-2xl sm:text-3xl font-medium text-foreground tracking-tighter mb-4">
                 Frequently asked questions
               </h2>
               <p className="text-sm text-muted-foreground">
@@ -1255,8 +1314,8 @@ const HomePage: React.FC = () => {
         {/* The CTA Block */}
         <div className="flex flex-col items-center gap-5 z-10 mb-16 relative px-6 text-center">
           <h2
-            className="text-3xl sm:text-5xl font-bold tracking-tight text-foreground"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            className="text-3xl sm:text-5xl font-medium tracking-tighter text-foreground"
+           
           >
             Ready to manage your links?
           </h2>
@@ -1265,7 +1324,7 @@ const HomePage: React.FC = () => {
           </p>
           <Link
             to={token ? '/dashboard' : '/register'}
-            className="group btn-solid px-8 py-3 text-xs font-semibold shadow-lg mt-2 inline-flex items-center gap-2"
+            className="group btn-solid px-8 py-3 text-xs font-medium shadow-lg mt-2 inline-flex items-center gap-2"
           >
             <span>{token ? 'Go to Dashboard' : 'Get Started'}</span>
             <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 ease-out group-hover:translate-x-1" />
@@ -1317,7 +1376,7 @@ const HomePage: React.FC = () => {
                 <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">
                   Modern, fast, and open-source URL shortener with comprehensive analytics, custom tags, and folder management.
                 </p>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-500 text-xs font-medium mt-1">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/20 bg-secondary text-foreground text-xs font-medium mt-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   All Systems Operational
                 </div>
@@ -1327,7 +1386,7 @@ const HomePage: React.FC = () => {
               <div className="md:col-span-7 grid grid-cols-3 gap-8">
                 {/* Column 1: PRODUCT */}
                 <div className="flex flex-col gap-3">
-                  <p className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                  <p className="text-[11px] font-medium text-foreground uppercase tracking-wider">
                     Product
                   </p>
                   <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
@@ -1356,7 +1415,7 @@ const HomePage: React.FC = () => {
 
                 {/* Column 2: RESOURCES */}
                 <div className="flex flex-col gap-3">
-                  <p className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                  <p className="text-[11px] font-medium text-foreground uppercase tracking-wider">
                     Resources
                   </p>
                   <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
@@ -1395,7 +1454,7 @@ const HomePage: React.FC = () => {
 
                 {/* Column 3: LEGAL */}
                 <div className="flex flex-col gap-3">
-                  <p className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                  <p className="text-[11px] font-medium text-foreground uppercase tracking-wider">
                     Legal
                   </p>
                   <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
