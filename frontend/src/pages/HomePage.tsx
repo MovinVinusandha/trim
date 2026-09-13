@@ -241,20 +241,31 @@ const FaqItem = ({ question, answer }: { question: string, answer: React.ReactNo
 };
 
 const SectionTicker = ({ number, title, commitMsg }: { number: string, title: string, commitMsg: string }) => (
-  <div className="bg-background relative border-b border-border w-full hidden md:block">
-    <div className="max-w-7xl mx-auto border-x border-border flex items-stretch h-12 text-[11px] font-mono tracking-widest uppercase">
-      <div className="w-12 lg:w-16 flex-shrink-0 border-r border-border flex items-center justify-center text-muted-foreground opacity-60">
-        {number}
+  <div className="w-full hidden md:block flex flex-col">
+    {/* Gap Row */}
+    <div className="bg-background relative border-b border-border">
+      <div className="max-w-7xl mx-auto border-x border-border flex items-stretch h-10 sm:h-12">
+        <div className="w-12 lg:w-16 flex-shrink-0 border-r border-border"></div>
+        <div className="flex-grow"></div>
+        <div className="w-12 lg:w-16 flex-shrink-0 border-l border-border"></div>
       </div>
-      <div className="flex-grow flex items-center justify-between px-6 overflow-hidden">
-        <span className="text-primary font-medium text-[10px] md:text-[11px] truncate tracking-wider">
-          {title}
-        </span>
-        <span className="text-muted-foreground truncate opacity-70 ml-4 hidden md:inline-block lowercase tracking-normal">
-          {commitMsg}
-        </span>
+    </div>
+    {/* Ticker Row */}
+    <div className="bg-background relative border-b border-border">
+      <div className="max-w-7xl mx-auto border-x border-border flex items-stretch h-12 text-[11px] font-mono tracking-widest uppercase">
+        <div className="w-12 lg:w-16 flex-shrink-0 border-r border-border flex items-center justify-center text-muted-foreground opacity-60">
+          {number}
+        </div>
+        <div className="flex-grow flex items-center justify-between px-6 overflow-hidden">
+          <span className="text-primary font-medium text-[10px] md:text-[11px] truncate tracking-wider">
+            {title}
+          </span>
+          <span className="text-muted-foreground truncate opacity-70 ml-4 hidden md:inline-block lowercase tracking-normal">
+            {commitMsg}
+          </span>
+        </div>
+        <div className="w-12 lg:w-16 flex-shrink-0 border-l border-border bg-hatch"></div>
       </div>
-      <div className="w-12 lg:w-16 flex-shrink-0 border-l border-border bg-hatch"></div>
     </div>
   </div>
 );
