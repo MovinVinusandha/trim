@@ -711,10 +711,10 @@ const HomePage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-[1px] bg-border rounded-lg overflow-hidden border border-border shadow-sm auto-rows-[minmax(280px,_auto)]">
             {/* 1. Dashboard (col-span-8) */}
-            <div className="col-span-1 md:col-span-8 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+            <div className="col-span-1 md:col-span-4 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10">
-                <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
-                  <Sparkles className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center mb-3">
+                  <Folder className="w-4 h-4" />
                 </div>
                 <h3 className="text-lg font-medium text-foreground tracking-tighter mb-1.5">Workspace Organization</h3>
                 <p className="text-xs text-muted-foreground max-w-md">
@@ -757,9 +757,9 @@ const HomePage: React.FC = () => {
             </div>
 
             {/* 2. Analytics (col-span-4) */}
-            <div className="col-span-1 md:col-span-4 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
+            <div className="col-span-1 md:col-span-8 bg-card p-5 sm:p-6 flex flex-col justify-between relative group transition-colors hover:bg-primary/[0.02]">
               <div className="relative z-10">
-                <div className="w-8 h-8 rounded-md bg-secondary text-foreground flex items-center justify-center mb-3">
+                <div className="w-8 h-8 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center mb-3">
                   <BarChart3 className="w-4 h-4" />
                 </div>
                 <h3 className="text-lg font-medium text-foreground tracking-tighter mb-1.5">Deep Analytics</h3>
@@ -767,17 +767,83 @@ const HomePage: React.FC = () => {
                   Track clicks, devices, browsers, and geographic data in real-time.
                 </p>
               </div>
-              {/* Nested UI: Mini chart */}
-              <div className="mt-8 flex items-end gap-1.5 h-32 w-full pt-4 border-b border-border">
-                {[40, 70, 45, 90, 65, 85, 100, 60, 75].map((h, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ height: '0%' }}
-                    whileInView={{ height: `${h}%` }}
-                    transition={{ duration: 0.5, delay: i * 0.05 }}
-                    className="flex-1 bg-primary rounded-t-sm group-hover:bg-primary/80 transition-colors"
-                  />
-                ))}
+              
+              {/* Nested UI: High-Fidelity Analytics Mockup */}
+              <div className="mt-8 border border-border rounded-md bg-background overflow-hidden flex flex-col relative group-hover:border-primary/30 transition-colors shadow-sm">
+                {/* KPIs */}
+                <div className="flex items-center border-b border-border bg-card/50">
+                  <div className="p-3 border-r border-border flex-1">
+                    <div className="text-[9px] text-muted-foreground mb-1 uppercase tracking-wider flex items-center gap-1.5"><Activity className="w-3 h-3 text-primary" /> Total Clicks</div>
+                    <div className="text-lg font-medium tracking-tight text-foreground">351</div>
+                  </div>
+                  <div className="p-3 border-r border-border flex-1 hidden sm:block">
+                    <div className="text-[9px] text-muted-foreground mb-1 uppercase tracking-wider flex items-center gap-1.5"><Zap className="w-3 h-3 text-amber-500" /> Peak Traffic</div>
+                    <div className="text-lg font-medium tracking-tight text-foreground flex items-baseline gap-1.5">209 <span className="text-[8px] text-muted-foreground font-normal tracking-normal uppercase">(Fri, Sep 11)</span></div>
+                  </div>
+                  <div className="p-3 flex-1">
+                    <div className="text-[9px] text-muted-foreground mb-1 uppercase tracking-wider flex items-center gap-1.5"><Globe2 className="w-3 h-3 text-emerald-500" /> Top Source</div>
+                    <div className="text-lg font-medium tracking-tight text-foreground">Chrome</div>
+                  </div>
+                </div>
+                
+                {/* Chart Area */}
+                <div className="relative h-40 w-full p-4 flex flex-col justify-between overflow-hidden">
+                  {/* Grid lines */}
+                  <div className="absolute inset-x-4 inset-y-4 flex flex-col justify-between pointer-events-none">
+                    <div className="border-t border-border border-dashed w-full" />
+                    <div className="border-t border-border border-dashed w-full" />
+                    <div className="border-t border-border border-dashed w-full" />
+                    <div className="border-t border-border border-dashed w-full" />
+                  </div>
+                  
+                  {/* Y Axis Labels */}
+                  <div className="absolute left-4 inset-y-4 flex flex-col justify-between text-[9px] text-muted-foreground font-mono z-10 pointer-events-none">
+                    <span>220</span>
+                    <span>165</span>
+                    <span>110</span>
+                    <span>55</span>
+                    <span>0</span>
+                  </div>
+
+                  {/* The SVG Chart */}
+                  <div className="absolute inset-0 w-full h-full overflow-hidden">
+                    <svg viewBox="0 0 400 100" preserveAspectRatio="none" className="w-full h-full absolute inset-0 text-primary">
+                      <defs>
+                        <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="currentColor" stopOpacity="0.2" />
+                          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                      <motion.path 
+                        d="M0 95 L100 95 L150 95 L200 95 L240 95 L250 92 L260 70 L270 20 L275 10 L280 25 L290 80 L300 92 L310 95 L400 95"
+                        fill="url(#chart-gradient)"
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        transition={{ duration: 1 }}
+                      />
+                      <motion.path 
+                        d="M0 95 L100 95 L150 95 L200 95 L240 95 L250 92 L260 70 L270 20 L275 10 L280 25 L290 80 L300 92 L310 95 L400 95"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        initial={{ pathLength: 0 }}
+                        whileInView={{ pathLength: 1 }}
+                        transition={{ duration: 1.5, ease: "easeInOut" }}
+                      />
+                    </svg>
+                  </div>
+                  
+                  {/* Floating Tooltip */}
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                    whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ delay: 1.2, duration: 0.4 }}
+                    className="absolute top-6 right-20 bg-card border border-border shadow-lg rounded-md p-1.5 flex flex-col gap-0.5 z-20"
+                  >
+                    <div className="text-[8px] text-muted-foreground font-mono">Fri, Sep 11</div>
+                    <div className="text-[10px] font-semibold flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Clicks 209</div>
+                  </motion.div>
+                </div>
               </div>
             </div>
 
