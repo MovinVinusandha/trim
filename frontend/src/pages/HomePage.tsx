@@ -484,13 +484,13 @@ const HomePage: React.FC = () => {
                   to="/login"
                   className="text-[13px] font-medium hover:opacity-70 transition-opacity px-2 py-1"
                 >
-                  Sign in
+                  Login
                 </Link>
                 <Link
                   to="/register"
                   className="inline-flex items-center justify-center rounded-md text-[13px] font-medium px-4 py-1.5 bg-white text-black hover:opacity-90 transition-opacity"
                 >
-                  Sign up
+                  Get Started
                 </Link>
               </>
             )}

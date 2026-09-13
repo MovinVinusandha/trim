@@ -72,7 +72,7 @@ const Navbar: React.FC = () => {
                   to="/login"
                   className="text-muted-foreground hover:text-foreground text-sm font-medium px-3 py-2 rounded-lg transition-colors hover:bg-secondary"
                 >
-                  Sign in
+                  Login
                 </Link>
                 <Link
                   to="/register"
