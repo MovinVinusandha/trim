@@ -227,6 +227,15 @@ public class AdminPortalController {
         return ResponseEntity.ok(adminService.testSmtpConnection(request.getRecipientEmail()));
     }
 
+    @PostMapping("/settings/test-safe-browsing")
+    @Operation(summary = "Diagnostic test for Google Safe Browsing v4 API key (ROOT and ADMIN)")
+    public ResponseEntity<com.url_shortener.url_shortener.admin.dto.SafeBrowsingDiagnosticResultDto> testSafeBrowsingKey(
+            @RequestBody(required = false) Map<String, String> request
+    ) {
+        String key = request != null ? request.get("key") : null;
+        return ResponseEntity.ok(adminService.testSafeBrowsingKey(key));
+    }
+
     @GetMapping("/incidents")
     @Operation(summary = "Get list of security threat incidents")
     public ResponseEntity<Page<com.url_shortener.url_shortener.security.SecurityIncident>> getIncidents(

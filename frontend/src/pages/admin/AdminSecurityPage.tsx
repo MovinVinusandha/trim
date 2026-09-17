@@ -508,6 +508,13 @@ const AdminSecurityPage: React.FC = () => {
               >
                 Phishing Lure
               </button>
+              <button
+                type="button"
+                onClick={() => applyPreset('http://testsafebrowsing.appspot.com/s/malware.html')}
+                className="px-2 py-0.5 rounded-md bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 text-[11px] hover:bg-red-500/20 transition-colors font-medium"
+              >
+                Google Safe Browsing Test
+              </button>
             </div>
           </div>
 

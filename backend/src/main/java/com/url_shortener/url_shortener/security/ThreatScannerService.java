@@ -21,9 +21,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -39,7 +42,14 @@ public class ThreatScannerService {
     private final StringRedisTemplate redisTemplate;
     private final CacheManager cacheManager;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = createRestTemplate();
+
+    private static RestTemplate createRestTemplate() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout((int) Duration.ofSeconds(4).toMillis());
+        factory.setReadTimeout((int) Duration.ofSeconds(5).toMillis());
+        return new RestTemplate(factory);
+    }
 
     @Value("${app.security.safe-browsing-api-key:}")
     private String configuredSafeBrowsingApiKey;
@@ -271,6 +281,14 @@ public class ThreatScannerService {
                     }
                 }
             }
+        } catch (HttpStatusCodeException e) {
+            String errorBody = e.getResponseBodyAsString();
+            log.warn("GSB API returned HTTP {}: {}", e.getStatusCode(), errorBody);
+            try {
+                JsonNode errNode = objectMapper.readTree(errorBody);
+                String msg = errNode.path("error").path("message").asText(e.getMessage());
+                log.warn("Google Safe Browsing error detail: {}", msg);
+            } catch (Exception ignored) {}
         } catch (Exception e) {
             log.warn("GSB API call failed: {}", e.getMessage());
         }
@@ -278,7 +296,85 @@ public class ThreatScannerService {
         return results;
     }
 
-    private String getEffectiveSafeBrowsingKey() {
+    public com.url_shortener.url_shortener.admin.dto.SafeBrowsingDiagnosticResultDto testSafeBrowsingKey(String keyToTest) {
+        long startTime = System.currentTimeMillis();
+        String key = keyToTest != null && !keyToTest.isBlank() ? keyToTest.trim() : getEffectiveSafeBrowsingKey();
+
+        if (key == null || key.isBlank()) {
+            return com.url_shortener.url_shortener.admin.dto.SafeBrowsingDiagnosticResultDto.builder()
+                    .valid(false)
+                    .latencyMs(System.currentTimeMillis() - startTime)
+                    .message("No Google Safe Browsing API Key is configured.")
+                    .testThreatResult(null)
+                    .build();
+        }
+
+        String endpoint = "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=" + key;
+        String testThreatUrl = "http://testsafebrowsing.appspot.com/s/malware.html";
+
+        Map<String, Object> requestBody = Map.of(
+                "client", Map.of("clientId", "trim-diagnostic-tester", "clientVersion", "2.0.0"),
+                "threatInfo", Map.of(
+                        "threatTypes", List.of("MALWARE", "SOCIAL_ENGINEERING"),
+                        "platformTypes", List.of("ANY_PLATFORM"),
+                        "threatEntryTypes", List.of("URL"),
+                        "threatEntries", List.of(Map.of("url", testThreatUrl))
+                )
+        );
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(endpoint, entity, String.class);
+            long latency = System.currentTimeMillis() - startTime;
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                JsonNode root = objectMapper.readTree(response.getBody());
+                JsonNode matches = root.path("matches");
+                boolean detected = matches.isArray() && !matches.isEmpty();
+                String threatType = detected ? matches.get(0).path("threatType").asText("MALWARE") : "NONE";
+
+                return com.url_shortener.url_shortener.admin.dto.SafeBrowsingDiagnosticResultDto.builder()
+                        .valid(true)
+                        .latencyMs(latency)
+                        .message("API Key is verified and operational with Google Safe Browsing v4.")
+                        .testThreatResult("Successfully identified test malware payload (" + threatType + ")")
+                        .build();
+            } else {
+                return com.url_shortener.url_shortener.admin.dto.SafeBrowsingDiagnosticResultDto.builder()
+                        .valid(false)
+                        .latencyMs(latency)
+                        .message("Unexpected response status from Google Safe Browsing: " + response.getStatusCode())
+                        .build();
+            }
+        } catch (HttpStatusCodeException e) {
+            long latency = System.currentTimeMillis() - startTime;
+            String errorMsg = "Google Safe Browsing Error (" + e.getStatusCode() + ")";
+            try {
+                JsonNode root = objectMapper.readTree(e.getResponseBodyAsString());
+                String details = root.path("error").path("message").asText();
+                if (!details.isBlank()) {
+                    errorMsg = details;
+                }
+            } catch (Exception ignored) {}
+
+            return com.url_shortener.url_shortener.admin.dto.SafeBrowsingDiagnosticResultDto.builder()
+                    .valid(false)
+                    .latencyMs(latency)
+                    .message(errorMsg)
+                    .build();
+        } catch (Exception e) {
+            long latency = System.currentTimeMillis() - startTime;
+            return com.url_shortener.url_shortener.admin.dto.SafeBrowsingDiagnosticResultDto.builder()
+                    .valid(false)
+                    .latencyMs(latency)
+                    .message("Network error connecting to Google Safe Browsing: " + e.getMessage())
+                    .build();
+        }
+    }
+
+    public String getEffectiveSafeBrowsingKey() {
         try {
             var setting = systemSettingRepository.findBySettingKey("SAFE_BROWSING_API_KEY");
             if (setting.isPresent() && !setting.get().getSettingValue().isBlank()) {

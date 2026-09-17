@@ -991,6 +991,10 @@ public class AdminService {
         return threatScannerService.scanUrl(url);
     }
 
+    public com.url_shortener.url_shortener.admin.dto.SafeBrowsingDiagnosticResultDto testSafeBrowsingKey(String key) {
+        return threatScannerService.testSafeBrowsingKey(key);
+    }
+
     public List<com.url_shortener.url_shortener.security.BlockedIp> getBlockedIps() {
         return blockedIpService.getAllBlockedIps();
     }

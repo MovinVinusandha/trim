@@ -4,6 +4,8 @@ import com.url_shortener.url_shortener.analytics.ClickEventRepository;
 import com.url_shortener.url_shortener.auth.EmailVerificationToken;
 import com.url_shortener.url_shortener.auth.EmailVerificationTokenRepository;
 import com.url_shortener.url_shortener.auth.OAuthService;
+import com.url_shortener.url_shortener.auth.PasswordResetToken;
+import com.url_shortener.url_shortener.auth.PasswordResetTokenRepository;
 import com.url_shortener.url_shortener.common.EmailService;
 import com.url_shortener.url_shortener.urls.Folder;
 import com.url_shortener.url_shortener.urls.FolderRepository;

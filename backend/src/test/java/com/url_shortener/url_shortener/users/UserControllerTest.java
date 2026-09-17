@@ -30,11 +30,14 @@ class UserControllerTest {
     @Mock
     private jakarta.servlet.http.HttpServletRequest httpServletRequest;
 
+    @Mock
+    private com.url_shortener.url_shortener.admin.SystemSettingRepository systemSettingRepository;
+
     private UserController userController;
 
     @BeforeEach
     void setUp() {
-        userController = new UserController(userMapper, userService, rateLimiterService);
+        userController = new UserController(userMapper, userService, rateLimiterService, systemSettingRepository);
     }
 
     @Test

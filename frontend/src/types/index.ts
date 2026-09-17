@@ -436,6 +436,13 @@ export interface SmtpTestResult {
   message: string;
 }
 
+export interface SafeBrowsingDiagnosticResult {
+  valid: boolean;
+  latencyMs: number;
+  message: string;
+  testThreatResult?: string | null;
+}
+
 export interface TableStorageItem {
   tableName: string;
   sizeMb: number;

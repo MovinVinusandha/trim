@@ -24,7 +24,7 @@ import {
   Database
 } from 'lucide-react';
 import axiosInstance from '../../api/axiosInstance';
-import type { SystemSettingItem, EnvironmentVaultItem, SmtpTestResult } from '../../types';
+import type { SystemSettingItem, EnvironmentVaultItem, SmtpTestResult, SafeBrowsingDiagnosticResult } from '../../types';
 import type { AdminLayoutContext } from '../../layouts/AdminLayout';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -61,6 +61,11 @@ const AdminSettingsPage: React.FC = () => {
   const [testEmail, setTestEmail] = useState('');
   const [isTestingSmtp, setIsTestingSmtp] = useState(false);
   const [smtpResult, setSmtpResult] = useState<SmtpTestResult | null>(null);
+
+  // Safe Browsing Test State & Visibility
+  const [showSafeBrowsingKey, setShowSafeBrowsingKey] = useState(false);
+  const [isTestingSafeBrowsing, setIsTestingSafeBrowsing] = useState(false);
+  const [safeBrowsingResult, setSafeBrowsingResult] = useState<SafeBrowsingDiagnosticResult | null>(null);
 
   // Inline editing in Vault
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -160,6 +165,26 @@ const AdminSettingsPage: React.FC = () => {
       toast.error(err.response?.data?.message || 'SMTP diagnostic request failed');
     } finally {
       setIsTestingSmtp(false);
+    }
+  };
+
+  const handleTestSafeBrowsing = async () => {
+    try {
+      setIsTestingSafeBrowsing(true);
+      setSafeBrowsingResult(null);
+      const { data } = await axiosInstance.post<SafeBrowsingDiagnosticResult>('/admin/settings/test-safe-browsing', {
+        key: settings.safe_browsing_api_key || ''
+      });
+      setSafeBrowsingResult(data);
+      if (data.valid) {
+        toast.success(data.message);
+      } else {
+        toast.error(data.message || 'Safe Browsing key verification failed');
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to verify Safe Browsing key');
+    } finally {
+      setIsTestingSafeBrowsing(false);
     }
   };
 
@@ -544,55 +569,130 @@ const AdminSettingsPage: React.FC = () => {
               </div>
 
               {/* Safe Browsing API Key */}
-              <div className="p-5 bg-background border border-border rounded-2xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-xl bg-secondary text-foreground shrink-0 mt-0.5">
-                    <Shield className="w-4 h-4" />
+              <div className="p-5 bg-background border border-border rounded-2xl shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-xl bg-secondary text-foreground shrink-0 mt-0.5">
+                      <Shield className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-foreground flex items-center gap-2">
+                        <span>Google Safe Browsing API Key</span>
+                        {settings.safe_browsing_api_key && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-medium rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                            Configured
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Live runtime override for Threat Scanner v4 integration. Validated against malware and phishing databases.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-xs font-semibold text-foreground">Google Safe Browsing API Key</div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      Live runtime override for Threat Scanner v4 integration. Updates immediately without container restart.
-                    </p>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-2 max-w-sm w-full sm:w-auto">
-                  <input
-                    type="password"
-                    placeholder="AIzaSy..."
-                    value={settings.safe_browsing_api_key || ''}
-                    onChange={(e) => setSettings({ ...settings, safe_browsing_api_key: e.target.value })}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+                  <div className="flex items-center gap-2 max-w-md w-full sm:w-auto">
+                    <div className="relative flex-1 sm:w-64">
+                      <input
+                        type={showSafeBrowsingKey ? 'text' : 'password'}
+                        placeholder="AIzaSy..."
+                        value={settings.safe_browsing_api_key || ''}
+                        onChange={(e) => setSettings({ ...settings, safe_browsing_api_key: e.target.value })}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleSaveSetting(
+                              'SAFE_BROWSING_API_KEY',
+                              settings.safe_browsing_api_key,
+                              'Google Safe Browsing API Key override'
+                            );
+                          }
+                        }}
+                        className="w-full pl-3 pr-8 py-1.5 text-xs bg-background border border-border rounded-lg font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowSafeBrowsingKey(!showSafeBrowsingKey)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        title={showSafeBrowsingKey ? 'Hide key' : 'Show key'}
+                      >
+                        {showSafeBrowsingKey ? (
+                          <EyeOff className="w-3.5 h-3.5" />
+                        ) : (
+                          <Eye className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleTestSafeBrowsing}
+                      disabled={isTestingSafeBrowsing || !settings.safe_browsing_api_key}
+                      className="px-2.5 py-1.5 text-xs font-medium bg-secondary text-foreground hover:bg-foreground hover:text-background rounded-lg border border-border transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shrink-0"
+                      title="Test Google Safe Browsing API Key against Google's threat servers"
+                    >
+                      {isTestingSafeBrowsing ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>Testing…</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          <span>Test Key</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() =>
                         handleSaveSetting(
                           'SAFE_BROWSING_API_KEY',
                           settings.safe_browsing_api_key,
                           'Google Safe Browsing API Key override'
-                        );
+                        )
                       }
-                    }}
-                    className="flex-1 sm:w-64 px-3 py-1.5 text-xs bg-background border border-border rounded-lg font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors"
-                  />
-                  <button
-                    onClick={() =>
-                      handleSaveSetting(
-                        'SAFE_BROWSING_API_KEY',
-                        settings.safe_browsing_api_key,
-                        'Google Safe Browsing API Key override'
-                      )
-                    }
-                    disabled={savingKey === 'SAFE_BROWSING_API_KEY'}
-                    className="p-2 rounded-lg bg-foreground text-background hover:bg-foreground/80 transition-all cursor-pointer disabled:opacity-50"
-                    title="Save API key"
-                  >
-                    {savingKey === 'SAFE_BROWSING_API_KEY' ? (
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Save className="w-3.5 h-3.5" />
-                    )}
-                  </button>
+                      disabled={savingKey === 'SAFE_BROWSING_API_KEY'}
+                      className="p-2 rounded-lg bg-foreground text-background hover:bg-foreground/80 transition-all cursor-pointer disabled:opacity-50 shrink-0"
+                      title="Save API key"
+                    >
+                      {savingKey === 'SAFE_BROWSING_API_KEY' ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Save className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
+
+                {/* Diagnostic Test Feedback Result */}
+                {safeBrowsingResult && (
+                  <div
+                    className={`p-3.5 rounded-xl border text-xs flex items-start gap-3 transition-colors ${
+                      safeBrowsingResult.valid
+                        ? 'bg-emerald-500/5 border-emerald-500/20 text-foreground'
+                        : 'bg-red-500/5 border-red-500/20 text-foreground'
+                    }`}
+                  >
+                    {safeBrowsingResult.valid ? (
+                      <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                    )}
+                    <div className="flex-1 space-y-1">
+                      <div className="font-semibold flex items-center justify-between">
+                        <span>{safeBrowsingResult.valid ? 'Google Safe Browsing Operational' : 'Google Safe Browsing Error'}</span>
+                        <span className="font-mono text-[11px] text-muted-foreground">{safeBrowsingResult.latencyMs} ms</span>
+                      </div>
+                      <p className="text-muted-foreground text-[11px] leading-relaxed">
+                        {safeBrowsingResult.message}
+                      </p>
+                      {safeBrowsingResult.testThreatResult && (
+                        <div className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 pt-0.5">
+                          ✓ {safeBrowsingResult.testThreatResult}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}

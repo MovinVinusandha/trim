@@ -285,6 +285,13 @@ public class UrlService {
             throw new IllegalArgumentException("The destination URL domain is blacklisted or prohibited on this instance.");
         }
 
+        if (threatScannerService != null) {
+            var scan = threatScannerService.scanUrl(request.getLongUrl());
+            if (!scan.isSafe() && scan.getRiskScore() >= 70) {
+                throw new IllegalArgumentException("Destination URL rejected by threat intelligence: " + String.join(", ", scan.getDetectedThreats()));
+            }
+        }
+
         Folder folder = null;
         if (request.getFolderId() != null) {
             folder = folderRepository.findById(request.getFolderId())
