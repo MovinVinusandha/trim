@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
@@ -27,7 +27,9 @@ import {
   Plus,
   Laptop,
   Smartphone,
-  MapPin
+  MapPin,
+  XCircle,
+  AlertTriangle
 } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import BrandLogo from '../components/BrandLogo';
@@ -232,6 +234,374 @@ const TestimonialCard: React.FC<TestimonialProps> = ({ quote, name, role, initia
   </div>
 );
 
+// ── Workspace Organization Animated Mockup ─────────────────────────────────
+const WorkspaceMockup: React.FC = () => {
+  const [activeFolder, setActiveFolder] = useState<'marketing' | 'product' | 'social'>('marketing');
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveFolder(prev => {
+        if (prev === 'marketing') return 'product';
+        if (prev === 'product') return 'social';
+        return 'marketing';
+      });
+    }, 3200);
+    return () => clearInterval(timer);
+  }, []);
+
+  const folderData = {
+    marketing: {
+      folderName: 'Marketing',
+      items: [
+        { name: 'trim.ly/summer-sale-26', tag: 'campaign' },
+        { name: 'trim.ly/newsletter-sep', tag: 'email' },
+      ]
+    },
+    product: {
+      folderName: 'Product',
+      items: [
+        { name: 'trim.ly/changelog-v2', tag: 'release' },
+        { name: 'trim.ly/api-docs-latest', tag: 'dev' },
+      ]
+    },
+    social: {
+      folderName: 'Social Bio',
+      items: [
+        { name: 'trim.ly/twitter-bio', tag: 'x.com' },
+        { name: 'trim.ly/discord-join', tag: 'community' },
+      ]
+    }
+  };
+
+  const current = folderData[activeFolder];
+
+  return (
+    <div className="mt-8 relative w-full h-[220px] border border-border rounded-md bg-background/50 overflow-hidden shadow-sm flex flex-col group-hover:border-primary/30 transition-colors">
+      {/* Clean Window Title Bar */}
+      <div className="h-8 border-b border-border bg-card/80 flex items-center px-4 gap-2 flex-shrink-0">
+        <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/30" />
+        <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/30" />
+        <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/30" />
+        <span className="ml-3 text-[10px] font-mono text-muted-foreground/70">workspace / folders</span>
+      </div>
+
+      <div className="flex h-full overflow-hidden">
+        {/* Left Sidebar: Folder List */}
+        <div className="w-36 border-r border-border p-2.5 flex flex-col gap-1.5 flex-shrink-0 bg-secondary/10">
+          <button
+            type="button"
+            onClick={() => setActiveFolder('marketing')}
+            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs font-medium transition-all text-left ${
+              activeFolder === 'marketing' 
+                ? 'bg-primary/10 text-primary border border-primary/20' 
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Folder className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">Marketing</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveFolder('product')}
+            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs font-medium transition-all text-left ${
+              activeFolder === 'product' 
+                ? 'bg-primary/10 text-primary border border-primary/20' 
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Folder className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">Product</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveFolder('social')}
+            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs font-medium transition-all text-left ${
+              activeFolder === 'social' 
+                ? 'bg-primary/10 text-primary border border-primary/20' 
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Folder className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">Social Bio</span>
+          </button>
+        </div>
+
+        {/* Right Main Panel: Clean Animated Links List */}
+        <div className="flex-1 p-4 flex flex-col justify-center overflow-hidden bg-background/30">
+          <div className="flex flex-col gap-2.5">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeFolder}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                className="flex flex-col gap-2.5"
+              >
+                {current.items.map((item, idx) => (
+                  <div 
+                    key={idx}
+                    className="flex items-center justify-between p-2.5 rounded border border-border bg-card shadow-xs"
+                  >
+                    <span className="font-mono text-xs font-medium text-foreground truncate pr-2">
+                      {item.name}
+                    </span>
+                    <span className="text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 flex-shrink-0">
+                      {item.tag}
+                    </span>
+                  </div>
+                ))}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Automated Link Check Animated Mockup (Pass / Fail cycle) ───────────────
+const AutomatedLinkCheckMockup: React.FC = () => {
+  const [phase, setPhase] = useState<'loading' | 'passed' | 'fail-loading' | 'failed'>('loading');
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+
+    if (phase === 'loading') {
+      setProgress(0);
+      const stepInterval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(stepInterval);
+            timer = setTimeout(() => setPhase('passed'), 200);
+            return 100;
+          }
+          return prev + 12;
+        });
+      }, 90);
+      return () => {
+        clearInterval(stepInterval);
+        clearTimeout(timer);
+      };
+    }
+
+    if (phase === 'passed') {
+      timer = setTimeout(() => {
+        setPhase('fail-loading');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+
+    if (phase === 'fail-loading') {
+      setProgress(0);
+      const stepInterval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(stepInterval);
+            timer = setTimeout(() => setPhase('failed'), 200);
+            return 100;
+          }
+          return prev + 12;
+        });
+      }, 90);
+      return () => {
+        clearInterval(stepInterval);
+        clearTimeout(timer);
+      };
+    }
+
+    if (phase === 'failed') {
+      timer = setTimeout(() => {
+        setPhase('loading');
+      }, 3200);
+      return () => clearTimeout(timer);
+    }
+  }, [phase]);
+
+  const isFailed = phase === 'failed' || phase === 'fail-loading';
+  const isLoaded = phase === 'passed' || phase === 'failed';
+
+  const currentUrl = isFailed ? 'https://malicious-redirect-hazard.xyz' : 'https://example.com/very/long/path...';
+
+  return (
+    <div className="w-full md:w-96 p-4 border border-border rounded-md bg-background/50 shadow-sm flex flex-col gap-3 group-hover:border-primary/30 transition-colors relative overflow-hidden">
+      {/* Top progress bar */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-secondary overflow-hidden">
+        <motion.div
+          className={`h-full ${isFailed ? 'bg-rose-500' : 'bg-emerald-500'}`}
+          initial={{ width: '0%' }}
+          animate={{ width: isLoaded ? '100%' : `${progress}%` }}
+          transition={{ ease: 'easeOut', duration: 0.1 }}
+        />
+      </div>
+
+      {/* Header bar: URL & overall status pill */}
+      <div className="flex items-center justify-between gap-2 pt-0.5">
+        <div className="text-xs text-muted-foreground font-mono truncate max-w-[220px]">
+          {currentUrl}
+        </div>
+
+        <AnimatePresence mode="wait">
+          {phase === 'loading' || phase === 'fail-loading' ? (
+            <motion.div
+              key="scanning"
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.85 }}
+              className="text-[10px] font-medium font-mono text-primary bg-primary/10 px-2 py-0.5 rounded flex items-center gap-1 border border-primary/20 shrink-0"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
+              SCANNING {progress}%
+            </motion.div>
+          ) : phase === 'passed' ? (
+            <motion.div
+              key="secure"
+              initial={{ opacity: 0, scale: 0.8, y: -4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              className="text-[10px] font-medium font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded flex items-center gap-1 border border-emerald-500/20 shrink-0"
+            >
+              <Check className="w-3 h-3" /> SECURE
+            </motion.div>
+          ) : (
+            <motion.div
+              key="threat"
+              initial={{ opacity: 0, scale: 0.8, y: -4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              className="text-[10px] font-medium font-mono text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded flex items-center gap-1 border border-rose-500/20 shrink-0"
+            >
+              <AlertTriangle className="w-3 h-3" /> THREAT
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Grid of 3 result metrics with pop-up transition */}
+      <div className="grid grid-cols-3 gap-2">
+        {/* Status card */}
+        <div className="bg-card border border-border rounded p-2 text-center flex flex-col justify-center min-h-[58px] relative overflow-hidden">
+          <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 font-mono">Status</div>
+          <AnimatePresence mode="wait">
+            {!isLoaded ? (
+              <motion.div
+                key="loading-status"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.5 }}
+                exit={{ opacity: 0 }}
+                className="h-3.5 w-12 bg-muted rounded mx-auto animate-pulse"
+              />
+            ) : phase === 'passed' ? (
+              <motion.div
+                key="status-passed"
+                initial={{ opacity: 0, scale: 0.8, y: 5 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 22, delay: 0.05 }}
+                className="text-xs font-medium text-foreground flex items-center justify-center gap-1"
+              >
+                200 OK
+              </motion.div>
+            ) : (
+              <motion.div
+                key="status-failed"
+                initial={{ opacity: 0, scale: 0.8, y: 5 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 22, delay: 0.05 }}
+                className="text-xs font-medium text-rose-500 flex items-center justify-center gap-1"
+              >
+                403 BLOCKED
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Malware card */}
+        <div className="bg-card border border-border rounded p-2 text-center flex flex-col justify-center min-h-[58px] relative overflow-hidden">
+          <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 font-mono">Malware</div>
+          <AnimatePresence mode="wait">
+            {!isLoaded ? (
+              <motion.div
+                key="loading-malware"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.5 }}
+                exit={{ opacity: 0 }}
+                className="h-3.5 w-12 bg-muted rounded mx-auto animate-pulse"
+              />
+            ) : phase === 'passed' ? (
+              <motion.div
+                key="malware-passed"
+                initial={{ opacity: 0, scale: 0.8, y: 5 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 22, delay: 0.12 }}
+                className="text-xs font-medium text-emerald-500 flex items-center justify-center gap-1"
+              >
+                Passed
+              </motion.div>
+            ) : (
+              <motion.div
+                key="malware-detected"
+                initial={{ opacity: 0, scale: 0.8, y: 5 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 22, delay: 0.12 }}
+                className="text-xs font-medium text-rose-500 flex items-center justify-center gap-1 font-bold"
+              >
+                Detected
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Phishing card */}
+        <div className="bg-card border border-border rounded p-2 text-center flex flex-col justify-center min-h-[58px] relative overflow-hidden">
+          <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 font-mono">Phishing</div>
+          <AnimatePresence mode="wait">
+            {!isLoaded ? (
+              <motion.div
+                key="loading-phishing"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.5 }}
+                exit={{ opacity: 0 }}
+                className="h-3.5 w-12 bg-muted rounded mx-auto animate-pulse"
+              />
+            ) : phase === 'passed' ? (
+              <motion.div
+                key="phishing-passed"
+                initial={{ opacity: 0, scale: 0.8, y: 5 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 22, delay: 0.19 }}
+                className="text-xs font-medium text-emerald-500 flex items-center justify-center gap-1"
+              >
+                Passed
+              </motion.div>
+            ) : (
+              <motion.div
+                key="phishing-flagged"
+                initial={{ opacity: 0, scale: 0.8, y: 5 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 22, delay: 0.19 }}
+                className="text-xs font-medium text-rose-500 flex items-center justify-center gap-1 font-bold"
+              >
+                Flagged
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 const FaqItem = ({ question, answer }: { question: string, answer: React.ReactNode }) => {
@@ -341,31 +711,38 @@ const LiveEventStream = () => {
     const interval = setInterval(() => {
       setEvents(prev => {
         const newEvents = [generateRandomEvent(), ...prev];
-        return newEvents.slice(0, 4); // Keep exactly 4 full lines visible
+        return newEvents.slice(0, 5); // Keep up to 5 so bottom item smoothly collapses out
       });
-    }, 2500);
+    }, 2800);
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="w-full border border-border rounded-lg shadow-sm bg-card overflow-hidden text-[11px] flex flex-col relative z-10">
-      <div className="grid grid-cols-[3fr_3.5fr_2fr_2.5fr] border-b border-border bg-muted/20 font-medium text-muted-foreground">
+      <div className="grid grid-cols-[3fr_3.5fr_2fr_2.5fr] border-b border-border bg-muted/20 font-medium text-muted-foreground z-10">
         <div className="px-3 py-2 flex items-center gap-1.5">Date <span className="text-primary text-[10px]">↑↓</span></div>
         <div className="px-3 py-2 border-l border-border">Link</div>
         <div className="px-3 py-2 border-l border-border">Country</div>
         <div className="px-3 py-2 border-l border-border">Device</div>
       </div>
       
-      <div className="flex flex-col relative bg-card">
+      {/* Fixed height container (4 rows * 53px = 212px) to prevent layout stutter */}
+      <div className="h-[212px] overflow-hidden flex flex-col relative bg-card">
         <AnimatePresence initial={false}>
           {events.map((event) => (
             <motion.div
               key={event.id}
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 53 }}
+              layout="position"
+              initial={{ opacity: 0, height: 0, y: -20 }}
+              animate={{ opacity: 1, height: 53, y: 0 }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
-              className="overflow-hidden"
+              transition={{ 
+                height: { duration: 0.45, ease: [0.25, 1, 0.5, 1] },
+                opacity: { duration: 0.35, ease: "easeOut" },
+                y: { duration: 0.45, ease: [0.25, 1, 0.5, 1] },
+                layout: { duration: 0.45, ease: [0.25, 1, 0.5, 1] }
+              }}
+              className="overflow-hidden flex-shrink-0"
             >
               <div className="grid grid-cols-[3fr_3.5fr_2fr_2.5fr] border-b border-border hover:bg-primary/[0.03] transition-colors group cursor-default bg-card h-[53px]">
                 <div className="px-3 py-2.5 truncate text-muted-foreground flex items-center h-full">{event.date}</div>
@@ -761,39 +1138,8 @@ const HomePage: React.FC = () => {
                   Organize links with Folders & Tags. Keep your workspace tidy and filter your entire library in seconds.
                 </p>
               </div>
-              {/* Nested UI: Dashboard mockup */}
-              <div className="mt-8 relative w-full h-[220px] border border-border rounded-md bg-background/50 overflow-hidden shadow-sm flex flex-col group-hover:border-primary/30 transition-colors">
-                <div className="h-8 border-b border-border bg-card/80 flex items-center px-4 gap-2 flex-shrink-0">
-                  <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/30" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/30" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/30" />
-                  <div className="ml-4 h-3 w-32 bg-secondary rounded-sm" />
-                </div>
-                <div className="flex h-full">
-                  <div className="w-32 border-r border-border p-3 flex flex-col gap-2 flex-shrink-0">
-                    <div className="h-3 w-full bg-secondary rounded-sm" />
-                    <div className="h-3 w-3/4 bg-secondary rounded-sm mt-2" />
-                    <div className="h-3 w-4/5 bg-secondary rounded-sm" />
-                    <div className="h-3 w-2/3 bg-secondary rounded-sm" />
-                  </div>
-                  <div className="flex-1 p-4 flex flex-col gap-3">
-                    <div className="flex items-center justify-between p-3 border border-border rounded bg-card shadow-sm">
-                      <div className="flex flex-col gap-1.5">
-                        <div className="h-3 w-32 bg-foreground/20 rounded-sm" />
-                        <div className="h-2 w-48 bg-muted-foreground/20 rounded-sm" />
-                      </div>
-                      <div className="h-5 w-16 rounded-full bg-primary/20" />
-                    </div>
-                    <div className="flex items-center justify-between p-3 border border-border rounded bg-card shadow-sm">
-                      <div className="flex flex-col gap-1.5">
-                        <div className="h-3 w-24 bg-foreground/20 rounded-sm" />
-                        <div className="h-2 w-40 bg-muted-foreground/20 rounded-sm" />
-                      </div>
-                      <div className="h-5 w-16 rounded-full bg-primary/20" />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {/* Nested UI: Interactive & Animated Workspace Mockup */}
+              <WorkspaceMockup />
             </motion.div>
 
             {/* 2. Analytics (col-span-4) */}
@@ -850,38 +1196,54 @@ const HomePage: React.FC = () => {
                     <svg viewBox="0 0 400 100" preserveAspectRatio="none" className="w-full h-full absolute inset-0 text-primary">
                       <defs>
                         <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="currentColor" stopOpacity="0.2" />
+                          <stop offset="0%" stopColor="currentColor" stopOpacity="0.28" />
+                          <stop offset="60%" stopColor="currentColor" stopOpacity="0.08" />
                           <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
                         </linearGradient>
                       </defs>
+                      {/* Smooth Organic Growth Wave */}
                       <motion.path 
-                        d="M0 95 L100 95 L150 95 L200 95 L240 95 L250 92 L260 70 L270 20 L275 10 L280 25 L290 80 L300 92 L310 95 L400 95"
+                        d="M0,82 C35,80 65,72 95,68 C130,64 160,70 190,52 C220,34 245,38 270,16 C295,30 325,48 355,42 C375,38 390,44 400,45 L400,100 L0,100 Z"
                         fill="url(#chart-gradient)"
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
-                        transition={{ duration: 1 }}
+                        transition={{ duration: 1.2, ease: "easeOut" }}
                       />
                       <motion.path 
-                        d="M0 95 L100 95 L150 95 L200 95 L240 95 L250 92 L260 70 L270 20 L275 10 L280 25 L290 80 L300 92 L310 95 L400 95"
+                        d="M0,82 C35,80 65,72 95,68 C130,64 160,70 190,52 C220,34 245,38 270,16 C295,30 325,48 355,42 C375,38 390,44 400,45"
                         fill="none"
                         stroke="currentColor"
-                        strokeWidth="1.5"
+                        strokeWidth="2"
+                        strokeLinecap="round"
                         initial={{ pathLength: 0 }}
                         whileInView={{ pathLength: 1 }}
-                        transition={{ duration: 1.5, ease: "easeInOut" }}
+                        transition={{ duration: 1.6, ease: "easeInOut" }}
                       />
                     </svg>
                   </div>
                   
-                  {/* Floating Tooltip */}
+                  {/* Floating Peak Tooltip & Pulse Dot pinned to peak (x: 270/400 = 67.5%, y: 16%) */}
+                  <div className="absolute left-[67.5%] top-[16%] -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-primary border-2 border-background shadow-xs" />
+                    </span>
+                  </div>
+
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.9, y: 10 }}
                     whileInView={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ delay: 1.2, duration: 0.4 }}
-                    className="absolute top-6 right-20 bg-card border border-border shadow-lg rounded-md p-1.5 flex flex-col gap-0.5 z-20"
+                    className="absolute top-2 right-12 sm:right-24 bg-card/95 backdrop-blur-sm border border-border shadow-md rounded-md p-2 flex flex-col gap-0.5 z-20"
                   >
-                    <div className="text-[8px] text-muted-foreground font-mono">Fri, Sep 11</div>
-                    <div className="text-[10px] font-semibold flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Clicks 209</div>
+                    <div className="text-[8px] text-muted-foreground font-mono flex items-center justify-between gap-2">
+                      <span>Fri, Sep 11</span>
+                      <span className="text-[7px] bg-primary/10 text-primary font-bold px-1 rounded">PEAK</span>
+                    </div>
+                    <div className="text-[11px] font-semibold flex items-center gap-1.5 text-foreground">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      209 clicks/min
+                    </div>
                   </motion.div>
                 </div>
               </div>
@@ -997,37 +1359,8 @@ const HomePage: React.FC = () => {
                   Trim automatically scans your destination URLs for malware, phishing, and broken links, ensuring your audience always lands safely.
                 </p>
               </div>
-              {/* Nested UI: Link Scan */}
-              <div className="w-full md:w-96 p-4 border border-border rounded-md bg-background/50 shadow-sm flex flex-col gap-3 group-hover:border-emerald-500/30 transition-colors relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-0.5 bg-emerald-500/20">
-                  <motion.div 
-                    initial={{ x: '-100%' }}
-                    animate={{ x: '100%' }}
-                    transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-                    className="h-full w-1/3 bg-emerald-500"
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-muted-foreground font-mono truncate">https://example.com/very/long/path...</div>
-                  <div className="text-[10px] font-medium text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded flex items-center gap-1">
-                    <Check className="w-3 h-3" /> SECURE
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                   <div className="bg-card border border-border rounded p-2 text-center">
-                     <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Status</div>
-                     <div className="text-xs font-medium text-foreground">200 OK</div>
-                   </div>
-                   <div className="bg-card border border-border rounded p-2 text-center">
-                     <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Malware</div>
-                     <div className="text-xs font-medium text-emerald-500">Passed</div>
-                   </div>
-                   <div className="bg-card border border-border rounded p-2 text-center">
-                     <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Phishing</div>
-                     <div className="text-xs font-medium text-emerald-500">Passed</div>
-                   </div>
-                </div>
-              </div>
+              {/* Nested UI: Interactive & Dynamic Link Scan Mockup */}
+              <AutomatedLinkCheckMockup />
             </motion.div>
           </motion.div>
         </div>
