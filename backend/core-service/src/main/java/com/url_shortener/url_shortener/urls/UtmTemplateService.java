@@ -1,8 +1,5 @@
 package com.url_shortener.url_shortener.urls;
 
-import com.url_shortener.url_shortener.users.User;
-import com.url_shortener.url_shortener.users.UserNotFoundException;
-import com.url_shortener.url_shortener.users.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -16,26 +13,25 @@ import java.util.stream.Collectors;
 public class UtmTemplateService {
 
     private final UtmTemplateRepository utmTemplateRepository;
-    private final UserRepository userRepository;
-
+    
     public List<UtmTemplateDto> getUserTemplates(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
-        return utmTemplateRepository.findByUserOrderByCreatedAtDesc(user)
+        
+        return utmTemplateRepository.findByUserOrderByCreatedAtDesc(userId)
                 .stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public UtmTemplateDto createTemplate(UtmTemplateRequest request, User user) {
+    public UtmTemplateDto createTemplate(UtmTemplateRequest request, Long userId) {
         String trimmedName = request.getName().trim();
-        if (utmTemplateRepository.existsByNameIgnoreCaseAndUserId(trimmedName, user.getId())) {
+        if (utmTemplateRepository.existsByNameIgnoreCaseAndUserId(trimmedName, userId)) {
             throw new IllegalArgumentException("A UTM template with this name already exists.");
         }
 
         boolean isDefault = Boolean.TRUE.equals(request.getIsDefault());
         if (isDefault) {
-            clearUserDefaultTemplates(user);
+            clearUserDefaultTemplates(userId);
         }
 
         UtmTemplate template = UtmTemplate.builder()
@@ -48,7 +44,7 @@ public class UtmTemplateService {
                 .ref(trimOrNull(request.getRef()))
                 .isDefault(isDefault)
                 .customParams(request.getCustomParams())
-                .user(user)
+                .userId(userId)
                 .build();
 
         UtmTemplate saved = utmTemplateRepository.save(template);
@@ -56,17 +52,17 @@ public class UtmTemplateService {
     }
 
     @Transactional
-    public UtmTemplateDto updateTemplate(Long id, UtmTemplateRequest request, User user) {
+    public UtmTemplateDto updateTemplate(Long id, UtmTemplateRequest request, Long userId) {
         UtmTemplate template = utmTemplateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("UTM template not found"));
 
-        if (!template.getUser().getId().equals(user.getId())) {
+        if (!template.getUserId().equals(userId)) {
             throw new AccessDeniedException("You cannot update a template you do not own.");
         }
 
         String newName = request.getName().trim();
         if (!template.getName().equalsIgnoreCase(newName)) {
-            if (utmTemplateRepository.existsByNameIgnoreCaseAndUserId(newName, user.getId())) {
+            if (utmTemplateRepository.existsByNameIgnoreCaseAndUserId(newName, userId)) {
                 throw new IllegalArgumentException("A UTM template with this name already exists.");
             }
             template.setName(newName);
@@ -74,7 +70,7 @@ public class UtmTemplateService {
 
         if (request.getIsDefault() != null) {
             if (Boolean.TRUE.equals(request.getIsDefault())) {
-                clearUserDefaultTemplates(user);
+                clearUserDefaultTemplates(userId);
                 template.setIsDefault(true);
             } else {
                 template.setIsDefault(false);
@@ -94,11 +90,11 @@ public class UtmTemplateService {
     }
 
     @Transactional
-    public UtmTemplateDto toggleDefaultTemplate(Long id, User user) {
+    public UtmTemplateDto toggleDefaultTemplate(Long id, Long userId) {
         UtmTemplate template = utmTemplateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("UTM template not found"));
 
-        if (!template.getUser().getId().equals(user.getId())) {
+        if (!template.getUserId().equals(userId)) {
             throw new AccessDeniedException("You cannot modify a template you do not own.");
         }
 
@@ -106,7 +102,7 @@ public class UtmTemplateService {
         if (currentlyDefault) {
             template.setIsDefault(false);
         } else {
-            clearUserDefaultTemplates(user);
+            clearUserDefaultTemplates(userId);
             template.setIsDefault(true);
         }
 
@@ -114,8 +110,8 @@ public class UtmTemplateService {
         return mapToDto(saved);
     }
 
-    private void clearUserDefaultTemplates(User user) {
-        List<UtmTemplate> defaults = utmTemplateRepository.findByUserAndIsDefaultTrue(user);
+    private void clearUserDefaultTemplates(Long userId) {
+        List<UtmTemplate> defaults = utmTemplateRepository.findByUserAndIsDefaultTrue(userId);
         for (UtmTemplate t : defaults) {
             t.setIsDefault(false);
             utmTemplateRepository.save(t);
@@ -123,11 +119,11 @@ public class UtmTemplateService {
     }
 
     @Transactional
-    public void deleteTemplate(Long id, User user) {
+    public void deleteTemplate(Long id, Long userId) {
         UtmTemplate template = utmTemplateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("UTM template not found"));
 
-        if (!template.getUser().getId().equals(user.getId())) {
+        if (!template.getUserId().equals(userId)) {
             throw new AccessDeniedException("You cannot delete a template you do not own.");
         }
 

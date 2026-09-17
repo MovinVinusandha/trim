@@ -1,7 +1,5 @@
 package com.url_shortener.url_shortener.urls;
 
-import com.url_shortener.url_shortener.users.User;
-import com.url_shortener.url_shortener.users.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -16,8 +14,7 @@ public class FolderService {
 
     private final FolderRepository folderRepository;
     private final UrlRepository urlRepository;
-    private final UserRepository userRepository;
-
+    
     public List<FolderDto> getUserFolders(Long userId) {
         List<Folder> folders = new ArrayList<>(folderRepository.findByUserId(userId));
         Folder linksFolder = folders.stream()
@@ -26,12 +23,12 @@ public class FolderService {
                 .orElse(null);
 
         if (linksFolder == null) {
-            var user = userRepository.findById(userId).orElse(null);
+            
             if (user != null) {
                 Folder defaultFolder = Folder.builder()
                         .name("Links")
                         .slug("links")
-                        .user(user)
+                        .userId(userId)
                         .build();
                 linksFolder = folderRepository.save(defaultFolder);
                 folders.add(0, linksFolder);
@@ -59,28 +56,28 @@ public class FolderService {
                 .collect(Collectors.toList());
     }
 
-    public FolderDto createFolder(String name, User user) {
-        if (folderRepository.existsByNameIgnoreCaseAndUserId(name, user.getId())) {
+    public FolderDto createFolder(String name, Long userId) {
+        if (folderRepository.existsByNameIgnoreCaseAndUserId(name, userId)) {
             throw new FolderAlreadyExistsException();
         }
 
-        String slug = generateSlug(name, user.getId());
+        String slug = generateSlug(name, userId);
 
         Folder folder = Folder.builder()
                 .name(name)
                 .slug(slug)
-                .user(user)
+                .userId(userId)
                 .build();
 
         Folder savedFolder = folderRepository.save(folder);
         return toDto(savedFolder);
     }
 
-    public void deleteFolder(Long folderId, User user) {
+    public void deleteFolder(Long folderId, Long userId) {
         Folder folder = folderRepository.findById(folderId)
                 .orElseThrow(FolderNotFoundException::new);
 
-        if (!folder.getUser().getId().equals(user.getId())) {
+        if (!folder.getUserId().equals(userId)) {
             throw new AccessDeniedException("You do not have permission to delete this folder.");
         }
 
@@ -92,11 +89,11 @@ public class FolderService {
         folderRepository.delete(folder);
     }
 
-    public FolderDto updateFolder(Long id, FolderRequestDto request, User user) {
+    public FolderDto updateFolder(Long id, FolderRequestDto request, Long userId) {
         Folder folder = folderRepository.findById(id)
                 .orElseThrow(FolderNotFoundException::new);
 
-        if (!folder.getUser().getId().equals(user.getId())) {
+        if (!folder.getUserId().equals(userId)) {
             throw new AccessDeniedException("You do not have permission to edit this folder.");
         }
 
@@ -106,11 +103,11 @@ public class FolderService {
 
         String newName = request.getName().trim();
         if (!folder.getName().equalsIgnoreCase(newName)) {
-            if (folderRepository.existsByNameIgnoreCaseAndUserId(newName, user.getId())) {
+            if (folderRepository.existsByNameIgnoreCaseAndUserId(newName, userId)) {
                 throw new FolderAlreadyExistsException();
             }
             folder.setName(newName);
-            folder.setSlug(generateSlug(newName, user.getId()));
+            folder.setSlug(generateSlug(newName, userId));
             folder = folderRepository.save(folder);
         }
 

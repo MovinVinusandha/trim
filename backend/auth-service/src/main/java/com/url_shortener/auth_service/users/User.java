@@ -1,6 +1,5 @@
 package com.url_shortener.auth_service.users;
 
-import com.url_shortener.auth_service.urls.Url;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -63,9 +62,7 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     @Builder.Default
-    private List<Url> urls = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<UserOAuthAccount> oauthAccounts = new ArrayList<>();
 

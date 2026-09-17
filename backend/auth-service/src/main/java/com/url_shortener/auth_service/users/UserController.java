@@ -16,7 +16,6 @@ public class UserController {
     private final UserMapper userMapper;
     private final UserService userService;
     private final RateLimiterService rateLimiterService;
-    private final com.url_shortener.auth_service.admin.SystemSettingRepository systemSettingRepository;
 
     @org.springframework.beans.factory.annotation.Value("${app.allow-registration:true}")
     private boolean allowRegistration;
@@ -24,16 +23,14 @@ public class UserController {
     public UserController(UserMapper userMapper,
                           UserService userService,
                           RateLimiterService rateLimiterService,
-                          com.url_shortener.auth_service.admin.SystemSettingRepository systemSettingRepository) {
         this.userMapper = userMapper;
         this.userService = userService;
         this.rateLimiterService = rateLimiterService;
-        this.systemSettingRepository = systemSettingRepository;
     }
 
     @PostMapping
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegister userRegister, HttpServletRequest request) {
-        boolean dynamicAllowRegistration = systemSettingRepository.findBySettingKey("ALLOW_REGISTRATION")
+        boolean dynamicAllowRegistration = true;
                 .map(s -> Boolean.parseBoolean(s.getSettingValue()))
                 .orElse(allowRegistration);
 

@@ -1,6 +1,5 @@
 package com.url_shortener.url_shortener.urls;
 
-import com.url_shortener.url_shortener.users.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,8 +19,8 @@ public class CustomChannelService {
     }
 
     @Transactional
-    public CustomChannelDto createCustomChannel(CustomChannelRequest request, User user) {
-        if (customChannelRepository.existsByNameIgnoreCaseAndUserId(request.getName().trim(), user.getId())) {
+    public CustomChannelDto createCustomChannel(CustomChannelRequest request, Long userId) {
+        if (customChannelRepository.existsByNameIgnoreCaseAndUserId(request.getName().trim(), userId)) {
             throw new IllegalArgumentException("A channel with this name already exists.");
         }
 
@@ -29,7 +28,7 @@ public class CustomChannelService {
                 .name(request.getName().trim())
                 .utmSource(request.getUtmSource().trim())
                 .utmMedium(request.getUtmMedium().trim())
-                .user(user)
+                .userId(userId)
                 .build();
 
         CustomChannel saved = customChannelRepository.save(channel);
@@ -37,8 +36,8 @@ public class CustomChannelService {
     }
 
     @Transactional
-    public void deleteCustomChannel(Long id, User user) {
-        CustomChannel channel = customChannelRepository.findByIdAndUserId(id, user.getId())
+    public void deleteCustomChannel(Long id, Long userId) {
+        CustomChannel channel = customChannelRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new IllegalArgumentException("Custom channel not found"));
         customChannelRepository.delete(channel);
     }

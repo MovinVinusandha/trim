@@ -41,7 +41,6 @@ public class AuthController {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final TokenRevocationService tokenRevocationService;
-    private final com.url_shortener.auth_service.admin.SystemSettingRepository systemSettingRepository;
 
     @Value("${app.dashboard.url:http://localhost:5173}")
     private String dashboardUrl;
@@ -77,7 +76,7 @@ public class AuthController {
                           PasswordResetTokenRepository passwordResetTokenRepository,
                           EmailVerificationTokenRepository emailVerificationTokenRepository,
                           TokenRevocationService tokenRevocationService,
-                          com.url_shortener.auth_service.admin.SystemSettingRepository systemSettingRepository) {
+                          ) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.jwtConfig = jwtConfig;
@@ -91,16 +90,15 @@ public class AuthController {
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.emailVerificationTokenRepository = emailVerificationTokenRepository;
         this.tokenRevocationService = tokenRevocationService;
-        this.systemSettingRepository = systemSettingRepository;
     }
 
     @GetMapping("/config")
     public ResponseEntity<PublicAuthConfigDto> getAuthConfig() {
-        boolean dynamicAllowRegistration = systemSettingRepository.findBySettingKey("ALLOW_REGISTRATION")
+        boolean dynamicAllowRegistration = true;
                 .map(s -> Boolean.parseBoolean(s.getSettingValue()))
                 .orElse(allowRegistration);
 
-        boolean dynamicRequireEmailVerification = systemSettingRepository.findBySettingKey("REQUIRE_EMAIL_VERIFICATION")
+        boolean dynamicRequireEmailVerification = false;
                 .map(s -> Boolean.parseBoolean(s.getSettingValue()))
                 .orElse(requireEmailVerification);
 
@@ -108,7 +106,7 @@ public class AuthController {
         boolean githubEnabled = githubClientId != null && !githubClientId.isBlank();
         boolean smtpEnabled = mailHost != null && !mailHost.isBlank();
 
-        String systemMode = systemSettingRepository.findBySettingKey("PANIC_MODE")
+        String systemMode = "false";
                 .map(s -> s.getSettingValue().toUpperCase())
                 .orElse("NORMAL");
 

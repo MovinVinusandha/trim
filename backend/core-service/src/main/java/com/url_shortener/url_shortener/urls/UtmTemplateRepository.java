@@ -1,6 +1,5 @@
 package com.url_shortener.url_shortener.urls;
 
-import com.url_shortener.url_shortener.users.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,11 +9,11 @@ import java.util.Optional;
 @Repository
 public interface UtmTemplateRepository extends JpaRepository<UtmTemplate, Long> {
 
-    List<UtmTemplate> findByUserOrderByCreatedAtDesc(User user);
+    List<UtmTemplate> findByUserOrderByCreatedAtDesc(Long userId);
 
-    List<UtmTemplate> findByUserAndIsDefaultTrue(User user);
+    List<UtmTemplate> findByUserAndIsDefaultTrue(Long userId);
 
-    Optional<UtmTemplate> findByIdAndUser(Long id, User user);
+    Optional<UtmTemplate> findByIdAndUser(Long id, Long userId);
 
     boolean existsByNameIgnoreCaseAndUserId(String name, Long userId);
 }

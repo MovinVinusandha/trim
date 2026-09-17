@@ -1,7 +1,6 @@
 package com.url_shortener.url_shortener.urls;
 
 import com.url_shortener.url_shortener.statistics.Statistic;
-import com.url_shortener.url_shortener.users.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -54,9 +53,8 @@ public class Url {
     @OneToOne(mappedBy = "urls", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private Statistic statistic;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    @Column(name = "user_id")
+    private Long userId;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "url_tags", joinColumns = @JoinColumn(name = "url_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))

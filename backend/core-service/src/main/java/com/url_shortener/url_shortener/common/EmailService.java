@@ -1,6 +1,5 @@
 package com.url_shortener.url_shortener.common;
 
-import com.url_shortener.url_shortener.users.User;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +26,7 @@ public class EmailService {
     }
 
     @Async
-    public void sendVerificationEmail(User user, String rawToken) {
+    public void sendVerificationEmail(Long userId, String rawToken) {
         String verifyUrl = dashboardUrl + "/verify-email?token=" + rawToken;
         String subject = "Verify your email address - Trim";
         String htmlContent = """
@@ -55,7 +54,7 @@ public class EmailService {
     }
 
     @Async
-    public void sendPasswordResetEmail(User user, String rawToken) {
+    public void sendPasswordResetEmail(Long userId, String rawToken) {
         String resetUrl = dashboardUrl + "/reset-password?token=" + rawToken;
         String subject = "Reset your Trim password";
         String htmlContent = """
@@ -83,7 +82,7 @@ public class EmailService {
     }
 
     @Async
-    public void sendSetInitialPasswordEmail(User user, String rawToken) {
+    public void sendSetInitialPasswordEmail(Long userId, String rawToken) {
         String setPasswordUrl = dashboardUrl + "/reset-password?token=" + rawToken;
         String subject = "Set a password for your Trim account";
         String htmlContent = """
@@ -111,7 +110,7 @@ public class EmailService {
     }
 
     @Async
-    public void sendPasswordChangedAlert(User user) {
+    public void sendPasswordChangedAlert(Long userId) {
         String subject = "Security Alert: Your Trim password was changed";
         String resetUrl = dashboardUrl + "/forgot-password";
         String htmlContent = """

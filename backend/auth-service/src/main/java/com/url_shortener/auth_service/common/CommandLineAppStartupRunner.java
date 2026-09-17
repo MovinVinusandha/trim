@@ -9,8 +9,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import com.url_shortener.auth_service.urls.Folder;
-import com.url_shortener.auth_service.urls.FolderRepository;
 
 @Component
 @RequiredArgsConstructor

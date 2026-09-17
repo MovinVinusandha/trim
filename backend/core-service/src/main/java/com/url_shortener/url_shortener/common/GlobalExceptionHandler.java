@@ -2,8 +2,6 @@ package com.url_shortener.url_shortener.common;
 
 import com.url_shortener.url_shortener.urls.UrlExistInDataBaseException;
 import com.url_shortener.url_shortener.urls.UrlNotFoundException;
-import com.url_shortener.url_shortener.users.UserAlreadyExist;
-import com.url_shortener.url_shortener.users.UserNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;

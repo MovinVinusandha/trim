@@ -1,15 +1,10 @@
 package com.url_shortener.auth_service.users;
 
-import com.url_shortener.auth_service.analytics.ClickEventRepository;
 import com.url_shortener.auth_service.auth.AuthTokenUtil;
 import com.url_shortener.auth_service.auth.EmailVerificationToken;
 import com.url_shortener.auth_service.auth.EmailVerificationTokenRepository;
 import com.url_shortener.auth_service.auth.OAuthService;
 import com.url_shortener.auth_service.common.EmailService;
-import com.url_shortener.auth_service.urls.Folder;
-import com.url_shortener.auth_service.urls.FolderRepository;
-import com.url_shortener.auth_service.urls.TagRepository;
-import com.url_shortener.auth_service.urls.UrlRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,8 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.url_shortener.auth_service.auth.PasswordResetToken;
 import com.url_shortener.auth_service.auth.PasswordResetTokenRepository;
 import com.url_shortener.auth_service.common.EmailDomainValidator;
-import com.url_shortener.auth_service.urls.CustomChannelRepository;
-import com.url_shortener.auth_service.urls.UtmTemplateRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -32,13 +25,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ClickEventRepository clickEventRepository;
-    private final UrlRepository urlRepository;
-    private final TagRepository tagRepository;
-    private final FolderRepository folderRepository;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
-    private final UtmTemplateRepository utmTemplateRepository;
-    private final CustomChannelRepository customChannelRepository;
     private final EmailService emailService;
     private final OAuthService oauthService;
     private final EmailDomainValidator emailDomainValidator;
@@ -54,13 +42,13 @@ public class UserService {
                        UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        ClickEventRepository clickEventRepository,
-                       UrlRepository urlRepository,
-                       TagRepository tagRepository,
-                       FolderRepository folderRepository,
+                       
+                       
+                       
                        EmailVerificationTokenRepository emailVerificationTokenRepository,
                        PasswordResetTokenRepository passwordResetTokenRepository,
-                       UtmTemplateRepository utmTemplateRepository,
-                       CustomChannelRepository customChannelRepository,
+                       
+                       
                        EmailService emailService,
                        OAuthService oauthService,
                        EmailDomainValidator emailDomainValidator,
@@ -69,13 +57,8 @@ public class UserService {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.clickEventRepository = clickEventRepository;
-        this.urlRepository = urlRepository;
-        this.tagRepository = tagRepository;
-        this.folderRepository = folderRepository;
         this.emailVerificationTokenRepository = emailVerificationTokenRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
-        this.utmTemplateRepository = utmTemplateRepository;
-        this.customChannelRepository = customChannelRepository;
         this.emailService = emailService;
         this.oauthService = oauthService;
         this.emailDomainValidator = emailDomainValidator;
@@ -107,12 +90,12 @@ public class UserService {
         userRepository.save(user);
 
         // Auto-create default "Links" folder for the user
-        Folder defaultFolder = Folder.builder()
+        //Folder defaultFolder = Folder.builder()
                 .name("Links")
                 .slug("links")
                 .user(user)
                 .build();
-        folderRepository.save(defaultFolder);
+        //folderRepository.save(defaultFolder);
 
         // Generate email verification token and send email if verification is active
         if (shouldVerify) {
@@ -341,14 +324,6 @@ public class UserService {
         tagRepository.deleteAll(tags);
 
         // 5. Delete all URLs (cascades statistics)
-        var urls = urlRepository.findByUserId(userId);
-        for (var url : urls) {
-            url.getTags().clear();
-        }
-        urlRepository.saveAll(urls);
-        urlRepository.deleteAll(urls);
-
-        // 6. Delete all folders
         folderRepository.deleteAll(folderRepository.findByUserId(userId));
 
         // 7. Globally revoke tokens

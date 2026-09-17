@@ -21,8 +21,6 @@ import com.url_shortener.url_shortener.analytics.dto.CountryDataPoint;
 import com.url_shortener.url_shortener.analytics.dto.DeviceDataPoint;
 import com.url_shortener.url_shortener.analytics.dto.BrowserDataPoint;
 import com.url_shortener.url_shortener.analytics.dto.UtmDataPoint;
-import com.url_shortener.url_shortener.users.User;
-import com.url_shortener.url_shortener.users.Role;
 
 /**
  * Asynchronous analytics orchestrator that records a {@link ClickEvent}
@@ -40,16 +38,16 @@ public class AnalyticsService {
     private final GeoLocationService       geoLocationService;
     private final EventStreamService       eventStreamService;
 
-    public UserUsageStatsDto getUserUsageStats(User currentUser) {
-        long totalLinks = urlRepository.countByUserId(currentUser.getId());
-        long totalClicks = clickEventRepository.countTotalClicksByUserId(currentUser.getId());
+    public UserUsageStatsDto getUserUsageStats(Long currentUserId) {
+        long totalLinks = urlRepository.countByUserId(currentUserId);
+        long totalClicks = clickEventRepository.countTotalClicksByUserId(currentUserId);
         return UserUsageStatsDto.builder()
                 .totalLinks(totalLinks)
                 .totalClicks(totalClicks)
                 .build();
     }
 
-    public AnalyticsResponseDto getAnalytics(String hash, User currentUser, String period, String startDateStr, String endDateStr, String utmSource, String utmMedium, String utmCampaign, String utmTerm, String utmContent, String referer) {
+    public AnalyticsResponseDto getAnalytics(String hash, Long currentUserId, String period, String startDateStr, String endDateStr, String utmSource, String utmMedium, String utmCampaign, String utmTerm, String utmContent, String referer) {
         var url = urlRepository.findByShortUrl(hash);
         if (url == null) {
             throw new com.url_shortener.url_shortener.urls.UrlNotFoundException();
@@ -57,7 +55,7 @@ public class AnalyticsService {
 
         boolean isRoot = currentUser.getRole() != null && currentUser.getRole() == Role.ROOT;
 
-        if (!isRoot && (url.getUser() == null || !url.getUser().getId().equals(currentUser.getId()))) {
+        if (!isRoot && (url.getUser() == null || !url.getUserId().equals(currentUserId))) {
             throw new com.url_shortener.url_shortener.urls.UrlNotFoundException();
         }
 
@@ -121,13 +119,13 @@ public class AnalyticsService {
                 .build();
     }
 
-    public AnalyticsResponseDto getOverallAnalytics(User currentUser, String period, String startDateStr, String endDateStr, String hash, List<Long> tagIds, Long folderId, String utmSource, String utmMedium, String utmCampaign, String utmTerm, String utmContent, String referer) {
+    public AnalyticsResponseDto getOverallAnalytics(Long currentUserId, String period, String startDateStr, String endDateStr, String hash, List<Long> tagIds, Long folderId, String utmSource, String utmMedium, String utmCampaign, String utmTerm, String utmContent, String referer) {
         tagIds = tagIds == null ? null : tagIds.stream().filter(id -> id != null && id > 0).collect(Collectors.toList());
         if (tagIds != null && tagIds.isEmpty()) {
             tagIds = null;
         }
 
-        Long userId = currentUser.getId();
+        Long userId = currentUserId;
         DateRange dates = parseDates(startDateStr, endDateStr, period);
         LocalDateTime startDate = dates.start();
         LocalDateTime endDate = dates.end();
@@ -187,23 +185,23 @@ public class AnalyticsService {
                 .build();
     }
 
-    public AnalyticsResponseDto getFolderAnalyticsBySlug(String slug, User currentUser, String period, String startDateStr, String endDateStr, String utmSource, String utmMedium, String utmCampaign, String utmTerm, String utmContent, String referer) {
-        var folder = folderRepository.findByUserIdAndSlug(currentUser.getId(), slug)
+    public AnalyticsResponseDto getFolderAnalyticsBySlug(String slug, Long currentUserId, String period, String startDateStr, String endDateStr, String utmSource, String utmMedium, String utmCampaign, String utmTerm, String utmContent, String referer) {
+        var folder = folderRepository.findByUserIdAndSlug(currentUserId, slug)
                 .orElseThrow(() -> new RuntimeException("Folder not found"));
         return getFolderAnalytics(folder.getId(), currentUser, period, startDateStr, endDateStr, utmSource, utmMedium, utmCampaign, utmTerm, utmContent, referer);
     }
 
-    public AnalyticsResponseDto getFolderAnalytics(Long folderId, User currentUser, String period, String startDateStr, String endDateStr, String utmSource, String utmMedium, String utmCampaign, String utmTerm, String utmContent, String referer) {
+    public AnalyticsResponseDto getFolderAnalytics(Long folderId, Long currentUserId, String period, String startDateStr, String endDateStr, String utmSource, String utmMedium, String utmCampaign, String utmTerm, String utmContent, String referer) {
         var folder = folderRepository.findById(folderId)
                 .orElseThrow(() -> new RuntimeException("Folder not found"));
 
         boolean isRoot = currentUser.getRole() != null && currentUser.getRole() == Role.ROOT;
 
-        if (!isRoot && (folder.getUser() == null || !folder.getUser().getId().equals(currentUser.getId()))) {
+        if (!isRoot && (folder.getUser() == null || !folder.getUserId().equals(currentUserId))) {
             throw new org.springframework.security.access.AccessDeniedException("Access denied");
         }
 
-        Long userId = currentUser.getId();
+        Long userId = currentUserId;
         DateRange dates = parseDates(startDateStr, endDateStr, period);
         LocalDateTime startDate = dates.start();
         LocalDateTime endDate = dates.end();
@@ -368,7 +366,7 @@ public class AnalyticsService {
                         .referer(savedEvent.getReferer())
                         .ipAddress(savedEvent.getIpAddress())
                         .build();
-                eventStreamService.broadcastEvent(url.getUser().getId(), eventDto);
+                eventStreamService.broadcastEvent(url.getUserId(), eventDto);
             }
 
             // Keep legacy statistic column in sync for any code paths that still read it
@@ -584,7 +582,7 @@ public class AnalyticsService {
     }
 
     public org.springframework.data.domain.Page<com.url_shortener.url_shortener.analytics.dto.ClickEventDto> getPaginatedEvents(
-            User currentUser,
+            Long currentUserId,
             String period,
             String startDateStr,
             String endDateStr,
@@ -603,7 +601,7 @@ public class AnalyticsService {
         LocalDateTime endDate = dates.end();
 
         return clickEventRepository.findEventsForUser(
-                currentUser.getId(),
+                currentUserId,
                 (hash != null && !hash.isBlank()) ? hash : null,
                 (country != null && !country.isBlank()) ? country : null,
                 (city != null && !city.isBlank()) ? city : null,

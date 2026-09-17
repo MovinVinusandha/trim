@@ -1,7 +1,5 @@
 package com.url_shortener.auth_service.common;
 
-import com.url_shortener.auth_service.urls.UrlExistInDataBaseException;
-import com.url_shortener.auth_service.urls.UrlNotFoundException;
 import com.url_shortener.auth_service.users.UserAlreadyExist;
 import com.url_shortener.auth_service.users.UserNotFoundException;
 import org.springframework.http.ResponseEntity;
@@ -39,18 +37,6 @@ public class GlobalExceptionHandler {
     @org.springframework.beans.factory.annotation.Value("${app.dashboard.url:http://app.localhost}")
     private String dashboardUrl;
 
-    @ExceptionHandler(com.url_shortener.auth_service.urls.LinkExpiredException.class)
-    public void linkExpired(com.url_shortener.auth_service.urls.LinkExpiredException ex, jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
-        response.sendRedirect(dashboardUrl + "/expired");
-    }
-
-    @ExceptionHandler(com.url_shortener.auth_service.urls.PasswordProtectedException.class)
-    public void passwordProtected(com.url_shortener.auth_service.urls.PasswordProtectedException ex, jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
-        response.sendRedirect(dashboardUrl + "/secure/" + ex.getHash());
-    }
-
-    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
-    public ResponseEntity<Map<String, String>> handleBadCredentials(org.springframework.security.authentication.BadCredentialsException ex) {
         return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).body(
                 Map.of("message", ex.getMessage())
         );

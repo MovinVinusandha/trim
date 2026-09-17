@@ -1,7 +1,6 @@
 package com.url_shortener.url_shortener.urls;
 
 import com.url_shortener.url_shortener.common.SecurityRules;
-import com.url_shortener.url_shortener.users.Role;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer;

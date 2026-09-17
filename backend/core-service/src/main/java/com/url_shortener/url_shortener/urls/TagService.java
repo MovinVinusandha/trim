@@ -1,7 +1,5 @@
 package com.url_shortener.url_shortener.urls;
 
-import com.url_shortener.url_shortener.users.User;
-import com.url_shortener.url_shortener.users.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,8 +14,7 @@ import java.util.stream.Collectors;
 public class TagService {
 
     private final TagRepository tagRepository;
-    private final UserRepository userRepository;
-    private final UrlRepository urlRepository;
+        private final UrlRepository urlRepository;
 
     public List<TagDto> getAllTagsForUser() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -25,11 +22,9 @@ public class TagService {
             throw new AccessDeniedException("You must be logged in to view tags.");
         }
         
-        Long userId = (Long) authentication.getPrincipal();
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                
         
-        return tagRepository.findByUser(user).stream()
+        return tagRepository.findByUser(userId).stream()
                 .map(t -> new TagDto(t.getId(), t.getName(), t.getColor(), urlRepository.countByTagsId(t.getId())))
                 .collect(Collectors.toList());
     }
@@ -40,9 +35,7 @@ public class TagService {
             throw new AccessDeniedException("You must be logged in to create tags.");
         }
 
-        Long userId = (Long) authentication.getPrincipal();
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                
 
         if (tagRepository.existsByNameIgnoreCaseAndUserId(request.getName().trim(), userId)) {
             throw new TagAlreadyExistsException("A tag with this name already exists.");
@@ -51,7 +44,7 @@ public class TagService {
         Tag tag = Tag.builder()
                 .name(request.getName().trim())
                 .color(request.getColor() != null ? request.getColor().trim() : null)
-                .user(user)
+                .userId(userId)
                 .build();
 
         Tag savedTag = tagRepository.save(tag);
@@ -65,11 +58,10 @@ public class TagService {
             throw new AccessDeniedException("You must be logged in to update tags.");
         }
 
-        Long userId = (Long) authentication.getPrincipal();
-        Tag tag = tagRepository.findById(id)
+                Tag tag = tagRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tag not found"));
 
-        if (!tag.getUser().getId().equals(userId)) {
+        if (!tag.getUserId().equals(userId)) {
             throw new AccessDeniedException("You cannot update a tag you do not own.");
         }
 
@@ -96,11 +88,10 @@ public class TagService {
             throw new AccessDeniedException("You must be logged in to delete tags.");
         }
 
-        Long userId = (Long) authentication.getPrincipal();
-        Tag tag = tagRepository.findById(id)
+                Tag tag = tagRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tag not found"));
 
-        if (!tag.getUser().getId().equals(userId)) {
+        if (!tag.getUserId().equals(userId)) {
             throw new AccessDeniedException("You cannot delete a tag you do not own.");
         }
 

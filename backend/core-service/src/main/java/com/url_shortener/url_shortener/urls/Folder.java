@@ -1,6 +1,5 @@
 package com.url_shortener.url_shortener.urls;
 
-import com.url_shortener.url_shortener.users.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,9 +26,8 @@ public class Folder {
     @Column(nullable = false)
     private String slug;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "user_id")
+    private Long userId;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

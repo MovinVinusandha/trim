@@ -2,8 +2,6 @@ package com.url_shortener.auth_service.auth;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.url_shortener.auth_service.urls.Folder;
-import com.url_shortener.auth_service.urls.FolderRepository;
 import com.url_shortener.auth_service.users.Role;
 import com.url_shortener.auth_service.users.User;
 import com.url_shortener.auth_service.users.UserOAuthAccount;
@@ -32,7 +30,6 @@ public class OAuthService {
 
     private final UserRepository userRepository;
     private final UserOAuthAccountRepository oauthAccountRepository;
-    private final FolderRepository folderRepository;
     private final RestTemplate restTemplate;
 
     @Value("${app.domain.root:http://localhost:8080}")
@@ -59,15 +56,15 @@ public class OAuthService {
     private final Cache<String, String> stateCache = Caffeine.newBuilder()
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .maximumSize(10000)
-            .build();
+            //.build();
 
     public OAuthService(UserRepository userRepository,
                         UserOAuthAccountRepository oauthAccountRepository,
-                        FolderRepository folderRepository,
+                        
                         RestTemplate restTemplate) {
         this.userRepository = userRepository;
         this.oauthAccountRepository = oauthAccountRepository;
-        this.folderRepository = folderRepository;
+        
         this.restTemplate = restTemplate;
     }
 
@@ -297,11 +294,11 @@ public class OAuthService {
 
                 // Link OAuth account
                 UserOAuthAccount account = UserOAuthAccount.builder()
-                        .user(user)
+                        //.user(user)
                         .provider(provider)
                         .providerUserId(info.providerUserId())
                         .providerEmail(info.email())
-                        .build();
+                        //.build();
                 oauthAccountRepository.save(account);
                 return user;
             }
@@ -317,17 +314,17 @@ public class OAuthService {
                 .role(Role.USER)
                 .emailVerified(true)
                 .emailVerifiedAt(LocalDateTime.now())
-                .build();
+                //.build();
 
         userRepository.save(newUser);
 
         // Create default Links folder
-        Folder defaultFolder = Folder.builder()
+        //Folder defaultFolder = Folder.builder()
                 .name("Links")
                 .slug("links")
                 .user(newUser)
-                .build();
-        folderRepository.save(defaultFolder);
+                //.build();
+        //folderRepository.save(defaultFolder);
 
         // Link OAuth account
         UserOAuthAccount account = UserOAuthAccount.builder()
@@ -335,7 +332,7 @@ public class OAuthService {
                 .provider(provider)
                 .providerUserId(info.providerUserId())
                 .providerEmail(info.email())
-                .build();
+                //.build();
         oauthAccountRepository.save(account);
 
         return newUser;
