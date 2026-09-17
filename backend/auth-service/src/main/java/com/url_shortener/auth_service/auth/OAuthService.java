@@ -56,7 +56,7 @@ public class OAuthService {
     private final Cache<String, String> stateCache = Caffeine.newBuilder()
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .maximumSize(10000)
-            //.build();
+            .build();
 
     public OAuthService(UserRepository userRepository,
                         UserOAuthAccountRepository oauthAccountRepository,
@@ -294,11 +294,11 @@ public class OAuthService {
 
                 // Link OAuth account
                 UserOAuthAccount account = UserOAuthAccount.builder()
-                        //.user(user)
+                        .user(user)
                         .provider(provider)
                         .providerUserId(info.providerUserId())
                         .providerEmail(info.email())
-                        //.build();
+                        .build();
                 oauthAccountRepository.save(account);
                 return user;
             }
@@ -314,17 +314,11 @@ public class OAuthService {
                 .role(Role.USER)
                 .emailVerified(true)
                 .emailVerifiedAt(LocalDateTime.now())
-                //.build();
+                .build();
 
         userRepository.save(newUser);
 
         // Create default Links folder
-        //Folder defaultFolder = Folder.builder()
-                .name("Links")
-                .slug("links")
-                .user(newUser)
-                //.build();
-        //folderRepository.save(defaultFolder);
 
         // Link OAuth account
         UserOAuthAccount account = UserOAuthAccount.builder()
@@ -332,7 +326,7 @@ public class OAuthService {
                 .provider(provider)
                 .providerUserId(info.providerUserId())
                 .providerEmail(info.email())
-                //.build();
+                .build();
         oauthAccountRepository.save(account);
 
         return newUser;

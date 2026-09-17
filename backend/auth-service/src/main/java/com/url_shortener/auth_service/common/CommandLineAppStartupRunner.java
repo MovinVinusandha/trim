@@ -14,8 +14,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CommandLineAppStartupRunner implements CommandLineRunner {
     private final UserRepository userRepository;
-    private final FolderRepository folderRepository;
-    private final PasswordEncoder passwordEncoder;
+        private final PasswordEncoder passwordEncoder;
 
     @Value("${root.user.email}")
     private String rootUserEmail;
@@ -45,18 +44,7 @@ public class CommandLineAppStartupRunner implements CommandLineRunner {
             rootAdmin = userRepository.save(rootAdmin);
         }
 
-        if (rootAdmin != null) {
-            final User targetRoot = rootAdmin;
-            if (!folderRepository.existsByUserIdAndSlug(targetRoot.getId(), "links") 
-                    && !folderRepository.existsByNameIgnoreCaseAndUserId("Links", targetRoot.getId())) {
-                Folder defaultFolder = Folder.builder()
-                        .name("Links")
-                        .slug("links")
-                        .user(targetRoot)
-                        .build();
-                folderRepository.save(defaultFolder);
-            }
-        }
+
     }
 
     private boolean rootUserAlreadyExists() {

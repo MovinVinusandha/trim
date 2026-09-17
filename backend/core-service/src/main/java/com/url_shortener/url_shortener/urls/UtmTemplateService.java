@@ -1,7 +1,7 @@
 package com.url_shortener.url_shortener.urls;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +16,7 @@ public class UtmTemplateService {
     
     public List<UtmTemplateDto> getUserTemplates(Long userId) {
         
-        return utmTemplateRepository.findByUserOrderByCreatedAtDesc(userId)
+        return utmTemplateRepository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
@@ -57,7 +57,7 @@ public class UtmTemplateService {
                 .orElseThrow(() -> new RuntimeException("UTM template not found"));
 
         if (!template.getUserId().equals(userId)) {
-            throw new AccessDeniedException("You cannot update a template you do not own.");
+            throw new IllegalArgumentException("You cannot update a template you do not own.");
         }
 
         String newName = request.getName().trim();
@@ -95,7 +95,7 @@ public class UtmTemplateService {
                 .orElseThrow(() -> new RuntimeException("UTM template not found"));
 
         if (!template.getUserId().equals(userId)) {
-            throw new AccessDeniedException("You cannot modify a template you do not own.");
+            throw new IllegalArgumentException("You cannot modify a template you do not own.");
         }
 
         boolean currentlyDefault = Boolean.TRUE.equals(template.getIsDefault());
@@ -111,7 +111,7 @@ public class UtmTemplateService {
     }
 
     private void clearUserDefaultTemplates(Long userId) {
-        List<UtmTemplate> defaults = utmTemplateRepository.findByUserAndIsDefaultTrue(userId);
+        List<UtmTemplate> defaults = utmTemplateRepository.findByUserIdAndIsDefaultTrue(userId);
         for (UtmTemplate t : defaults) {
             t.setIsDefault(false);
             utmTemplateRepository.save(t);
@@ -124,7 +124,7 @@ public class UtmTemplateService {
                 .orElseThrow(() -> new RuntimeException("UTM template not found"));
 
         if (!template.getUserId().equals(userId)) {
-            throw new AccessDeniedException("You cannot delete a template you do not own.");
+            throw new IllegalArgumentException("You cannot delete a template you do not own.");
         }
 
         utmTemplateRepository.delete(template);

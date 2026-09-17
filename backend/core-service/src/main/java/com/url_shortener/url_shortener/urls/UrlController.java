@@ -33,14 +33,15 @@ public class UrlController {
     private String dashboardUrl;
 
     public ResponseEntity<UrlSend> generateShortUrl(UrlRequest urlRequest) {
-        return generateShortUrl(urlRequest, (HttpServletRequest) null);
+        return generateShortUrl(urlRequest, (HttpServletRequest) null, null);
     }
 
     @PostMapping("/shorten")
     @Operation(summary = "Generate short url")
     public ResponseEntity<UrlSend> generateShortUrl(
             @Valid @RequestBody UrlRequest urlRequest,
-            HttpServletRequest request
+            HttpServletRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId
     ) {
         if (urlRequest.getCustomAlias() != null && !urlRequest.getCustomAlias().trim().isEmpty()) {
             if (userId == null) {
@@ -53,7 +54,7 @@ public class UrlController {
             }
         }
         String clientIp = request != null ? resolveClientIp(request) : null;
-        var urlDto = urlService.generateShortUrl(urlRequest, clientIp);
+        var urlDto = urlService.generateShortUrl(urlRequest, clientIp, userId);
         return ResponseEntity.ok(urlDto);
     }
 
@@ -143,54 +144,58 @@ public class UrlController {
 
     @GetMapping("url/all")
     public Iterable<UrlDto> getAllUsers(
+            @org.springframework.web.bind.annotation.RequestHeader(value = "X-User-Id", required = false) Long userId,
             @RequestParam(required = false, defaultValue = "", name = "sort") String sortBy,
             @RequestParam(required = false) Long tagId,
             @RequestParam(required = false) Long folderId,
             @RequestParam(required = false) String folderSlug,
             @RequestParam(required = false) String search
     ) {
-        return urlService.getAllUrls(sortBy, tagId, folderId, folderSlug, search);
+        return urlService.getAllUrls(userId, sortBy, tagId, folderId, folderSlug, search);
     }
 
     @PutMapping("/url/{hash}")
     public ResponseEntity<UrlDto> updateUrl(
             @PathVariable String hash,
-            @RequestBody UrlUpdateRequestDto request
+            @RequestBody UrlUpdateRequestDto request,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "X-User-Id", required = false) Long userId
     ) {
         if (userId == null) {
             throw new RuntimeException("You must be logged in to update a URL.");
         }
-        var urlDto = urlService.updateUrl(hash, request, currentUserId);
+        var urlDto = urlService.updateUrl(hash, request, userId);
         return ResponseEntity.ok(urlDto);
     }
 
     @DeleteMapping("/url/{hash}")
-    public ResponseEntity<Void> deleteUrl(@PathVariable String hash) {
-        urlService.deleteUrl(hash);
+    public ResponseEntity<Void> deleteUrl(@PathVariable String hash, @org.springframework.web.bind.annotation.RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        urlService.deleteUrl(hash, userId);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/url/batch-campaign")
     @Operation(summary = "Generate multi-channel campaign short urls in batch")
     public ResponseEntity<BatchCampaignResponseDto> createBatchCampaignUrls(
-            @Valid @RequestBody BatchCampaignRequestDto request
+            @Valid @RequestBody BatchCampaignRequestDto request,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "X-User-Id", required = false) Long userId
     ) {
         if (userId == null) {
             throw new RuntimeException("You must be logged in to create multi-channel campaign links.");
         }
-        var response = urlService.createBatchCampaignUrls(request, currentUserId);
+        var response = urlService.createBatchCampaignUrls(request, userId);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/url/bulk-action")
     @Operation(summary = "Execute bulk actions on multiple short URLs")
     public ResponseEntity<BulkUrlActionResponseDto> executeBulkAction(
-            @Valid @RequestBody BulkUrlActionRequestDto request
+            @Valid @RequestBody BulkUrlActionRequestDto request,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "X-User-Id", required = false) Long userId
     ) {
         if (userId == null) {
             throw new RuntimeException("You must be logged in to execute bulk actions.");
         }
-        var response = urlService.executeBulkAction(request, currentUserId);
+        var response = urlService.executeBulkAction(request, userId);
         return ResponseEntity.ok(response);
     }
 

@@ -20,9 +20,7 @@ public class UserController {
     @org.springframework.beans.factory.annotation.Value("${app.allow-registration:true}")
     private boolean allowRegistration;
 
-    public UserController(UserMapper userMapper,
-                          UserService userService,
-                          RateLimiterService rateLimiterService,
+    public UserController(UserMapper userMapper, UserService userService, RateLimiterService rateLimiterService) {
         this.userMapper = userMapper;
         this.userService = userService;
         this.rateLimiterService = rateLimiterService;
@@ -31,8 +29,6 @@ public class UserController {
     @PostMapping
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegister userRegister, HttpServletRequest request) {
         boolean dynamicAllowRegistration = true;
-                .map(s -> Boolean.parseBoolean(s.getSettingValue()))
-                .orElse(allowRegistration);
 
         if (!dynamicAllowRegistration) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)

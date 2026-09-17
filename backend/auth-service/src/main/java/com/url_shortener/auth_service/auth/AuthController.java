@@ -75,8 +75,7 @@ public class AuthController {
                           PasswordEncoder passwordEncoder,
                           PasswordResetTokenRepository passwordResetTokenRepository,
                           EmailVerificationTokenRepository emailVerificationTokenRepository,
-                          TokenRevocationService tokenRevocationService,
-                          ) {
+                          TokenRevocationService tokenRevocationService) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.jwtConfig = jwtConfig;
@@ -95,20 +94,14 @@ public class AuthController {
     @GetMapping("/config")
     public ResponseEntity<PublicAuthConfigDto> getAuthConfig() {
         boolean dynamicAllowRegistration = true;
-                .map(s -> Boolean.parseBoolean(s.getSettingValue()))
-                .orElse(allowRegistration);
 
         boolean dynamicRequireEmailVerification = false;
-                .map(s -> Boolean.parseBoolean(s.getSettingValue()))
-                .orElse(requireEmailVerification);
 
         boolean googleEnabled = googleClientId != null && !googleClientId.isBlank();
         boolean githubEnabled = githubClientId != null && !githubClientId.isBlank();
         boolean smtpEnabled = mailHost != null && !mailHost.isBlank();
 
         String systemMode = "false";
-                .map(s -> s.getSettingValue().toUpperCase())
-                .orElse("NORMAL");
 
         return ResponseEntity.ok(PublicAuthConfigDto.builder()
                 .isSelfHosted(isSelfHosted)

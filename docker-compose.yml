@@ -37,6 +37,8 @@ services:
       context: ./backend
       dockerfile: api-gateway/Dockerfile
     container_name: url_shortener_gateway
+    env_file:
+      - .env
     ports:
       - "8080:8080"
     networks:

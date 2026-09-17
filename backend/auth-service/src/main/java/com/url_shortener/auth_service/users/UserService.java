@@ -24,7 +24,6 @@ public class UserService {
     private final UserMapper userMapper;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final ClickEventRepository clickEventRepository;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailService emailService;
@@ -41,7 +40,6 @@ public class UserService {
     public UserService(UserMapper userMapper,
                        UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
-                       ClickEventRepository clickEventRepository,
                        
                        
                        
@@ -56,7 +54,6 @@ public class UserService {
         this.userMapper = userMapper;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.clickEventRepository = clickEventRepository;
         this.emailVerificationTokenRepository = emailVerificationTokenRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.emailService = emailService;
@@ -90,12 +87,6 @@ public class UserService {
         userRepository.save(user);
 
         // Auto-create default "Links" folder for the user
-        //Folder defaultFolder = Folder.builder()
-                .name("Links")
-                .slug("links")
-                .user(user)
-                .build();
-        //folderRepository.save(defaultFolder);
 
         // Generate email verification token and send email if verification is active
         if (shouldVerify) {
@@ -310,27 +301,11 @@ public class UserService {
         passwordResetTokenRepository.deleteByUser(user);
 
         // 2. Delete all UTM templates and Custom Channels
-        utmTemplateRepository.deleteAll(utmTemplateRepository.findByUserOrderByCreatedAtDesc(user));
-        customChannelRepository.deleteAll(customChannelRepository.findAllByUserIdOrderByIdAsc(userId));
 
         // 3. Delete all Click Events for the user's URLs
-        clickEventRepository.deleteByUserId(userId);
 
         // 4. Delete all tags and tag associations
-        var tags = tagRepository.findByUser(user);
-        for (var tag : tags) {
-            tagRepository.deleteTagAssociations(tag.getId());
-        }
-        tagRepository.deleteAll(tags);
 
-        // 5. Delete all URLs (cascades statistics)
-        folderRepository.deleteAll(folderRepository.findByUserId(userId));
-
-        // 7. Globally revoke tokens
-        tokenRevocationService.revokeAllUserTokens(userId);
-
-        // 8. Delete user (cascades oauth accounts)
-        userRepository.delete(user);
     }
 
     private static Long getUserId() {

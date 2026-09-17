@@ -1,8 +1,8 @@
 package com.url_shortener.url_shortener.urls;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.context.SecurityContextHolder;
+
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,24 +16,16 @@ public class TagService {
     private final TagRepository tagRepository;
         private final UrlRepository urlRepository;
 
-    public List<TagDto> getAllTagsForUser() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
-            throw new AccessDeniedException("You must be logged in to view tags.");
-        }
+    public List<TagDto> getAllTagsForUser(Long userId) {
         
                 
         
-        return tagRepository.findByUser(userId).stream()
+        return tagRepository.findByUserId(userId).stream()
                 .map(t -> new TagDto(t.getId(), t.getName(), t.getColor(), urlRepository.countByTagsId(t.getId())))
                 .collect(Collectors.toList());
     }
 
-    public TagDto createTag(TagRequest request) {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
-            throw new AccessDeniedException("You must be logged in to create tags.");
-        }
+    public TagDto createTag(TagRequest request, Long userId) {
 
                 
 
@@ -52,17 +44,13 @@ public class TagService {
     }
 
     @Transactional
-    public TagDto updateTag(Long id, TagRequest request) {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
-            throw new AccessDeniedException("You must be logged in to update tags.");
-        }
+    public TagDto updateTag(Long id, TagRequest request, Long userId) {
 
                 Tag tag = tagRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tag not found"));
 
         if (!tag.getUserId().equals(userId)) {
-            throw new AccessDeniedException("You cannot update a tag you do not own.");
+            throw new IllegalArgumentException("You cannot update a tag you do not own.");
         }
 
         String newName = request.getName().trim();
@@ -82,17 +70,13 @@ public class TagService {
     }
 
     @Transactional
-    public void deleteTag(Long id) {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
-            throw new AccessDeniedException("You must be logged in to delete tags.");
-        }
+    public void deleteTag(Long id, Long userId) {
 
                 Tag tag = tagRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tag not found"));
 
         if (!tag.getUserId().equals(userId)) {
-            throw new AccessDeniedException("You cannot delete a tag you do not own.");
+            throw new IllegalArgumentException("You cannot delete a tag you do not own.");
         }
 
         tagRepository.deleteTagAssociations(id);

@@ -1,9 +1,15 @@
 server:
   port: 8081
+  forward-headers-strategy: framework
+  max-http-request-header-size: 2MB
+  max-http-header-size: 2MB
+  tomcat:
+    max-http-form-post-size: 2MB
+    max-swallow-size: 2MB
 
 spring:
   application:
-    name: url-shortener
+    name: auth-service
   jwt:
     secret: ${JWT_SECRET}
     accessTokenExpiration: ${JWT_ACCESS_TOKEN_EXPIRATION:900}  # 15m (short-lived)
@@ -30,14 +36,6 @@ oauth:
   github:
     client-id: ${OAUTH_GITHUB_CLIENT_ID:${GITHUB_CLIENT_ID:}}
     client-secret: ${OAUTH_GITHUB_CLIENT_SECRET:${GITHUB_CLIENT_SECRET:}}
-
-server:
-  forward-headers-strategy: framework
-  max-http-request-header-size: 2MB
-  max-http-header-size: 2MB
-  tomcat:
-    max-http-form-post-size: 2MB
-    max-swallow-size: 2MB
 
 root:
   user:

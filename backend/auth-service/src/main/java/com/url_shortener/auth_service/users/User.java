@@ -62,8 +62,6 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     @Builder.Default
-
-    @Builder.Default
     private List<UserOAuthAccount> oauthAccounts = new ArrayList<>();
 
     public boolean hasPassword() {

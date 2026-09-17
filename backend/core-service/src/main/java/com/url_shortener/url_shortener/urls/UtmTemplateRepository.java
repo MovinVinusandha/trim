@@ -9,11 +9,11 @@ import java.util.Optional;
 @Repository
 public interface UtmTemplateRepository extends JpaRepository<UtmTemplate, Long> {
 
-    List<UtmTemplate> findByUserOrderByCreatedAtDesc(Long userId);
+    List<UtmTemplate> findByUserIdOrderByCreatedAtDesc(Long userId);
 
-    List<UtmTemplate> findByUserAndIsDefaultTrue(Long userId);
+    List<UtmTemplate> findByUserIdAndIsDefaultTrue(Long userId);
 
-    Optional<UtmTemplate> findByIdAndUser(Long id, Long userId);
+    Optional<UtmTemplate> findByIdAndUserId(Long id, Long userId);
 
     boolean existsByNameIgnoreCaseAndUserId(String name, Long userId);
 }

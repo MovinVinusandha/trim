@@ -5,8 +5,9 @@ import com.url_shortener.url_shortener.urls.UrlNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
+
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,13 +37,10 @@ public class AnalyticsController {
             @RequestParam(required = false) String utmContent,
             @RequestParam(required = false) String referer,
             @RequestHeader("X-User-Id") Long userId) {
-        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
-            throw new UrlNotFoundException();
-        }
-
+        
                 
 
-        AnalyticsResponseDto response = analyticsService.getAnalytics(hash, currentUser, period, startDate, endDate, utmSource, utmMedium, utmCampaign, utmTerm, utmContent, referer);
+        AnalyticsResponseDto response = analyticsService.getAnalytics(hash, userId, period, startDate, endDate, utmSource, utmMedium, utmCampaign, utmTerm, utmContent, referer);
         return ResponseEntity.ok(response);
     }
 
@@ -63,7 +61,7 @@ public class AnalyticsController {
             @RequestParam(required = false) String utmContent,
             @RequestParam(required = false) String referer) {
                 
-        return ResponseEntity.ok(analyticsService.getOverallAnalytics(currentUserId, period, startDate, endDate, hash, tagId, folderId, utmSource, utmMedium, utmCampaign, utmTerm, utmContent, referer));
+        return ResponseEntity.ok(analyticsService.getOverallAnalytics(userId, period, startDate, endDate, hash, tagId, folderId, utmSource, utmMedium, utmCampaign, utmTerm, utmContent, referer));
     }
 
     @GetMapping("/analytics/folder/{folderId}")
@@ -80,7 +78,7 @@ public class AnalyticsController {
             @RequestParam(required = false) String utmContent,
             @RequestParam(required = false) String referer) {
                 
-        return ResponseEntity.ok(analyticsService.getFolderAnalytics(folderId, currentUser, period, startDate, endDate, utmSource, utmMedium, utmCampaign, utmTerm, utmContent, referer));
+        return ResponseEntity.ok(analyticsService.getFolderAnalytics(folderId, userId, period, startDate, endDate, utmSource, utmMedium, utmCampaign, utmTerm, utmContent, referer));
     }
 
     @GetMapping("/analytics/folder/slug/{slug}")
@@ -97,13 +95,13 @@ public class AnalyticsController {
             @RequestParam(required = false) String utmContent,
             @RequestParam(required = false) String referer) {
                 
-        return ResponseEntity.ok(analyticsService.getFolderAnalyticsBySlug(slug, currentUser, period, startDate, endDate, utmSource, utmMedium, utmCampaign, utmTerm, utmContent, referer));
+        return ResponseEntity.ok(analyticsService.getFolderAnalyticsBySlug(slug, userId, period, startDate, endDate, utmSource, utmMedium, utmCampaign, utmTerm, utmContent, referer));
     }
     @GetMapping("/analytics/usage")
     @Operation(summary = "Get global usage stats for the current user")
     public ResponseEntity<UserUsageStatsDto> getUserUsageStats(@RequestHeader("X-User-Id") Long userId) {
                 
-        return ResponseEntity.ok(analyticsService.getUserUsageStats(currentUserId));
+        return ResponseEntity.ok(analyticsService.getUserUsageStats(userId));
     }
 
     @GetMapping("/analytics/events")
@@ -132,7 +130,7 @@ public class AnalyticsController {
         );
 
         return ResponseEntity.ok(analyticsService.getPaginatedEvents(
-                currentUser, period, startDate, endDate, hash, country, city, device, browser, os, campaign, search, pageable
+                userId, period, startDate, endDate, hash, country, city, device, browser, os, campaign, search, pageable
         ));
     }
 

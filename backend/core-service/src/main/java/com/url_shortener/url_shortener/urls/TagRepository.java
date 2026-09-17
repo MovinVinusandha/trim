@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface TagRepository extends JpaRepository<Tag, Long> {
-    List<Tag> findByUser(Long userId);
+    List<Tag> findByUserId(Long userId);
     boolean existsByNameIgnoreCaseAndUserId(String name, Long userId);
 
     @Modifying

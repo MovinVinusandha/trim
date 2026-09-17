@@ -1,7 +1,7 @@
 package com.url_shortener.url_shortener.urls;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
+
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ public class FolderService {
 
         if (linksFolder == null) {
             
-            if (user != null) {
+            if (userId != null) {
                 Folder defaultFolder = Folder.builder()
                         .name("Links")
                         .slug("links")
@@ -78,11 +78,11 @@ public class FolderService {
                 .orElseThrow(FolderNotFoundException::new);
 
         if (!folder.getUserId().equals(userId)) {
-            throw new AccessDeniedException("You do not have permission to delete this folder.");
+            throw new IllegalArgumentException("You do not have permission to delete this folder.");
         }
 
         if (folder.getName().equalsIgnoreCase("Links")) {
-            throw new AccessDeniedException("The default Links folder cannot be deleted.");
+            throw new IllegalArgumentException("The default Links folder cannot be deleted.");
         }
 
         // Deleting the folder will trigger the DB ON DELETE SET NULL cascade for the urls table
@@ -94,11 +94,11 @@ public class FolderService {
                 .orElseThrow(FolderNotFoundException::new);
 
         if (!folder.getUserId().equals(userId)) {
-            throw new AccessDeniedException("You do not have permission to edit this folder.");
+            throw new IllegalArgumentException("You do not have permission to edit this folder.");
         }
 
         if (folder.getName().equalsIgnoreCase("Links")) {
-            throw new AccessDeniedException("The default Links folder cannot be renamed.");
+            throw new IllegalArgumentException("The default Links folder cannot be renamed.");
         }
 
         String newName = request.getName().trim();

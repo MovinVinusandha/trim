@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class BlockedIpService {
 
     private final BlockedIpRepository blockedIpRepository;
-    private final List<IpAddressMatcher> cachedMatchers = new CopyOnWriteArrayList<>();
+    private final List<String> cachedMatchers = new CopyOnWriteArrayList<>();
 
     @PostConstruct
     public void init() {
@@ -29,10 +28,10 @@ public class BlockedIpService {
     public synchronized void reloadMatchers() {
         try {
             List<BlockedIp> allBlocked = blockedIpRepository.findAll();
-            List<IpAddressMatcher> newMatchers = allBlocked.stream()
+            List<String> newMatchers = allBlocked.stream()
                     .map(b -> {
                         try {
-                            return new IpAddressMatcher(b.getIpAddress().trim());
+                            return b.getIpAddress().trim();
                         } catch (Exception e) {
                             log.warn("Invalid IP address or CIDR format in database (id={}): {}", b.getId(), b.getIpAddress());
                             return null;
@@ -56,8 +55,8 @@ public class BlockedIpService {
         if (clientIp == null || clientIp.isBlank()) {
             return false;
         }
-        for (IpAddressMatcher matcher : cachedMatchers) {
-            if (matcher.matches(clientIp)) {
+        for (String matcher : cachedMatchers) {
+            if (clientIp.equals(matcher)) {
                 return true;
             }
         }
@@ -79,13 +78,7 @@ public class BlockedIpService {
         }
         String cleanIp = ipAddress.trim();
 
-        // Validate format by instantiating IpAddressMatcher
-        try {
-            new IpAddressMatcher(cleanIp);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid IP address or CIDR format: " + cleanIp);
-        }
-
+        
         if (blockedIpRepository.existsByIpAddress(cleanIp)) {
             throw new IllegalArgumentException("IP or CIDR is already blocked: " + cleanIp);
         }

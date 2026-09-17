@@ -53,9 +53,7 @@ public class AnalyticsService {
             throw new com.url_shortener.url_shortener.urls.UrlNotFoundException();
         }
 
-        boolean isRoot = currentUser.getRole() != null && currentUser.getRole() == Role.ROOT;
-
-        if (!isRoot && (url.getUser() == null || !url.getUserId().equals(currentUserId))) {
+        if (!url.getUserId().equals(currentUserId)) {
             throw new com.url_shortener.url_shortener.urls.UrlNotFoundException();
         }
 
@@ -188,17 +186,15 @@ public class AnalyticsService {
     public AnalyticsResponseDto getFolderAnalyticsBySlug(String slug, Long currentUserId, String period, String startDateStr, String endDateStr, String utmSource, String utmMedium, String utmCampaign, String utmTerm, String utmContent, String referer) {
         var folder = folderRepository.findByUserIdAndSlug(currentUserId, slug)
                 .orElseThrow(() -> new RuntimeException("Folder not found"));
-        return getFolderAnalytics(folder.getId(), currentUser, period, startDateStr, endDateStr, utmSource, utmMedium, utmCampaign, utmTerm, utmContent, referer);
+        return getFolderAnalytics(folder.getId(), currentUserId, period, startDateStr, endDateStr, utmSource, utmMedium, utmCampaign, utmTerm, utmContent, referer);
     }
 
     public AnalyticsResponseDto getFolderAnalytics(Long folderId, Long currentUserId, String period, String startDateStr, String endDateStr, String utmSource, String utmMedium, String utmCampaign, String utmTerm, String utmContent, String referer) {
         var folder = folderRepository.findById(folderId)
                 .orElseThrow(() -> new RuntimeException("Folder not found"));
 
-        boolean isRoot = currentUser.getRole() != null && currentUser.getRole() == Role.ROOT;
-
-        if (!isRoot && (folder.getUser() == null || !folder.getUserId().equals(currentUserId))) {
-            throw new org.springframework.security.access.AccessDeniedException("Access denied");
+        if (!folder.getUserId().equals(currentUserId)) {
+            throw new IllegalArgumentException("Access denied");
         }
 
         Long userId = currentUserId;
@@ -342,7 +338,7 @@ public class AnalyticsService {
             ClickEvent savedEvent = clickEventRepository.save(event);
 
             // Broadcast to real-time subscribers if the URL has an owner
-            if (url.getUser() != null) {
+            if (url.getUserId() != null) {
                 com.url_shortener.url_shortener.analytics.dto.ClickEventDto eventDto = com.url_shortener.url_shortener.analytics.dto.ClickEventDto.builder()
                         .id(savedEvent.getId())
                         .urlId(url.getId())

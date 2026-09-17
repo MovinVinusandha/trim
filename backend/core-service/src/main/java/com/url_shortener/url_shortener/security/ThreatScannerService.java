@@ -2,6 +2,9 @@ package com.url_shortener.url_shortener.security;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.url_shortener.url_shortener.admin.BlacklistedDomain;
+import com.url_shortener.url_shortener.admin.BlacklistedDomainRepository;
+import com.url_shortener.url_shortener.admin.SystemSettingRepository;
 import com.url_shortener.url_shortener.security.dto.ThreatScanResultDto;
 import com.url_shortener.url_shortener.urls.Url;
 import com.url_shortener.url_shortener.urls.UrlRepository;
@@ -32,8 +35,8 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class ThreatScannerService {
 
-    
-    
+    private final BlacklistedDomainRepository blacklistedDomainRepository;
+    private final SystemSettingRepository systemSettingRepository;
     private final SecurityIncidentRepository incidentRepository;
     private final UrlRepository urlRepository;
     private final StringRedisTemplate redisTemplate;
@@ -161,10 +164,10 @@ public class ThreatScannerService {
         }
 
         // 7. Heuristic: Administrative Domain Blacklist
-        List<String> blacklisted = java.util.Collections.emptyList();
-        for (Object b : blacklisted) {
-            //if (matchesDomainPattern(host, b.getDomainPattern())) {
-                //threats.add
+        List<BlacklistedDomain> blacklisted = blacklistedDomainRepository.findAll();
+        for (BlacklistedDomain b : blacklisted) {
+            if (matchesDomainPattern(host, b.getDomainPattern())) {
+                threats.add("Domain matches administrative blacklist: " + b.getDomainPattern() + " (" + b.getReason() + ")");
                 riskScore = 100;
                 threatType = "BLACKLISTED_DOMAIN";
                 break;
@@ -373,7 +376,7 @@ public class ThreatScannerService {
 
     public String getEffectiveSafeBrowsingKey() {
         try {
-            var setting = java.util.Optional.empty();
+            var setting = systemSettingRepository.findBySettingKey("SAFE_BROWSING_API_KEY");
             if (setting.isPresent() && !setting.get().getSettingValue().isBlank()) {
                 return setting.get().getSettingValue().trim();
             }

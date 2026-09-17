@@ -8,10 +8,10 @@ spring:
     gateway:
       routes:
         - id: auth-service
-          uri: http://localhost:8081
+          uri: ${AUTH_SERVICE_URI:http://auth-service:8081}
           predicates:
-            - Path=/api/auth/**
+            - Path=/auth/**, /oauth2/**, /api/auth/**, /user, /user/**, /users/**
         - id: core-service
-          uri: http://localhost:8082
+          uri: ${CORE_SERVICE_URI:http://core-service:8082}
           predicates:
             - Path=/**

@@ -25,7 +25,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     /** Total click count for a specific URL. */
     long countByUrl_Id(Long urlId);
 
-    @Query("SELECT COUNT(c) FROM ClickEvent c WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.user.id = :userId)")
+    @Query("SELECT COUNT(c) FROM ClickEvent c WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.userId = :userId)")
     long countTotalClicksByUserId(@Param("userId") Long userId);
 
     @Query("""
@@ -258,7 +258,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT CAST(c.timestamp AS date) as date, COUNT(c) as cnt
             FROM ClickEvent c JOIN c.url u
-            WHERE u.user.id = :userId
+            WHERE u.userId = :userId
               AND (:startDate IS NULL OR c.timestamp >= :startDate)
               AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:hash IS NULL OR u.shortUrl = :hash OR u.shortUrl LIKE CONCAT('%/', :hash))
@@ -278,7 +278,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT FUNCTION('DATE_FORMAT', c.timestamp, '%Y-%m-%d %H:00:00') as date, COUNT(c) as cnt
             FROM ClickEvent c JOIN c.url u
-            WHERE u.user.id = :userId
+            WHERE u.userId = :userId
               AND (:startDate IS NULL OR c.timestamp >= :startDate)
               AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:hash IS NULL OR u.shortUrl = :hash OR u.shortUrl LIKE CONCAT('%/', :hash))
@@ -298,7 +298,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.country, COUNT(c) AS cnt
             FROM ClickEvent c JOIN c.url u
-            WHERE u.user.id = :userId
+            WHERE u.userId = :userId
               AND (:startDate IS NULL OR c.timestamp >= :startDate)
               AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:hash IS NULL OR u.shortUrl = :hash OR u.shortUrl LIKE CONCAT('%/', :hash))
@@ -318,7 +318,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.device, COUNT(c) AS cnt
             FROM ClickEvent c JOIN c.url u
-            WHERE u.user.id = :userId
+            WHERE u.userId = :userId
               AND (:startDate IS NULL OR c.timestamp >= :startDate)
               AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:hash IS NULL OR u.shortUrl = :hash OR u.shortUrl LIKE CONCAT('%/', :hash))
@@ -338,7 +338,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.browser, COUNT(c) AS cnt
             FROM ClickEvent c JOIN c.url u
-            WHERE u.user.id = :userId
+            WHERE u.userId = :userId
               AND (:startDate IS NULL OR c.timestamp >= :startDate)
               AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:hash IS NULL OR u.shortUrl = :hash OR u.shortUrl LIKE CONCAT('%/', :hash))
@@ -358,7 +358,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.utmSource, COUNT(c) AS cnt
             FROM ClickEvent c JOIN c.url u
-            WHERE u.user.id = :userId
+            WHERE u.userId = :userId
               AND c.utmSource IS NOT NULL AND c.utmSource <> ''
               AND (:startDate IS NULL OR c.timestamp >= :startDate)
               AND (:endDate IS NULL OR c.timestamp <= :endDate)
@@ -379,7 +379,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.utmMedium, COUNT(c) AS cnt
             FROM ClickEvent c JOIN c.url u
-            WHERE u.user.id = :userId
+            WHERE u.userId = :userId
               AND c.utmMedium IS NOT NULL AND c.utmMedium <> ''
               AND (:startDate IS NULL OR c.timestamp >= :startDate)
               AND (:endDate IS NULL OR c.timestamp <= :endDate)
@@ -400,7 +400,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.utmCampaign, COUNT(c) AS cnt
             FROM ClickEvent c JOIN c.url u
-            WHERE u.user.id = :userId
+            WHERE u.userId = :userId
               AND c.utmCampaign IS NOT NULL AND c.utmCampaign <> ''
               AND (:startDate IS NULL OR c.timestamp >= :startDate)
               AND (:endDate IS NULL OR c.timestamp <= :endDate)
@@ -421,7 +421,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.utmTerm, COUNT(c) AS cnt
             FROM ClickEvent c JOIN c.url u
-            WHERE u.user.id = :userId
+            WHERE u.userId = :userId
               AND c.utmTerm IS NOT NULL AND c.utmTerm <> ''
               AND (:startDate IS NULL OR c.timestamp >= :startDate)
               AND (:endDate IS NULL OR c.timestamp <= :endDate)
@@ -442,7 +442,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.utmContent, COUNT(c) AS cnt
             FROM ClickEvent c JOIN c.url u
-            WHERE u.user.id = :userId
+            WHERE u.userId = :userId
               AND c.utmContent IS NOT NULL AND c.utmContent <> ''
               AND (:startDate IS NULL OR c.timestamp >= :startDate)
               AND (:endDate IS NULL OR c.timestamp <= :endDate)
@@ -463,7 +463,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.referer, COUNT(c) AS cnt
             FROM ClickEvent c JOIN c.url u
-            WHERE u.user.id = :userId
+            WHERE u.userId = :userId
               AND c.referer IS NOT NULL AND c.referer <> ''
               AND (:startDate IS NULL OR c.timestamp >= :startDate)
               AND (:endDate IS NULL OR c.timestamp <= :endDate)
@@ -484,7 +484,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT COUNT(c)
             FROM ClickEvent c JOIN c.url u
-            WHERE u.user.id = :userId
+            WHERE u.userId = :userId
               AND (:startDate IS NULL OR c.timestamp >= :startDate)
               AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:hash IS NULL OR u.shortUrl = :hash OR u.shortUrl LIKE CONCAT('%/', :hash))
@@ -504,7 +504,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT CAST(c.timestamp AS date) as date, COUNT(c) as cnt
             FROM ClickEvent c
-            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.user.id = :userId)
+            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.userId = :userId)
               AND c.timestamp >= :startDate AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:utmSource IS NULL OR c.utmSource = :utmSource)
               AND (:utmMedium IS NULL OR c.utmMedium = :utmMedium)
@@ -520,7 +520,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT FUNCTION('DATE_FORMAT', c.timestamp, '%Y-%m-%d %H:00:00') as date, COUNT(c) as cnt
             FROM ClickEvent c
-            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.user.id = :userId)
+            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.userId = :userId)
               AND c.timestamp >= :startDate AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:utmSource IS NULL OR c.utmSource = :utmSource)
               AND (:utmMedium IS NULL OR c.utmMedium = :utmMedium)
@@ -536,7 +536,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.country, COUNT(c) AS cnt
             FROM ClickEvent c
-            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.user.id = :userId)
+            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.userId = :userId)
               AND c.timestamp >= :startDate AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:utmSource IS NULL OR c.utmSource = :utmSource)
               AND (:utmMedium IS NULL OR c.utmMedium = :utmMedium)
@@ -552,7 +552,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.device, COUNT(c) AS cnt
             FROM ClickEvent c
-            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.user.id = :userId)
+            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.userId = :userId)
               AND c.timestamp >= :startDate AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:utmSource IS NULL OR c.utmSource = :utmSource)
               AND (:utmMedium IS NULL OR c.utmMedium = :utmMedium)
@@ -568,7 +568,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.browser, COUNT(c) AS cnt
             FROM ClickEvent c
-            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.user.id = :userId)
+            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.userId = :userId)
               AND c.timestamp >= :startDate AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:utmSource IS NULL OR c.utmSource = :utmSource)
               AND (:utmMedium IS NULL OR c.utmMedium = :utmMedium)
@@ -584,7 +584,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.utmSource, COUNT(c) AS cnt
             FROM ClickEvent c
-            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.user.id = :userId)
+            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.userId = :userId)
               AND c.utmSource IS NOT NULL AND c.utmSource <> ''
               AND c.timestamp >= :startDate AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:utmSource IS NULL OR c.utmSource = :utmSource)
@@ -601,7 +601,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.utmMedium, COUNT(c) AS cnt
             FROM ClickEvent c
-            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.user.id = :userId)
+            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.userId = :userId)
               AND c.utmMedium IS NOT NULL AND c.utmMedium <> ''
               AND c.timestamp >= :startDate AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:utmSource IS NULL OR c.utmSource = :utmSource)
@@ -618,7 +618,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.utmCampaign, COUNT(c) AS cnt
             FROM ClickEvent c
-            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.user.id = :userId)
+            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.userId = :userId)
               AND c.utmCampaign IS NOT NULL AND c.utmCampaign <> ''
               AND c.timestamp >= :startDate AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:utmSource IS NULL OR c.utmSource = :utmSource)
@@ -635,7 +635,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.utmTerm, COUNT(c) AS cnt
             FROM ClickEvent c
-            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.user.id = :userId)
+            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.userId = :userId)
               AND c.utmTerm IS NOT NULL AND c.utmTerm <> ''
               AND c.timestamp >= :startDate AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:utmSource IS NULL OR c.utmSource = :utmSource)
@@ -652,7 +652,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.utmContent, COUNT(c) AS cnt
             FROM ClickEvent c
-            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.user.id = :userId)
+            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.userId = :userId)
               AND c.utmContent IS NOT NULL AND c.utmContent <> ''
               AND c.timestamp >= :startDate AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:utmSource IS NULL OR c.utmSource = :utmSource)
@@ -669,7 +669,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     @Query("""
             SELECT c.referer, COUNT(c) AS cnt
             FROM ClickEvent c
-            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.user.id = :userId)
+            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.userId = :userId)
               AND c.referer IS NOT NULL AND c.referer <> ''
               AND c.timestamp >= :startDate AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:utmSource IS NULL OR c.utmSource = :utmSource)
@@ -685,7 +685,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
 
     @Query("""
             SELECT COUNT(c) FROM ClickEvent c 
-            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.user.id = :userId) 
+            WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.folder.id = :folderId AND u.userId = :userId) 
               AND c.timestamp >= :startDate AND (:endDate IS NULL OR c.timestamp <= :endDate)
               AND (:utmSource IS NULL OR c.utmSource = :utmSource)
               AND (:utmMedium IS NULL OR c.utmMedium = :utmMedium)
@@ -698,7 +698,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
 
     @Query("""
             SELECT c FROM ClickEvent c
-            WHERE c.url.user.id = :userId
+            WHERE c.url.userId = :userId
                AND (:hash IS NULL OR c.url.shortUrl = :hash)
                AND (:country IS NULL OR LOWER(c.country) = LOWER(:country))
                AND (:city IS NULL OR LOWER(c.city) = LOWER(:city))
@@ -734,7 +734,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Long> {
     );
 
     @org.springframework.data.jpa.repository.Modifying
-    @Query("DELETE FROM ClickEvent c WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.user.id = :userId)")
+    @Query("DELETE FROM ClickEvent c WHERE c.url.id IN (SELECT u.id FROM Url u WHERE u.userId = :userId)")
     void deleteByUserId(@Param("userId") Long userId);
 
     long countByTimestampBefore(LocalDateTime timestamp);

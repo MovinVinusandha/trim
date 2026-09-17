@@ -22,8 +22,8 @@ public class AppConfig {
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
         return builder
-                .connectTimeout(Duration.ofSeconds(3))
-                .readTimeout(Duration.ofSeconds(5))
+                .setConnectTimeout(Duration.ofSeconds(3))
+                .setReadTimeout(Duration.ofSeconds(5))
                 .build();
     }
 
@@ -35,8 +35,12 @@ public class AppConfig {
         return factory -> factory.addConnectorCustomizers(connector -> {
             if (connector.getProtocolHandler() instanceof AbstractHttp11Protocol<?> protocolHandler) {
                 protocolHandler.setMaxHttpHeaderSize(2 * 1024 * 1024); // 2 MB
-                protocolHandler.setMaxSavePostSize(2 * 1024 * 1024);
             }
         });
+    }
+
+    @Bean
+    public org.springframework.security.crypto.password.PasswordEncoder passwordEncoder() {
+        return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
     }
 }

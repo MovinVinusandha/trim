@@ -27,8 +27,7 @@ public class UrlService {
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     private final TagRepository tagRepository;
     private final FolderRepository folderRepository;
-    private final com.url_shortener.url_shortener.admin.SystemSettingRepository systemSettingRepository;
-
+    
     @org.springframework.beans.factory.annotation.Autowired 
     private org.springframework.cache.CacheManager cacheManager;
 
@@ -42,13 +41,11 @@ public class UrlService {
     private String rootDomainUrl;
 
     public UrlSend generateShortUrl(UrlRequest urlRequest) {
-        return generateShortUrl(urlRequest, null);
+        return generateShortUrl(urlRequest, null, null);
     }
 
-    public UrlSend generateShortUrl(UrlRequest urlRequest, String clientIp) {
-        String panicMode = systemSettingRepository.findBySettingKey("PANIC_MODE")
-                .map(s -> s.getSettingValue().toUpperCase())
-                .orElse("NORMAL");
+    public UrlSend generateShortUrl(UrlRequest urlRequest, String clientIp, Long currentUserId) {
+        String panicMode = "NORMAL";
 
         if ("MAINTENANCE".equals(panicMode)) {
             throw new IllegalStateException("The system is currently undergoing scheduled maintenance. Link creation is paused.");
@@ -61,7 +58,6 @@ public class UrlService {
             throw new IllegalArgumentException("The destination URL domain is blacklisted or prohibited on this instance.");
         }
 
-        Long currentUserId = null;
         String currentUserEmail = null;
         
         if (spamVelocityService != null) {
@@ -96,17 +92,7 @@ public class UrlService {
         url.setActive(true);
 
         // Apply default link expiration if not explicitly provided
-        if (url.getExpiresAt() == null) {
-            systemSettingRepository.findBySettingKey("DEFAULT_LINK_EXPIRATION_DAYS")
-                    .ifPresent(s -> {
-                        try {
-                            long days = Long.parseLong(s.getSettingValue().trim());
-                            if (days > 0) {
-                                url.setExpiresAt(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC).plusDays(days));
-                            }
-                        } catch (Exception ignored) {}
-                    });
-        }
+        if (url.getExpiresAt() == null) { }
 
         if (url.getExpiresAt() != null && url.getExpiresAt().isBefore(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC))) {
             url.setActive(false);
@@ -116,72 +102,43 @@ public class UrlService {
             
             url.setPasswordHash(passwordEncoder.encode(urlRequest.getPassword().trim()));
         }
-
-        
-            
-            if (user == null) {
-                throw new UserNotFoundException();
-            }
-            if (user.isSuspended()) {
-                throw new AccessDeniedException("Your account has been suspended by an administrator.");
-            }
-
-            // Enforce max links per user quota (for non-ROOT/ADMIN users)
-            if (user.getRole() == com.url_shortener.url_shortener.users.Role.USER) {
-                long maxLinks = 1000;
-                if (user.getCustomMaxLinks() != null && user.getCustomMaxLinks() > 0) {
-                    maxLinks = user.getCustomMaxLinks();
-                } else {
-                    try {
-                        var quotaSetting = systemSettingRepository.findBySettingKey("MAX_LINKS_PER_USER");
-                        if (quotaSetting.isPresent() && !quotaSetting.get().getSettingValue().isBlank()) {
-                            maxLinks = Long.parseLong(quotaSetting.get().getSettingValue().trim());
-                        }
-                    } catch (Exception ignored) {}
-                }
-
-                long currentLinks = urlRepository.countByUserId(userId);
-                if (currentLinks >= maxLinks) {
-                    throw new AccessDeniedException("You have reached the maximum allowed link quota (" + maxLinks + ") for your account.");
-                }
-            }
-
-            url.setUserId(userId);
+        if (currentUserId != null) {
+            url.setUserId(currentUserId);
         }
 
         if (urlRequest.getTagIds() != null && !urlRequest.getTagIds().isEmpty()) {
-            if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
-                throw new AccessDeniedException("You must be logged in to assign tags.");
+            if (currentUserId == null) {
+                throw new IllegalArgumentException("You must be logged in to assign tags.");
             }
                         
             
             List<Tag> requestedTags = tagRepository.findAllById(urlRequest.getTagIds());
             for (Tag t : requestedTags) {
-                if (!t.getUserId().equals(userId)) {
-                    throw new AccessDeniedException("You cannot assign a tag you do not own.");
+                if (!t.getUserId().equals(currentUserId)) {
+                    throw new IllegalArgumentException("You cannot assign a tag you do not own.");
                 }
             }
             url.setTags(new HashSet<>(requestedTags));
         }
 
-        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
+        if (currentUserId != null) {
                         if (urlRequest.getFolderId() != null) {
                 Folder folder = folderRepository.findById(urlRequest.getFolderId())
                         .orElseThrow(FolderNotFoundException::new);
                 
-                if (!folder.getUserId().equals(userId)) {
-                    throw new AccessDeniedException("You cannot assign a folder you do not own.");
+                if (!folder.getUserId().equals(currentUserId)) {
+                    throw new IllegalArgumentException("You cannot assign a folder you do not own.");
                 }
                 url.setFolder(folder);
             } else {
-                Folder defaultFolder = folderRepository.findByUserIdAndSlug(userId, "links")
-                        .orElseGet(() -> folderRepository.findByNameIgnoreCaseAndUserId("Links", userId)
+                Folder defaultFolder = folderRepository.findByUserIdAndSlug(currentUserId, "links")
+                        .orElseGet(() -> folderRepository.findByNameIgnoreCaseAndUserId("Links", currentUserId)
                                 .orElseGet(() -> {
                                     
                                     Folder newDefault = Folder.builder()
                                             .name("Links")
                                             .slug("links")
-                                            .userId(userId)
+                                            .userId(currentUserId)
                                             .build();
                                     return folderRepository.save(newDefault);
                                 }));
@@ -222,9 +179,7 @@ public class UrlService {
 
     @org.springframework.transaction.annotation.Transactional
     public BatchCampaignResponseDto createBatchCampaignUrls(BatchCampaignRequestDto request, Long currentUserId) {
-        String panicMode = systemSettingRepository.findBySettingKey("PANIC_MODE")
-                .map(s -> s.getSettingValue().toUpperCase())
-                .orElse("NORMAL");
+        String panicMode = "NORMAL";
 
         if ("MAINTENANCE".equals(panicMode)) {
             throw new IllegalStateException("The system is currently undergoing scheduled maintenance. Batch link creation is paused.");
@@ -233,28 +188,13 @@ public class UrlService {
             throw new IllegalStateException("The system is currently operating in read-only lockdown mode. Batch link creation is temporarily halted.");
         }
 
-        if (currentUser.isSuspended()) {
-            throw new AccessDeniedException("Your account has been suspended by an administrator.");
-        }
-
         // Enforce max links quota in batch campaign
-        if (currentUser.getRole() == com.url_shortener.url_shortener.users.Role.USER) {
-            long maxLinks = 1000;
-            if (currentUser.getCustomMaxLinks() != null && currentUser.getCustomMaxLinks() > 0) {
-                maxLinks = currentUser.getCustomMaxLinks();
-            } else {
-                try {
-                    var quotaSetting = systemSettingRepository.findBySettingKey("MAX_LINKS_PER_USER");
-                    if (quotaSetting.isPresent() && !quotaSetting.get().getSettingValue().isBlank()) {
-                        maxLinks = Long.parseLong(quotaSetting.get().getSettingValue().trim());
-                    }
-                } catch (Exception ignored) {}
-            }
-
+        long maxLinks = 1000;
+        if (currentUserId != null) {
             long currentLinks = urlRepository.countByUserId(currentUserId);
             int requestedNewLinks = request.getChannels() != null ? request.getChannels().size() : 0;
             if (currentLinks + requestedNewLinks > maxLinks) {
-                throw new AccessDeniedException("Creating " + requestedNewLinks + " links would exceed your account quota (" + maxLinks + "). You currently have " + currentLinks + " links.");
+                throw new IllegalArgumentException("Creating " + requestedNewLinks + " links would exceed your account quota (" + maxLinks + "). You currently have " + currentLinks + " links.");
             }
         }
 
@@ -274,14 +214,14 @@ public class UrlService {
             folder = folderRepository.findById(request.getFolderId())
                     .orElseThrow(() -> new IllegalArgumentException("Folder not found"));
             if (!folder.getUserId().equals(currentUserId)) {
-                throw new AccessDeniedException("You do not own this folder.");
+                throw new IllegalArgumentException("You do not own this folder.");
             }
         } else {
             folder = folderRepository.findByNameIgnoreCaseAndUserId("Links", currentUserId)
                     .orElseGet(() -> folderRepository.save(Folder.builder()
                             .name("Links")
                             .slug("links")
-                            .userId(userId)
+                            .userId(currentUserId)
                             .build()));
         }
 
@@ -290,7 +230,7 @@ public class UrlService {
             List<Tag> foundTags = tagRepository.findAllById(request.getTagIds());
             for (Tag t : foundTags) {
                 if (!t.getUserId().equals(currentUserId)) {
-                    throw new AccessDeniedException("You cannot assign a tag you do not own.");
+                    throw new IllegalArgumentException("You cannot assign a tag you do not own.");
                 }
             }
             tags.addAll(foundTags);
@@ -311,7 +251,7 @@ public class UrlService {
             Url url = Url.builder()
                     .longUrl(fullTargetUrl)
                     .shortUrl(hash)
-                    .userId(userId)
+                    .userId(currentUserId)
                     .folder(folder)
                     .tags(new HashSet<>(tags))
                     .isActive(true)
@@ -391,9 +331,7 @@ public class UrlService {
     private final org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
 
     public String getLongUrlForRedirect(String shortUrl) {
-        String panicMode = systemSettingRepository.findBySettingKey("PANIC_MODE")
-                .map(s -> s.getSettingValue().toUpperCase())
-                .orElse("NORMAL");
+        String panicMode = "NORMAL";
 
         if ("MAINTENANCE".equals(panicMode)) {
             throw new com.url_shortener.url_shortener.common.SystemMaintenanceException(shortUrl);
@@ -458,7 +396,7 @@ public class UrlService {
         }
         
         if (!passwordEncoder.matches(password, url.getPasswordHash())) {
-            throw new org.springframework.security.authentication.BadCredentialsException("Incorrect password");
+            throw new IllegalArgumentException("Incorrect password");
         }
         
         return url.getLongUrl();
@@ -472,8 +410,8 @@ public class UrlService {
         return toDtoWithClickCount(url);
     }
 
-    public List<UrlDto> getAllUrls(String sortBy, Long tagId, Long folderId, String folderSlug, String search) {
-        var sortByClickCount = sortBy.equals("accessed_times");
+    public List<UrlDto> getAllUrls(Long userId, String sortBy, Long tagId, Long folderId, String folderSlug, String search) {
+        var sortByClickCount = sortBy != null && sortBy.equals("accessed_times");
 
         if (sortByClickCount) {
             sortBy = "id";
@@ -483,13 +421,14 @@ public class UrlService {
             sortBy = "id";
         }
 
-        Long userId = getUserId();
-        List<Url> unassignedUrls = urlRepository.findByUserIdAndFolderIsNull(userId);
-        if (!unassignedUrls.isEmpty()) {
-            folderRepository.findByNameIgnoreCaseAndUserId("Links", userId).ifPresent(linksFolder -> {
-                unassignedUrls.forEach(url -> url.setFolder(linksFolder));
-                urlRepository.saveAll(unassignedUrls);
-            });
+        if (userId != null) {
+            List<Url> unassignedUrls = urlRepository.findByUserIdAndFolderIsNull(userId);
+            if (!unassignedUrls.isEmpty()) {
+                folderRepository.findByNameIgnoreCaseAndUserId("Links", userId).ifPresent(linksFolder -> {
+                    unassignedUrls.forEach(url -> url.setFolder(linksFolder));
+                    urlRepository.saveAll(unassignedUrls);
+                });
+            }
         }
         List<Url> urls = urlRepository.findAllByUserIdWithFilters(userId, tagId, folderId, folderSlug, search);
         urls.sort(Comparator.comparing(Url::getId).reversed());
@@ -506,6 +445,10 @@ public class UrlService {
         }
 
         return dtos;
+    }
+
+    public List<UrlDto> getAllUrls(String sortBy, Long tagId, Long folderId, String folderSlug, String search) {
+        return getAllUrls(null, sortBy, tagId, folderId, folderSlug, search);
     }
 
     private UrlDto toDtoWithClickCountSafe(Url url) {
@@ -592,10 +535,7 @@ public class UrlService {
     }
 
     public UrlDto updateUrl(String hash, UrlUpdateRequestDto request, Long currentUserId) {
-        if (currentUser.isSuspended()) {
-            throw new org.springframework.security.access.AccessDeniedException("Your account has been suspended by an administrator.");
-        }
-        if (request.getLongUrl() != null && isDomainBlacklisted(request.getLongUrl())) {
+                if (request.getLongUrl() != null && isDomainBlacklisted(request.getLongUrl())) {
             throw new IllegalArgumentException("The destination URL domain is blacklisted or prohibited on this instance.");
         }
 
@@ -604,7 +544,7 @@ public class UrlService {
         boolean isAdmin = false; // TODO: check via auth service
 
         if (!isAdmin && !url.getUserId().equals(currentUserId)) {
-            throw new org.springframework.security.access.AccessDeniedException("You do not own this URL.");
+            throw new IllegalArgumentException("You do not own this URL.");
         }
 
         if (request.getLongUrl() != null && !request.getLongUrl().trim().isEmpty()) {
@@ -622,7 +562,7 @@ public class UrlService {
             List<Tag> tags = tagRepository.findAllById(request.getTagIds());
             for (Tag t : tags) {
                 if (!isAdmin && !t.getUserId().equals(currentUserId)) {
-                    throw new org.springframework.security.access.AccessDeniedException("You cannot assign a tag you do not own.");
+                    throw new IllegalArgumentException("You cannot assign a tag you do not own.");
                 }
             }
             url.setTags(new java.util.HashSet<>(tags));
@@ -656,12 +596,17 @@ public class UrlService {
     }
 
     @CacheEvict(value = "urls", key = "#shortUrl")
-    public void deleteUrl(String shortUrl) {
+    public void deleteUrl(String shortUrl, Long userId) {
         var url = isExistsShortUrl(shortUrl);
-
-        isUserCorrect(url);
-
+        if (userId != null && url.getUserId() != null && !url.getUserId().equals(userId)) {
+            throw new UrlNotFoundException();
+        }
         urlRepository.delete(url);
+    }
+
+    @CacheEvict(value = "urls", key = "#shortUrl")
+    public void deleteUrl(String shortUrl) {
+        deleteUrl(shortUrl, null);
     }
 
     private static void isUserCorrect(Url url) {
@@ -697,7 +642,7 @@ public class UrlService {
         // Verify ownership
         for (Url url : urls) {
             if (!isAdmin && !url.getUserId().equals(currentUserId)) {
-                throw new org.springframework.security.access.AccessDeniedException("You do not own all of the selected URLs.");
+                throw new IllegalArgumentException("You do not own all of the selected URLs.");
             }
         }
 
@@ -711,7 +656,7 @@ public class UrlService {
                     folder = folderRepository.findById(request.getFolderId())
                             .orElseThrow(() -> new IllegalArgumentException("Folder not found"));
                     if (!isAdmin && !folder.getUserId().equals(currentUserId)) {
-                        throw new org.springframework.security.access.AccessDeniedException("You do not own this folder.");
+                        throw new IllegalArgumentException("You do not own this folder.");
                     }
                 }
                 for (Url url : urls) {
@@ -727,7 +672,7 @@ public class UrlService {
                     List<Tag> tags = tagRepository.findAllById(request.getTagIds());
                     for (Tag t : tags) {
                         if (!isAdmin && !t.getUserId().equals(currentUserId)) {
-                            throw new org.springframework.security.access.AccessDeniedException("You cannot assign a tag you do not own.");
+                            throw new IllegalArgumentException("You cannot assign a tag you do not own.");
                         }
                     }
                     tagsToAssign.addAll(tags);
@@ -809,7 +754,7 @@ public class UrlService {
 
             var blacklist = java.util.Collections.emptyList();
             for (Object b : blacklist) {
-                //String pattern.toLowerCase().trim();
+                String pattern = b.toString().toLowerCase().trim();
                 if (pattern.startsWith("*.")) {
                     String root = pattern.substring(2);
                     if (host.equals(root) || host.endsWith("." + root)) return true;

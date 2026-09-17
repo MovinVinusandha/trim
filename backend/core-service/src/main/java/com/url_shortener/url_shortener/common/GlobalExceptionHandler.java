@@ -23,11 +23,6 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<String> userNotFound() {
-        return ResponseEntity.notFound().build();
-    }
-
     @org.springframework.beans.factory.annotation.Value("${app.frontend.url:http://localhost}")
     private String frontendUrl;
     
@@ -47,24 +42,10 @@ public class GlobalExceptionHandler {
         response.sendRedirect(dashboardUrl + "/secure/" + ex.getHash());
     }
 
-    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
-    public ResponseEntity<Map<String, String>> handleBadCredentials(org.springframework.security.authentication.BadCredentialsException ex) {
-        return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).body(
-                Map.of("message", ex.getMessage())
-        );
-    }
-
     @ExceptionHandler(UrlExistInDataBaseException.class)
     public ResponseEntity<Map<String, String >> urlInDb() {
         return ResponseEntity.badRequest().body(
                 Map.of("longUrl", "This URL has already been shortened")
-        );
-    }
-
-    @ExceptionHandler(UserAlreadyExist.class)
-    public ResponseEntity<Map<String, String >> userAlreadyRegistered() {
-        return ResponseEntity.badRequest().body(
-                Map.of("longUrl", "This User has already been registered")
         );
     }
 
@@ -84,7 +65,24 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public ResponseEntity<Map<String, String>> handleIllegalArgument(RuntimeException exception) {
         return ResponseEntity.badRequest().body(
-                Map.of("message", exception.getMessage())
+                Map.of("message", exception.getMessage() != null ? exception.getMessage() : "Invalid request")
+        );
+    }
+
+    @ExceptionHandler(com.url_shortener.url_shortener.urls.AliasAlreadyExistsException.class)
+    public ResponseEntity<Map<String, String>> handleAliasAlreadyExists(com.url_shortener.url_shortener.urls.AliasAlreadyExistsException ex) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT).body(
+                Map.of("message", "This short link alias is already taken. Please choose another.", "error", "Conflict")
+        );
+    }
+
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleResponseStatusException(org.springframework.web.server.ResponseStatusException ex) {
+        return ResponseEntity.status(ex.getStatusCode()).body(
+                Map.of(
+                        "status", ex.getStatusCode().value(),
+                        "message", ex.getReason() != null ? ex.getReason() : ex.getMessage()
+                )
         );
     }
 
@@ -92,6 +90,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleSpamVelocity(com.url_shortener.url_shortener.security.SpamVelocityExceededException ex) {
         return ResponseEntity.status(org.springframework.http.HttpStatus.TOO_MANY_REQUESTS).body(
                 Map.of("status", 429, "error", "Too Many Requests", "message", ex.getMessage())
+        );
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, String>> handleGenericRuntimeException(RuntimeException exception) {
+        return ResponseEntity.badRequest().body(
+                Map.of("message", exception.getMessage() != null ? exception.getMessage() : "An unexpected error occurred")
         );
     }
 }

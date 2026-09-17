@@ -1,5 +1,14 @@
 server:
   port: 8082
+  forward-headers-strategy: framework
+  max-http-request-header-size: 2MB
+  max-http-header-size: 2MB
+  error:
+    include-message: always
+    include-binding-errors: always
+  tomcat:
+    max-http-form-post-size: 2MB
+    max-swallow-size: 2MB
 
 spring:
   application:
@@ -31,13 +40,6 @@ oauth:
     client-id: ${OAUTH_GITHUB_CLIENT_ID:${GITHUB_CLIENT_ID:}}
     client-secret: ${OAUTH_GITHUB_CLIENT_SECRET:${GITHUB_CLIENT_SECRET:}}
 
-server:
-  forward-headers-strategy: framework
-  max-http-request-header-size: 2MB
-  max-http-header-size: 2MB
-  tomcat:
-    max-http-form-post-size: 2MB
-    max-swallow-size: 2MB
 
 root:
   user:
