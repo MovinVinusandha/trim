@@ -817,59 +817,63 @@ const HomePage: React.FC = () => {
       className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary/20 selection:text-primary"
       style={{ fontFamily: "'Inter', 'Space Grotesk', sans-serif" }}
     >
-      {/* ── Fixed Minimalist Navigation ──────────────────────────────── */}
-                        {/* 1. Navbar Glass Background Layer (Separate so it doesn't break mix-blend-mode) */}
-      <div className="fixed top-0 left-0 right-0 h-14 z-40 backdrop-blur-md pointer-events-none" />
-
-      {/* 2. Navbar Content Layer (Strictly mix-blend-difference, NO backdrop filters here) */}
-      <header className="fixed top-0 left-0 right-0 h-14 z-50 mix-blend-difference text-white pointer-events-none border-b border-[#1A1814]">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 h-full flex items-center justify-between pointer-events-auto">
+      {/* ── Fixed Modern Navigation ──────────────────────────────── */}
+      <header className="fixed top-0 left-0 right-0 h-16 z-50 bg-background/80 backdrop-blur-md border-b border-border transition-colors duration-200">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 h-full flex items-center justify-between">
           
-          {/* Left: Logo */}
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <BrandLogo className="h-5 w-auto text-white" />
+          {/* Left: Big Trim Logo */}
+          <Link to="/" className="flex items-center gap-2 group transition-transform active:scale-95">
+            <BrandLogo className="h-7 sm:h-8 w-auto text-foreground transition-opacity group-hover:opacity-85" />
           </Link>
 
-          {/* Center: Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-8 text-[13px] font-medium absolute left-1/2 -translate-x-1/2">
-            <a href="#features" className="hover:opacity-70 transition-opacity">
-              Features
+          {/* Right: GitHub Icon, Theme Toggle & Auth buttons */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* GitHub Button */}
+            <a
+              href="https://github.com/MovinVinusandha/URL-Shortener"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub Repository"
+              title="GitHub Repository"
+              className="flex items-center justify-center w-8 h-8 rounded-lg border border-border bg-background hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <GithubIcon className="w-4 h-4" />
             </a>
-            <a href="#pricing" className="hover:opacity-70 transition-opacity">
-              Pricing
-            </a>
-            <a href="#testimonials" className="hover:opacity-70 transition-opacity">
-              Reviews
-            </a>
-          </nav>
 
-          {/* Auth buttons */}
-          <div className="flex items-center gap-4">
-            <div className="hover:opacity-70 transition-opacity">
-              <ThemeToggle className="!bg-transparent !border-transparent !text-white hover:!opacity-70" />
-            </div>
+            {/* Light / Dark Mode Toggle */}
+            <ThemeToggle />
+
             {token ? (
-              <Link
-                to="/dashboard"
-                className="inline-flex items-center justify-center rounded-md text-[13px] font-medium px-4 py-1.5 border border-white hover:bg-white hover:text-black transition-colors"
-              >
-                Dashboard
-              </Link>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+                <Link
+                  to="/dashboard"
+                  className="btn-solid text-xs font-medium px-4 py-2 rounded-md flex items-center justify-center shadow-xs"
+                >
+                  Dashboard
+                </Link>
+              </motion.div>
             ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="text-[13px] font-medium hover:opacity-70 transition-opacity px-2 py-1"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/register"
-                  className="inline-flex items-center justify-center rounded-md text-[13px] font-medium px-4 py-1.5 bg-white text-black hover:opacity-90 transition-opacity"
-                >
-                  Get Started
-                </Link>
-              </>
+              <div className="flex items-center gap-2 ml-1">
+                {/* Login Button: gray hover, same behavior as secondary buttons */}
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+                  <Link
+                    to="/login"
+                    className="px-3.5 py-1.5 rounded-md text-xs font-medium text-foreground bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800/80 border border-transparent hover:border-border transition-colors flex items-center justify-center"
+                  >
+                    Log in
+                  </Link>
+                </motion.div>
+
+                {/* Get Started Button: standard landing page solid button animation */}
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+                  <Link
+                    to="/register"
+                    className="btn-solid text-xs font-medium px-4 py-1.5 rounded-md flex items-center justify-center shadow-xs"
+                  >
+                    Get Started
+                  </Link>
+                </motion.div>
+              </div>
             )}
           </div>
         </div>
