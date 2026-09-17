@@ -274,12 +274,43 @@ export interface AdminUser {
   email: string;
   role: 'USER' | 'ADMIN' | 'ROOT';
   emailVerified: boolean;
+  emailVerifiedAt?: string | null;
+  customMaxLinks?: number | null;
+  connectedOAuthProviders?: string[];
   isSuspended: boolean;
   suspended?: boolean;
   suspendedReason?: string | null;
   linkCount: number;
   totalClicks: number;
   createdAt: string;
+}
+
+export interface OAuthAccountSummary {
+  provider: string;
+  providerEmail?: string | null;
+  connectedAt: string;
+}
+
+export interface AdminUserDetail {
+  id: number;
+  publicId: string;
+  username: string;
+  email: string;
+  role: 'USER' | 'ADMIN' | 'ROOT';
+  emailVerified: boolean;
+  emailVerifiedAt?: string | null;
+  customMaxLinks?: number | null;
+  effectiveMaxLinks: number;
+  isSuspended: boolean;
+  suspended?: boolean;
+  suspendedReason?: string | null;
+  createdAt: string;
+  totalLinks: number;
+  activeLinks: number;
+  quarantinedLinks: number;
+  totalClicks: number;
+  oauthAccounts: OAuthAccountSummary[];
+  recentLinks: AdminLink[];
 }
 
 export interface PaginatedAdminUsers {

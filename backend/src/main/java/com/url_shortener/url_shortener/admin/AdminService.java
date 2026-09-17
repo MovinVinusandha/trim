@@ -46,6 +46,14 @@ public class AdminService {
     private final com.url_shortener.url_shortener.security.BlockedIpService blockedIpService;
     private final com.url_shortener.url_shortener.admin.audit.AdminAuditService adminAuditService;
     private final EnvSyncService envSyncService;
+    private final com.url_shortener.url_shortener.users.UserOAuthAccountRepository userOAuthAccountRepository;
+    private final com.url_shortener.url_shortener.auth.EmailVerificationTokenRepository emailVerificationTokenRepository;
+    private final com.url_shortener.url_shortener.auth.PasswordResetTokenRepository passwordResetTokenRepository;
+    private final com.url_shortener.url_shortener.urls.FolderRepository folderRepository;
+    private final com.url_shortener.url_shortener.urls.TagRepository tagRepository;
+    private final com.url_shortener.url_shortener.urls.UtmTemplateRepository utmTemplateRepository;
+    private final com.url_shortener.url_shortener.urls.CustomChannelRepository customChannelRepository;
+    private final com.url_shortener.url_shortener.common.EmailService emailService;
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private org.springframework.mail.javamail.JavaMailSender javaMailSender;
@@ -597,6 +605,216 @@ public class AdminService {
         return toAdminUserDto(user);
     }
 
+    @Transactional(readOnly = true)
+    public AdminUserDetailDto getUserDetails(String publicId) {
+        User user = userRepository.findByPublicId(publicId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + publicId));
+
+        long totalLinks = user.getUrls() != null ? user.getUrls().size() : 0;
+        long activeLinks = 0;
+        long quarantinedLinks = 0;
+        long totalClicks = 0;
+
+        if (user.getUrls() != null) {
+            for (Url l : user.getUrls()) {
+                if (l.isActive() && !l.isQuarantined()) {
+                    activeLinks++;
+                }
+                if (l.isQuarantined()) {
+                    quarantinedLinks++;
+                }
+                if (l.getStatistic() != null && l.getStatistic().getAccessedTimes() != null) {
+                    totalClicks += l.getStatistic().getAccessedTimes();
+                }
+            }
+        }
+
+        List<AdminUserDetailDto.OAuthAccountSummaryDto> oauthDtos = new ArrayList<>();
+        if (user.getOauthAccounts() != null) {
+            for (com.url_shortener.url_shortener.users.UserOAuthAccount acc : user.getOauthAccounts()) {
+                oauthDtos.add(AdminUserDetailDto.OAuthAccountSummaryDto.builder()
+                        .provider(acc.getProvider())
+                        .providerEmail(acc.getProviderEmail())
+                        .connectedAt(acc.getCreatedAt())
+                        .build());
+            }
+        }
+
+        // Fetch top recent links for this user (up to 10)
+        List<AdminLinkDto> recentLinks = Collections.emptyList();
+        if (user.getUrls() != null && !user.getUrls().isEmpty()) {
+            recentLinks = user.getUrls().stream()
+                    .sorted((a, b) -> {
+                        if (a.getCreatedAt() == null || b.getCreatedAt() == null) return 0;
+                        return b.getCreatedAt().compareTo(a.getCreatedAt());
+                    })
+                    .limit(10)
+                    .map(this::toAdminLinkDto)
+                    .collect(Collectors.toList());
+        }
+
+        int effectiveQuota = 1000;
+        if (user.getCustomMaxLinks() != null && user.getCustomMaxLinks() > 0) {
+            effectiveQuota = user.getCustomMaxLinks();
+        } else {
+            try {
+                var quotaSetting = systemSettingRepository.findBySettingKey("MAX_LINKS_PER_USER");
+                if (quotaSetting.isPresent() && !quotaSetting.get().getSettingValue().isBlank()) {
+                    effectiveQuota = Integer.parseInt(quotaSetting.get().getSettingValue().trim());
+                }
+            } catch (Exception ignored) {}
+        }
+
+        return AdminUserDetailDto.builder()
+                .id(user.getId())
+                .publicId(user.getPublicId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .emailVerified(user.isEmailVerified())
+                .emailVerifiedAt(user.getEmailVerifiedAt())
+                .customMaxLinks(user.getCustomMaxLinks())
+                .effectiveMaxLinks(effectiveQuota)
+                .isSuspended(user.isSuspended())
+                .suspendedReason(user.getSuspendedReason())
+                .createdAt(user.getCreatedAt())
+                .totalLinks(totalLinks)
+                .activeLinks(activeLinks)
+                .quarantinedLinks(quarantinedLinks)
+                .totalClicks(totalClicks)
+                .oauthAccounts(oauthDtos)
+                .recentLinks(recentLinks)
+                .build();
+    }
+
+    @Transactional
+    public void deleteUser(String publicId, Long currentAdminId) {
+        User user = userRepository.findByPublicId(publicId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + publicId));
+
+        if (user.getId().equals(currentAdminId)) {
+            throw new IllegalArgumentException("You cannot delete your own account from the administrator console.");
+        }
+        if (user.getRole() == Role.ROOT) {
+            throw new IllegalArgumentException("The ROOT instance owner cannot be deleted.");
+        }
+
+        String userEmail = user.getEmail();
+        String userUsername = user.getUsername();
+        long linkCount = user.getUrls() != null ? user.getUrls().size() : 0;
+
+        // 1. Revoke active JWT tokens
+        tokenRevocationService.revokeAllUserTokens(user.getId());
+
+        // 2. Evict cache & delete user URLs (along with associated click events)
+        if (user.getUrls() != null && !user.getUrls().isEmpty()) {
+            for (Url url : user.getUrls()) {
+                evictCache(url.getShortUrl());
+            }
+        }
+        clickEventRepository.deleteByUserId(user.getId());
+
+        // 3. Clear tokens & personal collections
+        emailVerificationTokenRepository.deleteByUser(user);
+        passwordResetTokenRepository.deleteByUser(user);
+
+        // 4. Delete user's folders, tags, custom channels, UTM templates
+        var folders = folderRepository.findByUserId(user.getId());
+        folderRepository.deleteAll(folders);
+
+        var tags = tagRepository.findByUser(user);
+        for (var t : tags) {
+            tagRepository.deleteTagAssociations(t.getId());
+        }
+        tagRepository.deleteAll(tags);
+
+        var channels = customChannelRepository.findAllByUserIdOrderByIdAsc(user.getId());
+        customChannelRepository.deleteAll(channels);
+
+        var utmTemplates = utmTemplateRepository.findByUserOrderByCreatedAtDesc(user);
+        utmTemplateRepository.deleteAll(utmTemplates);
+
+        // 5. Delete all user URLs explicitly
+        if (user.getUrls() != null && !user.getUrls().isEmpty()) {
+            urlRepository.deleteAll(user.getUrls());
+        }
+
+        // 6. Delete user entity (cascade will delete UserOAuthAccount)
+        userRepository.delete(user);
+
+        // 7. Record immutable audit log
+        recordAudit("USER_DELETED", "USER", userEmail,
+                "Deleted user " + userUsername + " (" + userEmail + ") with " + linkCount + " associated links.",
+                "{\"publicId\":\"" + publicId + "\",\"email\":\"" + userEmail + "\",\"linkCount\":" + linkCount + "}");
+    }
+
+    @Transactional
+    public AdminUserDto manuallyVerifyEmail(String publicId) {
+        User user = userRepository.findByPublicId(publicId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + publicId));
+
+        if (user.isEmailVerified()) {
+            throw new IllegalArgumentException("User email is already verified.");
+        }
+
+        user.setEmailVerified(true);
+        user.setEmailVerifiedAt(LocalDateTime.now());
+        user = userRepository.save(user);
+
+        emailVerificationTokenRepository.deleteByUser(user);
+
+        recordAudit("USER_EMAIL_VERIFIED", "USER", user.getEmail(),
+                "Manually verified email for user " + user.getEmail(),
+                "{\"userId\":" + user.getId() + ",\"email\":\"" + user.getEmail() + "\"}");
+
+        return toAdminUserDto(user);
+    }
+
+    @Transactional
+    public void resendVerificationEmail(String publicId) {
+        User user = userRepository.findByPublicId(publicId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + publicId));
+
+        if (user.isEmailVerified()) {
+            throw new IllegalArgumentException("User email is already verified.");
+        }
+
+        emailVerificationTokenRepository.deleteByUser(user);
+
+        String rawToken = com.url_shortener.url_shortener.auth.AuthTokenUtil.generateRandomToken();
+        String tokenHash = com.url_shortener.url_shortener.auth.AuthTokenUtil.hashToken(rawToken);
+
+        com.url_shortener.url_shortener.auth.EmailVerificationToken verificationToken =
+                com.url_shortener.url_shortener.auth.EmailVerificationToken.builder()
+                        .user(user)
+                        .tokenHash(tokenHash)
+                        .expiresAt(LocalDateTime.now().plusHours(24))
+                        .build();
+        emailVerificationTokenRepository.save(verificationToken);
+
+        emailService.sendVerificationEmail(user, rawToken);
+
+        recordAudit("USER_VERIFICATION_RESENT", "USER", user.getEmail(),
+                "Resent verification email to user " + user.getEmail(),
+                "{\"userId\":" + user.getId() + ",\"email\":\"" + user.getEmail() + "\"}");
+    }
+
+    @Transactional
+    public AdminUserDto updateUserQuota(String publicId, Integer customMaxLinks) {
+        User user = userRepository.findByPublicId(publicId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + publicId));
+
+        Integer oldQuota = user.getCustomMaxLinks();
+        user.setCustomMaxLinks(customMaxLinks);
+        user = userRepository.save(user);
+
+        recordAudit("USER_QUOTA_OVERRIDDEN", "USER", user.getEmail(),
+                "Updated custom link quota for " + user.getEmail() + " to " + (customMaxLinks != null ? customMaxLinks : "DEFAULT"),
+                "{\"oldQuota\":" + oldQuota + ",\"newQuota\":" + customMaxLinks + "}");
+
+        return toAdminUserDto(user);
+    }
+
     public List<BlacklistedDomain> getBlacklist() {
         return blacklistedDomainRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
     }
@@ -707,6 +925,14 @@ public class AdminService {
             }
         }
 
+        List<String> oauthProviders = Collections.emptyList();
+        if (u.getOauthAccounts() != null && !u.getOauthAccounts().isEmpty()) {
+            oauthProviders = u.getOauthAccounts().stream()
+                    .map(com.url_shortener.url_shortener.users.UserOAuthAccount::getProvider)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+
         return AdminUserDto.builder()
                 .id(u.getId())
                 .publicId(u.getPublicId())
@@ -714,6 +940,9 @@ public class AdminService {
                 .email(u.getEmail())
                 .role(u.getRole())
                 .emailVerified(u.isEmailVerified())
+                .emailVerifiedAt(u.getEmailVerifiedAt())
+                .customMaxLinks(u.getCustomMaxLinks())
+                .connectedOAuthProviders(oauthProviders)
                 .isSuspended(u.isSuspended())
                 .suspendedReason(u.getSuspendedReason())
                 .linkCount(linkCount)

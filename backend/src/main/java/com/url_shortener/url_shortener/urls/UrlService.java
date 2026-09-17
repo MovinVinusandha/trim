@@ -150,12 +150,16 @@ public class UrlService {
             // Enforce max links per user quota (for non-ROOT/ADMIN users)
             if (user.getRole() == com.url_shortener.url_shortener.users.Role.USER) {
                 long maxLinks = 1000;
-                try {
-                    var quotaSetting = systemSettingRepository.findBySettingKey("MAX_LINKS_PER_USER");
-                    if (quotaSetting.isPresent() && !quotaSetting.get().getSettingValue().isBlank()) {
-                        maxLinks = Long.parseLong(quotaSetting.get().getSettingValue().trim());
-                    }
-                } catch (Exception ignored) {}
+                if (user.getCustomMaxLinks() != null && user.getCustomMaxLinks() > 0) {
+                    maxLinks = user.getCustomMaxLinks();
+                } else {
+                    try {
+                        var quotaSetting = systemSettingRepository.findBySettingKey("MAX_LINKS_PER_USER");
+                        if (quotaSetting.isPresent() && !quotaSetting.get().getSettingValue().isBlank()) {
+                            maxLinks = Long.parseLong(quotaSetting.get().getSettingValue().trim());
+                        }
+                    } catch (Exception ignored) {}
+                }
 
                 long currentLinks = urlRepository.countByUserId(user.getId());
                 if (currentLinks >= maxLinks) {
@@ -255,6 +259,28 @@ public class UrlService {
         if (currentUser.isSuspended()) {
             throw new AccessDeniedException("Your account has been suspended by an administrator.");
         }
+
+        // Enforce max links quota in batch campaign
+        if (currentUser.getRole() == com.url_shortener.url_shortener.users.Role.USER) {
+            long maxLinks = 1000;
+            if (currentUser.getCustomMaxLinks() != null && currentUser.getCustomMaxLinks() > 0) {
+                maxLinks = currentUser.getCustomMaxLinks();
+            } else {
+                try {
+                    var quotaSetting = systemSettingRepository.findBySettingKey("MAX_LINKS_PER_USER");
+                    if (quotaSetting.isPresent() && !quotaSetting.get().getSettingValue().isBlank()) {
+                        maxLinks = Long.parseLong(quotaSetting.get().getSettingValue().trim());
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            long currentLinks = urlRepository.countByUserId(currentUser.getId());
+            int requestedNewLinks = request.getChannels() != null ? request.getChannels().size() : 0;
+            if (currentLinks + requestedNewLinks > maxLinks) {
+                throw new AccessDeniedException("Creating " + requestedNewLinks + " links would exceed your account quota (" + maxLinks + "). You currently have " + currentLinks + " links.");
+            }
+        }
+
         if (isDomainBlacklisted(request.getLongUrl())) {
             throw new IllegalArgumentException("The destination URL domain is blacklisted or prohibited on this instance.");
         }

@@ -55,6 +55,9 @@ public class User {
     @Column(name = "email_verified_at")
     private LocalDateTime emailVerifiedAt;
 
+    @Column(name = "custom_max_links")
+    private Integer customMaxLinks;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

@@ -7,12 +7,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AdminUserDto {
+public class AdminUserDetailDto {
     private Long id;
     private String publicId;
     private String username;
@@ -21,13 +22,33 @@ public class AdminUserDto {
     private boolean emailVerified;
     private LocalDateTime emailVerifiedAt;
     private Integer customMaxLinks;
-    private java.util.List<String> connectedOAuthProviders;
+    private Integer effectiveMaxLinks;
 
     @com.fasterxml.jackson.annotation.JsonProperty("isSuspended")
     private boolean isSuspended;
 
     private String suspendedReason;
-    private long linkCount;
-    private long totalClicks;
     private LocalDateTime createdAt;
+
+    // Aggregated metrics
+    private long totalLinks;
+    private long activeLinks;
+    private long quarantinedLinks;
+    private long totalClicks;
+
+    // Associated OAuth profiles
+    private List<OAuthAccountSummaryDto> oauthAccounts;
+
+    // Recent top short links
+    private List<AdminLinkDto> recentLinks;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OAuthAccountSummaryDto {
+        private String provider;
+        private String providerEmail;
+        private LocalDateTime connectedAt;
+    }
 }

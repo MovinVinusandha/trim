@@ -121,6 +121,42 @@ public class AdminPortalController {
         return ResponseEntity.ok(adminService.toggleUserSuspension(publicId, reason, currentUserId));
     }
 
+    @GetMapping("/users/{publicId}")
+    @Operation(summary = "Get detailed user profile, OAuth providers, and recent links")
+    public ResponseEntity<AdminUserDetailDto> getUserDetails(@PathVariable String publicId) {
+        return ResponseEntity.ok(adminService.getUserDetails(publicId));
+    }
+
+    @DeleteMapping("/users/{publicId}")
+    @Operation(summary = "Permanently delete a user account, their links, and associated data")
+    public ResponseEntity<Map<String, String>> deleteUser(@PathVariable String publicId) {
+        Long currentUserId = getCurrentUserId();
+        adminService.deleteUser(publicId, currentUserId);
+        return ResponseEntity.ok(Map.of("message", "User account and all associated resources deleted successfully"));
+    }
+
+    @PostMapping("/users/{publicId}/verify-email")
+    @Operation(summary = "Manually mark a user's email address as verified")
+    public ResponseEntity<AdminUserDto> manuallyVerifyEmail(@PathVariable String publicId) {
+        return ResponseEntity.ok(adminService.manuallyVerifyEmail(publicId));
+    }
+
+    @PostMapping("/users/{publicId}/resend-verification")
+    @Operation(summary = "Dispatch a new email verification message to the user")
+    public ResponseEntity<Map<String, String>> resendVerificationEmail(@PathVariable String publicId) {
+        adminService.resendVerificationEmail(publicId);
+        return ResponseEntity.ok(Map.of("message", "Verification email dispatched successfully"));
+    }
+
+    @PutMapping("/users/{publicId}/quota")
+    @Operation(summary = "Update or reset a custom link quota for a user")
+    public ResponseEntity<AdminUserDto> updateUserQuota(
+            @PathVariable String publicId,
+            @Valid @RequestBody UserQuotaUpdateRequestDto request
+    ) {
+        return ResponseEntity.ok(adminService.updateUserQuota(publicId, request.getCustomMaxLinks()));
+    }
+
     @PutMapping("/users/{publicId}/role")
     @Operation(summary = "Update user role (ROOT only)")
     public ResponseEntity<AdminUserDto> updateUserRole(
