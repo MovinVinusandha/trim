@@ -731,10 +731,14 @@ const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 409) {
           setError('This short link alias is already taken. Please choose another.');
-        } else if (err.response?.status === 400 && err.response?.data?.message) {
-          setError(err.response.data.message);
+        } else if (err.response?.status === 400 && err.response?.data) {
+          const data = err.response.data;
+          const msg = data.message || data.longUrl || data.error || (typeof data === 'string' ? data : null);
+          setError(msg || 'Invalid request. Please check your inputs.');
         } else {
-          setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+          const data = err.response?.data;
+          const msg = data?.message || data?.longUrl || data?.error || (typeof data === 'string' ? data : null);
+          setError(msg || 'Something went wrong. Please try again.');
         }
       } else {
         setError('Network error. Please try again.');

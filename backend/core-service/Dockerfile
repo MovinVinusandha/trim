@@ -7,6 +7,6 @@ RUN if [ ! -f core-service/target/*.jar ]; then \
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=build /app/core-service/target/*.jar app.jar
+COPY --from=build /app/core-service/target/core-service-2.0.0.jar app.jar
 EXPOSE 8082
 ENTRYPOINT ["java", "-jar", "app.jar"]

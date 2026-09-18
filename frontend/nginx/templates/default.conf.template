@@ -21,6 +21,16 @@ server {
             return 204;
         }
 
+        # CORS headers for actual requests
+        add_header 'Access-Control-Allow-Origin' '$http_origin' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+        add_header 'Access-Control-Expose-Headers' 'Authorization, Content-Disposition, Set-Cookie' always;
+
+        # Hide upstream CORS headers to avoid duplicates with Nginx's headers
+        proxy_hide_header 'Access-Control-Allow-Origin';
+        proxy_hide_header 'Access-Control-Allow-Credentials';
+        proxy_hide_header 'Access-Control-Expose-Headers';
+
         # Direct proxy pass (no variable assignment)
         proxy_pass http://api-gateway:8080;
         proxy_set_header Host $host;

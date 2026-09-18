@@ -43,9 +43,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(UrlExistInDataBaseException.class)
-    public ResponseEntity<Map<String, String >> urlInDb() {
+    public ResponseEntity<Map<String, String>> urlInDb() {
         return ResponseEntity.badRequest().body(
-                Map.of("longUrl", "This URL has already been shortened")
+                Map.of(
+                        "message", "This URL has already been shortened",
+                        "longUrl", "This URL has already been shortened"
+                )
         );
     }
 
