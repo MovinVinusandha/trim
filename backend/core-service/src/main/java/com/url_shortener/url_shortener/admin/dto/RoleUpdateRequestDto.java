@@ -1,6 +1,6 @@
 package com.url_shortener.url_shortener.admin.dto;
 
-import com.url_shortener.url_shortener.users.Role;
+import com.url_shortener.common.Role;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 

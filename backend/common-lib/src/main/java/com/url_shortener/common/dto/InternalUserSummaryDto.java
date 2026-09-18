@@ -1,4 +1,4 @@
-package com.url_shortener.url_shortener.admin.dto;
+package com.url_shortener.common.dto;
 
 import com.url_shortener.common.Role;
 import lombok.AllArgsConstructor;
@@ -7,12 +7,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AdminUserDto {
+public class InternalUserSummaryDto {
     private Long id;
     private String publicId;
     private String username;
@@ -21,13 +22,8 @@ public class AdminUserDto {
     private boolean emailVerified;
     private LocalDateTime emailVerifiedAt;
     private Integer customMaxLinks;
-    private java.util.List<String> connectedOAuthProviders;
-
-    @com.fasterxml.jackson.annotation.JsonProperty("isSuspended")
     private boolean isSuspended;
-
     private String suspendedReason;
-    private long linkCount;
-    private long totalClicks;
+    private List<String> connectedOAuthProviders;
     private LocalDateTime createdAt;
 }

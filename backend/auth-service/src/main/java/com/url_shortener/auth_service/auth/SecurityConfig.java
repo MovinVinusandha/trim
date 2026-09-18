@@ -63,6 +63,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(c -> {
                             c.requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll();
                             c.requestMatchers("/api/health", "/health").permitAll();
+                            c.requestMatchers("/internal/**").permitAll();
                             c.requestMatchers("/auth/**").permitAll();
                             c.requestMatchers(org.springframework.http.HttpMethod.POST, "/users", "/user").permitAll();
                             c.requestMatchers("/public/qr/preview").permitAll();

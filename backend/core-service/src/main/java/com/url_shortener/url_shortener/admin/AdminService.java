@@ -1,14 +1,13 @@
 package com.url_shortener.url_shortener.admin;
 
+import com.url_shortener.common.Role;
+import com.url_shortener.common.dto.InternalUserSummaryDto;
 import com.url_shortener.url_shortener.admin.audit.AdminAuditLogDto;
 import com.url_shortener.url_shortener.admin.dto.*;
 import com.url_shortener.url_shortener.analytics.ClickEventRepository;
 import com.url_shortener.url_shortener.auth.TokenRevocationService;
 import com.url_shortener.url_shortener.urls.Url;
 import com.url_shortener.url_shortener.urls.UrlRepository;
-import com.url_shortener.url_shortener.users.Role;
-import com.url_shortener.url_shortener.users.User;
-import com.url_shortener.url_shortener.users.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,8 +32,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AdminService {
 
+    private final AuthServiceClient authServiceClient;
     private final UrlRepository urlRepository;
-    private final UserRepository userRepository;
     private final ClickEventRepository clickEventRepository;
     private final BlacklistedDomainRepository blacklistedDomainRepository;
     private final SystemSettingRepository systemSettingRepository;
@@ -46,14 +45,10 @@ public class AdminService {
     private final com.url_shortener.url_shortener.security.BlockedIpService blockedIpService;
     private final com.url_shortener.url_shortener.admin.audit.AdminAuditService adminAuditService;
     private final EnvSyncService envSyncService;
-    private final com.url_shortener.url_shortener.users.UserOAuthAccountRepository userOAuthAccountRepository;
-    private final com.url_shortener.url_shortener.auth.EmailVerificationTokenRepository emailVerificationTokenRepository;
-    private final com.url_shortener.url_shortener.auth.PasswordResetTokenRepository passwordResetTokenRepository;
     private final com.url_shortener.url_shortener.urls.FolderRepository folderRepository;
     private final com.url_shortener.url_shortener.urls.TagRepository tagRepository;
     private final com.url_shortener.url_shortener.urls.UtmTemplateRepository utmTemplateRepository;
     private final com.url_shortener.url_shortener.urls.CustomChannelRepository customChannelRepository;
-    private final com.url_shortener.url_shortener.common.EmailService emailService;
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private org.springframework.mail.javamail.JavaMailSender javaMailSender;
@@ -120,9 +115,10 @@ public class AdminService {
             log.warn("Failed to count 24h click events: {}", e.getMessage());
         }
 
-        long totalUsers = userRepository.count();
-        long suspendedUsers = userRepository.countByIsSuspendedTrue();
-        long activeUsers = userRepository.countByIsSuspendedFalse();
+        com.url_shortener.common.dto.UserCountsDto userCounts = authServiceClient.getUserCounts();
+        long totalUsers = userCounts.getTotalUsers();
+        long suspendedUsers = userCounts.getSuspendedUsers();
+        long activeUsers = userCounts.getActiveUsers();
 
         // 1. Operational Mode (Panic Switch)
         String systemMode = getEffectiveSetting("PANIC_MODE", "NORMAL");
@@ -363,12 +359,9 @@ public class AdminService {
 
             if (search != null && !search.trim().isEmpty()) {
                 String term = "%" + search.trim().toLowerCase() + "%";
-                var userJoin = root.join("user", jakarta.persistence.criteria.JoinType.LEFT);
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("shortUrl")), term),
-                        cb.like(cb.lower(root.get("longUrl")), term),
-                        cb.like(cb.lower(userJoin.get("email")), term),
-                        cb.like(cb.lower(userJoin.get("username")), term)
+                        cb.like(cb.lower(root.get("longUrl")), term)
                 ));
             }
 
@@ -538,77 +531,44 @@ public class AdminService {
     }
 
     public Page<AdminUserDto> getUsers(int page, int size, String search) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<User> userPage;
-
-        if (search != null && !search.trim().isEmpty()) {
-            String q = search.trim();
-            userPage = userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(q, q, pageable);
-        } else {
-            userPage = userRepository.findAll(pageable);
-        }
-
+        Page<InternalUserSummaryDto> userPage = authServiceClient.getUsers(page, size, search);
         return userPage.map(this::toAdminUserDto);
     }
 
     @Transactional
     public AdminUserDto toggleUserSuspension(String publicId, String reason, Long currentAdminId) {
-        User user = userRepository.findByPublicId(publicId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + publicId));
-
-        if (user.getId().equals(currentAdminId)) {
-            throw new IllegalArgumentException("You cannot suspend your own account.");
-        }
-        if (user.getRole() == Role.ROOT) {
-            throw new IllegalArgumentException("The ROOT instance owner cannot be suspended.");
+        InternalUserSummaryDto updated = authServiceClient.toggleUserSuspension(publicId, reason, currentAdminId);
+        if (updated == null) {
+            throw new IllegalArgumentException("User not found or operation failed: " + publicId);
         }
 
-        boolean willSuspend = !user.isSuspended();
-        user.setSuspended(willSuspend);
-        user.setSuspendedReason(willSuspend ? (reason != null ? reason.trim() : "Suspended by administrator") : null);
-        user = userRepository.save(user);
+        recordAudit(updated.isSuspended() ? "USER_SUSPENDED" : "USER_UNSUSPENDED", "USER", updated.getEmail(),
+                (updated.isSuspended() ? "Suspended user " : "Restored user ") + updated.getEmail() + (reason != null ? ". Reason: " + reason : ""),
+                "{\"userId\":" + updated.getId() + ",\"email\":\"" + updated.getEmail() + "\"}");
 
-        if (willSuspend) {
-            tokenRevocationService.revokeAllUserTokens(user.getId());
-        }
-
-        recordAudit(willSuspend ? "USER_SUSPENDED" : "USER_UNSUSPENDED", "USER", user.getEmail(),
-                (willSuspend ? "Suspended user " : "Restored user ") + user.getEmail() + (reason != null ? ". Reason: " + reason : ""),
-                "{\"userId\":" + user.getId() + ",\"email\":\"" + user.getEmail() + "\"}");
-
-        return toAdminUserDto(user);
+        return toAdminUserDto(updated);
     }
 
     @Transactional
     public AdminUserDto updateUserRole(String publicId, Role newRole, Long currentAdminId) {
-        User user = userRepository.findByPublicId(publicId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + publicId));
-
-        if (user.getId().equals(currentAdminId)) {
-            throw new IllegalArgumentException("You cannot change your own role.");
-        }
-        if (user.getRole() == Role.ROOT) {
-            throw new IllegalArgumentException("The ROOT instance owner role cannot be modified.");
-        }
-        if (newRole == Role.ROOT) {
-            throw new IllegalArgumentException("Cannot assign ROOT role.");
+        InternalUserSummaryDto updated = authServiceClient.updateUserRole(publicId, newRole, currentAdminId);
+        if (updated == null) {
+            throw new IllegalArgumentException("User not found or operation failed: " + publicId);
         }
 
-        Role oldRole = user.getRole();
-        user.setRole(newRole);
-        user = userRepository.save(user);
+        recordAudit("USER_ROLE_CHANGED", "USER", updated.getEmail(),
+                "Changed role of user " + updated.getEmail() + " to " + newRole,
+                "{\"newRole\":\"" + newRole + "\"}");
 
-        recordAudit("USER_ROLE_CHANGED", "USER", user.getEmail(),
-                "Changed role of user " + user.getEmail() + " from " + oldRole + " to " + newRole,
-                "{\"oldRole\":\"" + oldRole + "\",\"newRole\":\"" + newRole + "\"}");
-
-        return toAdminUserDto(user);
+        return toAdminUserDto(updated);
     }
 
     @Transactional(readOnly = true)
     public AdminUserDetailDto getUserDetails(String publicId) {
-        User user = userRepository.findByPublicId(publicId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + publicId));
+        InternalUserSummaryDto user = authServiceClient.getUserByPublicId(publicId);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found: " + publicId);
+        }
 
         List<Url> userUrls = urlRepository.findByUserId(user.getId());
         long totalLinks = userUrls.size();
@@ -629,12 +589,10 @@ public class AdminService {
         }
 
         List<AdminUserDetailDto.OAuthAccountSummaryDto> oauthDtos = new ArrayList<>();
-        if (user.getOauthAccounts() != null) {
-            for (com.url_shortener.url_shortener.users.UserOAuthAccount acc : user.getOauthAccounts()) {
+        if (user.getConnectedOAuthProviders() != null) {
+            for (String provider : user.getConnectedOAuthProviders()) {
                 oauthDtos.add(AdminUserDetailDto.OAuthAccountSummaryDto.builder()
-                        .provider(acc.getProvider())
-                        .providerEmail(acc.getProviderEmail())
-                        .connectedAt(acc.getCreatedAt())
+                        .provider(provider)
                         .build());
             }
         }
@@ -688,8 +646,10 @@ public class AdminService {
 
     @Transactional
     public void deleteUser(String publicId, Long currentAdminId) {
-        User user = userRepository.findByPublicId(publicId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + publicId));
+        InternalUserSummaryDto user = authServiceClient.getUserByPublicId(publicId);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found: " + publicId);
+        }
 
         if (user.getId().equals(currentAdminId)) {
             throw new IllegalArgumentException("You cannot delete your own account from the administrator console.");
@@ -703,20 +663,13 @@ public class AdminService {
         List<Url> userUrls = urlRepository.findByUserId(user.getId());
         long linkCount = userUrls.size();
 
-        // 1. Revoke active JWT tokens
-        tokenRevocationService.revokeAllUserTokens(user.getId());
-
-        // 2. Evict cache & delete user URLs (along with associated click events)
+        // 1. Evict cache & delete user URLs (along with associated click events)
         for (Url url : userUrls) {
             evictCache(url.getShortUrl());
         }
         clickEventRepository.deleteByUserId(user.getId());
 
-        // 3. Clear tokens & personal collections
-        emailVerificationTokenRepository.deleteByUser(user);
-        passwordResetTokenRepository.deleteByUser(user);
-
-        // 4. Delete user's folders, tags, custom channels, UTM templates
+        // 2. Delete user's folders, tags, custom channels, UTM templates
         var folders = folderRepository.findByUserId(user.getId());
         folderRepository.deleteAll(folders);
 
@@ -732,13 +685,13 @@ public class AdminService {
         var utmTemplates = utmTemplateRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
         utmTemplateRepository.deleteAll(utmTemplates);
 
-        // 5. Delete all user URLs explicitly
+        // 3. Delete all user URLs explicitly
         urlRepository.deleteAll(userUrls);
 
-        // 6. Delete user entity (cascade will delete UserOAuthAccount)
-        userRepository.delete(user);
+        // 4. Delete user entity via auth-service
+        authServiceClient.deleteUser(publicId, currentAdminId);
 
-        // 7. Record immutable audit log
+        // 5. Record immutable audit log
         recordAudit("USER_DELETED", "USER", userEmail,
                 "Deleted user " + userUsername + " (" + userEmail + ") with " + linkCount + " associated links.",
                 "{\"publicId\":\"" + publicId + "\",\"email\":\"" + userEmail + "\",\"linkCount\":" + linkCount + "}");
@@ -746,49 +699,26 @@ public class AdminService {
 
     @Transactional
     public AdminUserDto manuallyVerifyEmail(String publicId) {
-        User user = userRepository.findByPublicId(publicId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + publicId));
-
-        if (user.isEmailVerified()) {
-            throw new IllegalArgumentException("User email is already verified.");
+        InternalUserSummaryDto updated = authServiceClient.manuallyVerifyEmail(publicId);
+        if (updated == null) {
+            throw new IllegalArgumentException("User not found: " + publicId);
         }
 
-        user.setEmailVerified(true);
-        user.setEmailVerifiedAt(LocalDateTime.now());
-        user = userRepository.save(user);
+        recordAudit("USER_EMAIL_VERIFIED", "USER", updated.getEmail(),
+                "Manually verified email for user " + updated.getEmail(),
+                "{\"userId\":" + updated.getId() + ",\"email\":\"" + updated.getEmail() + "\"}");
 
-        emailVerificationTokenRepository.deleteByUser(user);
-
-        recordAudit("USER_EMAIL_VERIFIED", "USER", user.getEmail(),
-                "Manually verified email for user " + user.getEmail(),
-                "{\"userId\":" + user.getId() + ",\"email\":\"" + user.getEmail() + "\"}");
-
-        return toAdminUserDto(user);
+        return toAdminUserDto(updated);
     }
 
     @Transactional
     public void resendVerificationEmail(String publicId) {
-        User user = userRepository.findByPublicId(publicId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + publicId));
-
-        if (user.isEmailVerified()) {
-            throw new IllegalArgumentException("User email is already verified.");
+        InternalUserSummaryDto user = authServiceClient.getUserByPublicId(publicId);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found: " + publicId);
         }
 
-        emailVerificationTokenRepository.deleteByUser(user);
-
-        String rawToken = com.url_shortener.url_shortener.auth.AuthTokenUtil.generateRandomToken();
-        String tokenHash = com.url_shortener.url_shortener.auth.AuthTokenUtil.hashToken(rawToken);
-
-        com.url_shortener.url_shortener.auth.EmailVerificationToken verificationToken =
-                com.url_shortener.url_shortener.auth.EmailVerificationToken.builder()
-                        .user(user)
-                        .tokenHash(tokenHash)
-                        .expiresAt(LocalDateTime.now().plusHours(24))
-                        .build();
-        emailVerificationTokenRepository.save(verificationToken);
-
-        emailService.sendVerificationEmail(user, rawToken);
+        authServiceClient.resendVerificationEmail(publicId);
 
         recordAudit("USER_VERIFICATION_RESENT", "USER", user.getEmail(),
                 "Resent verification email to user " + user.getEmail(),
@@ -797,18 +727,16 @@ public class AdminService {
 
     @Transactional
     public AdminUserDto updateUserQuota(String publicId, Integer customMaxLinks) {
-        User user = userRepository.findByPublicId(publicId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + publicId));
+        InternalUserSummaryDto updated = authServiceClient.updateUserQuota(publicId, customMaxLinks);
+        if (updated == null) {
+            throw new IllegalArgumentException("User not found: " + publicId);
+        }
 
-        Integer oldQuota = user.getCustomMaxLinks();
-        user.setCustomMaxLinks(customMaxLinks);
-        user = userRepository.save(user);
+        recordAudit("USER_QUOTA_OVERRIDDEN", "USER", updated.getEmail(),
+                "Updated custom link quota for " + updated.getEmail() + " to " + (customMaxLinks != null ? customMaxLinks : "DEFAULT"),
+                "{\"newQuota\":" + customMaxLinks + "}");
 
-        recordAudit("USER_QUOTA_OVERRIDDEN", "USER", user.getEmail(),
-                "Updated custom link quota for " + user.getEmail() + " to " + (customMaxLinks != null ? customMaxLinks : "DEFAULT"),
-                "{\"oldQuota\":" + oldQuota + ",\"newQuota\":" + customMaxLinks + "}");
-
-        return toAdminUserDto(user);
+        return toAdminUserDto(updated);
     }
 
     public List<BlacklistedDomain> getBlacklist() {
@@ -890,7 +818,7 @@ public class AdminService {
     private AdminLinkDto toAdminLinkDto(Url u) {
         long clicks = u.getStatistic() != null && u.getStatistic().getAccessedTimes() != null
                 ? u.getStatistic().getAccessedTimes() : 0;
-        User owner = u.getUserId() != null ? userRepository.findById(u.getUserId()).orElse(null) : null;
+        InternalUserSummaryDto owner = u.getUserId() != null ? authServiceClient.getUserById(u.getUserId()) : null;
 
         return AdminLinkDto.builder()
                 .id(u.getId())
@@ -910,7 +838,7 @@ public class AdminService {
                 .build();
     }
 
-    private AdminUserDto toAdminUserDto(User u) {
+    private AdminUserDto toAdminUserDto(InternalUserSummaryDto u) {
         List<Url> userUrls = urlRepository.findByUserId(u.getId());
         long linkCount = userUrls.size();
         long totalClicks = 0;
@@ -920,13 +848,7 @@ public class AdminService {
             }
         }
 
-        List<String> oauthProviders = Collections.emptyList();
-        if (u.getOauthAccounts() != null && !u.getOauthAccounts().isEmpty()) {
-            oauthProviders = u.getOauthAccounts().stream()
-                    .map(com.url_shortener.url_shortener.users.UserOAuthAccount::getProvider)
-                    .distinct()
-                    .collect(Collectors.toList());
-        }
+        List<String> oauthProviders = u.getConnectedOAuthProviders() != null ? u.getConnectedOAuthProviders() : Collections.emptyList();
 
         return AdminUserDto.builder()
                 .id(u.getId())

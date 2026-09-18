@@ -49,6 +49,11 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
             }
         }
 
+        // 0. Protect internal microservice endpoints from external gateway access
+        if (path.startsWith("/internal")) {
+            return onError(exchange, HttpStatus.FORBIDDEN, "Access to internal endpoints is forbidden");
+        }
+
         // 1. Check Admin Routes
         if (path.startsWith("/admin")) {
             if (claims == null) {
