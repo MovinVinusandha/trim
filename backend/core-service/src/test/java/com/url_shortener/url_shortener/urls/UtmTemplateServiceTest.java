@@ -1,14 +1,11 @@
 package com.url_shortener.url_shortener.urls;
 
-import com.url_shortener.url_shortener.users.User;
-import com.url_shortener.url_shortener.users.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,22 +21,13 @@ class UtmTemplateServiceTest {
     @Mock
     private UtmTemplateRepository utmTemplateRepository;
 
-    @Mock
-    private UserRepository userRepository;
-
     @InjectMocks
     private UtmTemplateService utmTemplateService;
 
-    private User user;
     private UtmTemplate template;
 
     @BeforeEach
     void setUp() {
-        user = User.builder()
-                .id(1L)
-                .email("test@example.com")
-                .build();
-
         template = UtmTemplate.builder()
                 .id(10L)
                 .name("Summer Promo")
@@ -50,14 +38,13 @@ class UtmTemplateServiceTest {
                 .content("ad_1")
                 .ref("mysite.com")
                 .createdAt(LocalDateTime.now())
-                .user(user)
+                .userId(1L)
                 .build();
     }
 
     @Test
     void getUserTemplates_Success() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(utmTemplateRepository.findByUserOrderByCreatedAtDesc(user)).thenReturn(List.of(template));
+        when(utmTemplateRepository.findByUserIdOrderByCreatedAtDesc(1L)).thenReturn(List.of(template));
 
         List<UtmTemplateDto> dtos = utmTemplateService.getUserTemplates(1L);
 
@@ -82,7 +69,7 @@ class UtmTemplateServiceTest {
             return t;
         });
 
-        UtmTemplateDto result = utmTemplateService.createTemplate(request, user);
+        UtmTemplateDto result = utmTemplateService.createTemplate(request, 1L);
 
         assertNotNull(result);
         assertEquals(11L, result.getId());
@@ -98,7 +85,7 @@ class UtmTemplateServiceTest {
 
         when(utmTemplateRepository.existsByNameIgnoreCaseAndUserId("Summer Promo", 1L)).thenReturn(true);
 
-        assertThrows(IllegalArgumentException.class, () -> utmTemplateService.createTemplate(request, user));
+        assertThrows(IllegalArgumentException.class, () -> utmTemplateService.createTemplate(request, 1L));
     }
 
     @Test
@@ -112,7 +99,7 @@ class UtmTemplateServiceTest {
         when(utmTemplateRepository.existsByNameIgnoreCaseAndUserId("Updated Promo", 1L)).thenReturn(false);
         when(utmTemplateRepository.save(any(UtmTemplate.class))).thenReturn(template);
 
-        UtmTemplateDto result = utmTemplateService.updateTemplate(10L, request, user);
+        UtmTemplateDto result = utmTemplateService.updateTemplate(10L, request, 1L);
 
         assertNotNull(result);
         assertEquals("Updated Promo", result.getName());
@@ -120,9 +107,8 @@ class UtmTemplateServiceTest {
     }
 
     @Test
-    void updateTemplate_NotOwner_ThrowsAccessDenied() {
-        User otherUser = User.builder().id(2L).build();
-        template.setUser(otherUser);
+    void updateTemplate_NotOwner_ThrowsIllegalArgumentException() {
+        template.setUserId(2L);
 
         UtmTemplateRequest request = UtmTemplateRequest.builder()
                 .name("Updated Promo")
@@ -130,14 +116,14 @@ class UtmTemplateServiceTest {
 
         when(utmTemplateRepository.findById(10L)).thenReturn(Optional.of(template));
 
-        assertThrows(AccessDeniedException.class, () -> utmTemplateService.updateTemplate(10L, request, user));
+        assertThrows(IllegalArgumentException.class, () -> utmTemplateService.updateTemplate(10L, request, 1L));
     }
 
     @Test
     void deleteTemplate_Success() {
         when(utmTemplateRepository.findById(10L)).thenReturn(Optional.of(template));
 
-        utmTemplateService.deleteTemplate(10L, user);
+        utmTemplateService.deleteTemplate(10L, 1L);
 
         verify(utmTemplateRepository, times(1)).delete(template);
     }
@@ -148,14 +134,14 @@ class UtmTemplateServiceTest {
                 .id(20L)
                 .name("Old Default")
                 .isDefault(true)
-                .user(user)
+                .userId(1L)
                 .build();
 
         when(utmTemplateRepository.findById(10L)).thenReturn(Optional.of(template));
-        when(utmTemplateRepository.findByUserAndIsDefaultTrue(user)).thenReturn(List.of(oldDefault));
+        when(utmTemplateRepository.findByUserIdAndIsDefaultTrue(1L)).thenReturn(List.of(oldDefault));
         when(utmTemplateRepository.save(any(UtmTemplate.class))).thenAnswer(i -> i.getArgument(0));
 
-        UtmTemplateDto result = utmTemplateService.toggleDefaultTemplate(10L, user);
+        UtmTemplateDto result = utmTemplateService.toggleDefaultTemplate(10L, 1L);
 
         assertTrue(result.getIsDefault());
         assertFalse(oldDefault.getIsDefault());
@@ -168,7 +154,7 @@ class UtmTemplateServiceTest {
         when(utmTemplateRepository.findById(10L)).thenReturn(Optional.of(template));
         when(utmTemplateRepository.save(any(UtmTemplate.class))).thenAnswer(i -> i.getArgument(0));
 
-        UtmTemplateDto result = utmTemplateService.toggleDefaultTemplate(10L, user);
+        UtmTemplateDto result = utmTemplateService.toggleDefaultTemplate(10L, 1L);
 
         assertFalse(result.getIsDefault());
     }

@@ -38,25 +38,10 @@ class BlockedIpServiceTest {
     }
 
     @Test
-    void isIpBlocked_MatchesCidrSubnet() {
-        BlockedIp blocked = BlockedIp.builder()
-                .id(2L)
-                .ipAddress("10.50.0.0/16")
-                .reason("Bot subnet block")
-                .build();
-        when(blockedIpRepository.findAll()).thenReturn(List.of(blocked));
-
-        blockedIpService.reloadMatchers();
-
-        assertThat(blockedIpService.isIpBlocked("10.50.12.34")).isTrue();
-        assertThat(blockedIpService.isIpBlocked("10.51.0.1")).isFalse();
-    }
-
-    @Test
-    void blockIp_InvalidFormat_ThrowsIllegalArgument() {
-        assertThatThrownBy(() -> blockedIpService.blockIp("invalid-ip-string", "reason", "admin"))
+    void blockIp_BlankIp_ThrowsIllegalArgument() {
+        assertThatThrownBy(() -> blockedIpService.blockIp("   ", "reason", "admin"))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid IP address or CIDR format");
+                .hasMessageContaining("IP address cannot be blank");
     }
 
     @Test

@@ -33,6 +33,7 @@ import java.time.Duration;
 public class RedisConfig {
 
     @Bean
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "spring.redis.listener.enabled", havingValue = "true", matchIfMissing = true)
     public RedisMessageListenerContainer redisMessageListenerContainer(
             RedisConnectionFactory connectionFactory,
             UserEventListener userEventListener

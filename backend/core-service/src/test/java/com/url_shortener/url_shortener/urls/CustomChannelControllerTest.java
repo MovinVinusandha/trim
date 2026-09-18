@@ -1,21 +1,16 @@
 package com.url_shortener.url_shortener.urls;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.url_shortener.url_shortener.users.User;
-import com.url_shortener.url_shortener.users.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -37,12 +32,6 @@ class CustomChannelControllerTest {
     @MockBean
     private CustomChannelService customChannelService;
 
-    @MockBean
-    private UserRepository userRepository;
-
-    @MockBean
-    private com.url_shortener.url_shortener.auth.JwtService jwtService;
-
     @Test
     void getUserCustomChannels_Success() throws Exception {
         CustomChannelDto dto = CustomChannelDto.builder()
@@ -56,7 +45,7 @@ class CustomChannelControllerTest {
         when(customChannelService.getUserCustomChannels(1L)).thenReturn(List.of(dto));
 
         mockMvc.perform(get("/custom-channels")
-                        .principal(new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())))
+                        .header("X-User-Id", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Reddit"))
                 .andExpect(jsonPath("$[0].utmSource").value("reddit"))
@@ -71,9 +60,6 @@ class CustomChannelControllerTest {
                 .utmMedium("community")
                 .build();
 
-        User user = User.builder().id(1L).email("test@example.com").build();
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
         CustomChannelDto dto = CustomChannelDto.builder()
                 .id(2L)
                 .name("Discord")
@@ -82,10 +68,10 @@ class CustomChannelControllerTest {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        when(customChannelService.createCustomChannel(any(CustomChannelRequest.class), eq(user))).thenReturn(dto);
+        when(customChannelService.createCustomChannel(any(CustomChannelRequest.class), eq(1L))).thenReturn(dto);
 
         mockMvc.perform(post("/custom-channels")
-                        .principal(new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList()))
+                        .header("X-User-Id", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -95,13 +81,10 @@ class CustomChannelControllerTest {
 
     @Test
     void deleteCustomChannel_Success() throws Exception {
-        User user = User.builder().id(1L).email("test@example.com").build();
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
         mockMvc.perform(delete("/custom-channels/2")
-                        .principal(new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())))
+                        .header("X-User-Id", 1L))
                 .andExpect(status().isNoContent());
 
-        verify(customChannelService).deleteCustomChannel(2L, user);
+        verify(customChannelService).deleteCustomChannel(2L, 1L);
     }
 }

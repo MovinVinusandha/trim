@@ -1,7 +1,5 @@
 package com.url_shortener.url_shortener.urls;
 
-import com.url_shortener.url_shortener.users.User;
-import com.url_shortener.url_shortener.users.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,35 +17,29 @@ class UrlRepositoryTest {
     private UrlRepository urlRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private FolderRepository folderRepository;
 
     @Autowired
     private TagRepository tagRepository;
 
-    private User testUser;
+    private Long testUserId = 1L;
 
     @BeforeEach
     void setUp() {
-        testUser = User.builder().email("urltest@example.com").password("pass").build();
-        userRepository.save(testUser);
-
-        Folder folder = Folder.builder().name("Test Folder").slug("test-folder").user(testUser).build();
+        Folder folder = Folder.builder().name("Test Folder").slug("test-folder").userId(testUserId).build();
         folderRepository.save(folder);
 
-        Tag tag = Tag.builder().name("Test Tag").color("#FFF").user(testUser).build();
+        Tag tag = Tag.builder().name("Test Tag").color("#FFF").userId(testUserId).build();
         tagRepository.save(tag);
 
         Url url = Url.builder().shortUrl("hash123").longUrl("https://example.com")
-                .user(testUser).folder(folder).tags(Set.of(tag)).build();
+                .userId(testUserId).folder(folder).tags(Set.of(tag)).build();
         urlRepository.save(url);
     }
 
     @Test
     void findAllByUserIdWithFilters_Success() {
-        List<Url> urls = urlRepository.findAllByUserIdWithFilters(testUser.getId(), null, null, null, null);
+        List<Url> urls = urlRepository.findAllByUserIdWithFilters(testUserId, null, null, null, null);
         
         assertThat(urls).hasSize(1);
         Url retrieved = urls.get(0);
@@ -60,10 +52,10 @@ class UrlRepositoryTest {
 
     @Test
     void findAllByUserIdWithFilters_FilterByFolderSlug() {
-        List<Url> urlsMatch = urlRepository.findAllByUserIdWithFilters(testUser.getId(), null, null, "test-folder", null);
+        List<Url> urlsMatch = urlRepository.findAllByUserIdWithFilters(testUserId, null, null, "test-folder", null);
         assertThat(urlsMatch).hasSize(1);
 
-        List<Url> urlsNoMatch = urlRepository.findAllByUserIdWithFilters(testUser.getId(), null, null, "non-existent-slug", null);
+        List<Url> urlsNoMatch = urlRepository.findAllByUserIdWithFilters(testUserId, null, null, "non-existent-slug", null);
         assertThat(urlsNoMatch).isEmpty();
     }
 }

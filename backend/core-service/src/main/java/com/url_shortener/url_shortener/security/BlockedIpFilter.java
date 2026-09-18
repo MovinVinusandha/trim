@@ -17,6 +17,7 @@ import java.util.Map;
 
 @Slf4j
 @Component
+@org.springframework.boot.autoconfigure.condition.ConditionalOnBean(BlockedIpService.class)
 @RequiredArgsConstructor
 public class BlockedIpFilter extends OncePerRequestFilter {
 

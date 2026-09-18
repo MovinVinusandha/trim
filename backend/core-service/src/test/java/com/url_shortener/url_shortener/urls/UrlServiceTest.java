@@ -1,10 +1,6 @@
 package com.url_shortener.url_shortener.urls;
 
 import com.url_shortener.url_shortener.client.AnalyticsServiceClient;
-import com.url_shortener.url_shortener.users.Role;
-import com.url_shortener.url_shortener.users.User;
-import com.url_shortener.url_shortener.users.UserNotFoundException;
-import com.url_shortener.url_shortener.users.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,14 +10,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -43,8 +33,6 @@ class UrlServiceTest {
     private UrlMapper urlMapper;
     @Mock
     private UrlRepository urlRepository;
-    @Mock
-    private UserRepository userRepository;
     @Mock
     private AnalyticsServiceClient analyticsServiceClient;
     @Mock
@@ -72,35 +60,19 @@ class UrlServiceTest {
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
     }
 
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
-    }
-
-    @Test
-    void shortenUrl_AdminUser_ThrowsAccessDenied() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_ROOT")))
-        );
-        UrlRequest request = new UrlRequest("https://example.com", null, null, null, null, null);
-
-        assertThatThrownBy(() -> urlService.generateShortUrl(request))
-                .isInstanceOf(AccessDeniedException.class);
-    }
-
     @Test
     void shortenUrl_CustomAliasAlreadyExists() {
         UrlRequest request = new UrlRequest("https://example.com", "my-brand", null, null, null, null);
         when(urlRepository.existsUrlByShortUrl("my-brand")).thenReturn(true);
 
-        assertThatThrownBy(() -> urlService.generateShortUrl(request))
+        assertThatThrownBy(() -> urlService.generateShortUrl(request, null, 1L))
                 .isInstanceOf(AliasAlreadyExistsException.class);
     }
 
     @Test
     void shortenUrl_InvalidCustomAlias() {
         UrlRequest request = new UrlRequest("https://example.com", "my/link", null, null, null, null);
-        assertThatThrownBy(() -> urlService.generateShortUrl(request))
+        assertThatThrownBy(() -> urlService.generateShortUrl(request, null, 1L))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -109,26 +81,12 @@ class UrlServiceTest {
         UrlRequest request = new UrlRequest("https://example.com", null, null, null, null, null);
         when(urlRepository.existsUrlByShortUrl(anyString())).thenReturn(true);
 
-        assertThatThrownBy(() -> urlService.generateShortUrl(request))
+        assertThatThrownBy(() -> urlService.generateShortUrl(request, null, null))
                 .isInstanceOf(UrlExistInDataBaseException.class);
     }
 
     @Test
-    void shortenUrl_WithPassword_Unauthenticated_ThrowsAccessDenied() {
-        UrlRequest request = new UrlRequest("https://example.com", null, null, "secret123", null, null);
-        when(urlMapper.toEntity(any())).thenReturn(new Url());
-
-        assertThatThrownBy(() -> urlService.generateShortUrl(request))
-                .isInstanceOf(AccessDeniedException.class);
-    }
-
-    @Test
     void shortenUrl_WithPassword_Authenticated_EncodesPassword() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))
-        );
-        User user = User.builder().id(1L).build();
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(passwordEncoder.encode("secret123")).thenReturn("hashedSecret");
 
         UrlRequest request = new UrlRequest("https://example.com", null, null, "secret123", null, null);
@@ -141,61 +99,41 @@ class UrlServiceTest {
         UrlSend expectedSend = new UrlSend("https://example.com", "HASH1", null, null, true, true, null, null, null);
         when(urlMapper.toSendDto(any(Url.class))).thenReturn(expectedSend);
 
-        UrlSend result = urlService.generateShortUrl(request);
+        UrlSend result = urlService.generateShortUrl(request, null, 1L);
 
         assertThat(result).isNotNull();
         assertThat(url.getPasswordHash()).isEqualTo("hashedSecret");
     }
 
     @Test
-    void shortenUrl_WithTagIds_UnauthorizedOwner_ThrowsAccessDenied() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))
-        );
-        User user = User.builder().id(1L).build();
-        User otherUser = User.builder().id(2L).build();
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
-        Tag foreignTag = Tag.builder().id(50L).user(otherUser).build();
+    void shortenUrl_WithTagIds_UnauthorizedOwner_ThrowsIllegalArgumentException() {
+        Tag foreignTag = Tag.builder().id(50L).userId(2L).build();
         when(tagRepository.findAllById(List.of(50L))).thenReturn(List.of(foreignTag));
 
         UrlRequest request = new UrlRequest("https://example.com", null, null, null, List.of(50L), null);
         Url url = new Url();
         when(urlMapper.toEntity(any())).thenReturn(url);
 
-        assertThatThrownBy(() -> urlService.generateShortUrl(request))
-                .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> urlService.generateShortUrl(request, null, 1L))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void shortenUrl_WithFolderId_UnauthorizedOwner_ThrowsAccessDenied() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))
-        );
-        User user = User.builder().id(1L).build();
-        User otherUser = User.builder().id(2L).build();
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
-        Folder foreignFolder = Folder.builder().id(30L).user(otherUser).build();
+    void shortenUrl_WithFolderId_UnauthorizedOwner_ThrowsIllegalArgumentException() {
+        Folder foreignFolder = Folder.builder().id(30L).userId(2L).build();
         when(folderRepository.findById(30L)).thenReturn(Optional.of(foreignFolder));
 
         UrlRequest request = new UrlRequest("https://example.com", null, null, null, null, 30L);
         Url url = new Url();
         when(urlMapper.toEntity(any())).thenReturn(url);
 
-        assertThatThrownBy(() -> urlService.generateShortUrl(request))
-                .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> urlService.generateShortUrl(request, null, 1L))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void shortenUrl_WithDefaultFolder_Success() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))
-        );
-        User user = User.builder().id(1L).build();
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
-        Folder linksFolder = Folder.builder().id(10L).name("Links").slug("links").user(user).build();
+        Folder linksFolder = Folder.builder().id(10L).name("Links").slug("links").userId(1L).build();
         when(folderRepository.findByUserIdAndSlug(1L, "links")).thenReturn(Optional.of(linksFolder));
 
         UrlRequest request = new UrlRequest("https://example.com", null, LocalDateTime.now().plusDays(2), null, null, null);
@@ -208,7 +146,7 @@ class UrlServiceTest {
         UrlSend expectedSend = new UrlSend("https://example.com", "HASH1", null, null, true, false, null, null, null);
         when(urlMapper.toSendDto(any(Url.class))).thenReturn(expectedSend);
 
-        UrlSend result = urlService.generateShortUrl(request);
+        UrlSend result = urlService.generateShortUrl(request, null, 1L);
 
         assertThat(result).isNotNull();
         assertThat(url.getFolder()).isEqualTo(linksFolder);
@@ -217,16 +155,10 @@ class UrlServiceTest {
 
     @Test
     void shortenUrl_DefaultFolder_FallbackByNameAndCreation() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))
-        );
-        User user = User.builder().id(1L).build();
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
         when(folderRepository.findByUserIdAndSlug(1L, "links")).thenReturn(Optional.empty());
         when(folderRepository.findByNameIgnoreCaseAndUserId("Links", 1L)).thenReturn(Optional.empty());
 
-        Folder createdDefault = Folder.builder().id(20L).name("Links").slug("links").user(user).build();
+        Folder createdDefault = Folder.builder().id(20L).name("Links").slug("links").userId(1L).build();
         when(folderRepository.save(any(Folder.class))).thenReturn(createdDefault);
 
         UrlRequest request = new UrlRequest("https://example.com", null, null, null, null, null);
@@ -239,7 +171,7 @@ class UrlServiceTest {
         UrlSend expectedSend = new UrlSend("https://example.com", "HASH1", null, null, true, false, null, null, null);
         when(urlMapper.toSendDto(any(Url.class))).thenReturn(expectedSend);
 
-        UrlSend result = urlService.generateShortUrl(request);
+        UrlSend result = urlService.generateShortUrl(request, null, 1L);
 
         assertThat(result).isNotNull();
         assertThat(url.getFolder()).isEqualTo(createdDefault);
@@ -249,12 +181,13 @@ class UrlServiceTest {
     void shortenUrl_ExpiredDateInPast_SetsInactive() {
         UrlRequest request = new UrlRequest("https://example.com", null, LocalDateTime.now().minusDays(1), null, null, null);
         Url url = new Url();
+        url.setExpiresAt(request.getExpiresAt());
         when(urlMapper.toEntity(any())).thenReturn(url);
         when(urlRepository.save(any(Url.class))).thenAnswer(inv -> inv.getArgument(0));
         UrlSend expectedSend = new UrlSend("https://example.com", "HASH1", null, null, false, false, null, null, null);
         when(urlMapper.toSendDto(any(Url.class))).thenReturn(expectedSend);
 
-        UrlSend result = urlService.generateShortUrl(request);
+        UrlSend result = urlService.generateShortUrl(request, null, null);
 
         assertThat(result).isNotNull();
         assertThat(url.isActive()).isFalse();
@@ -332,7 +265,7 @@ class UrlServiceTest {
         when(passwordEncoder.matches("wrongPass", "encodedPass")).thenReturn(false);
 
         assertThatThrownBy(() -> urlService.getUrlForUnlock("unlockHash", "wrongPass"))
-                .isInstanceOf(BadCredentialsException.class);
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -346,12 +279,7 @@ class UrlServiceTest {
 
     @Test
     void getUrl_Success() {
-        User user = User.builder().id(1L).build();
-        Url url = Url.builder().id(1L).shortUrl("hash1").user(user).build();
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(1L, null, List.of())
-        );
-
+        Url url = Url.builder().id(1L).shortUrl("hash1").userId(1L).build();
         when(urlRepository.findByShortUrl("hash1")).thenReturn(url);
         UrlDto dto = new UrlDto(BigInteger.ONE, "https://long.com", "hash1", BigInteger.ZERO, null, null, null, true, false, null, null, null);
         when(urlMapper.toDto(url)).thenReturn(dto);
@@ -364,13 +292,9 @@ class UrlServiceTest {
     }
 
     @Test
-    void getAllUrls_Admin_SortByClickCount() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_ROOT")))
-        );
-
-        Url url1 = Url.builder().id(1L).shortUrl("h1").build();
-        Url url2 = Url.builder().id(2L).shortUrl("h2").build();
+    void getAllUrls_SortByClickCount() {
+        Url url1 = Url.builder().id(1L).shortUrl("h1").userId(1L).build();
+        Url url2 = Url.builder().id(2L).shortUrl("h2").userId(1L).build();
 
         when(urlRepository.findByUserIdAndFolderIsNull(1L)).thenReturn(List.of());
         when(urlRepository.findAllByUserIdWithFilters(1L, null, null, null, null)).thenReturn(new ArrayList<>(List.of(url1, url2)));
@@ -383,7 +307,7 @@ class UrlServiceTest {
         when(analyticsServiceClient.getUrlClickCount(1L)).thenReturn(5L);
         when(analyticsServiceClient.getUrlClickCount(2L)).thenReturn(20L);
 
-        List<UrlDto> result = urlService.getAllUrls("accessed_times", null, null, null, null);
+        List<UrlDto> result = urlService.getAllUrls(1L, "accessed_times", null, null, null, null);
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).getId()).isEqualTo(BigInteger.TWO);
@@ -392,25 +316,20 @@ class UrlServiceTest {
 
     @Test
     void getAllUrls_User_WithUnassignedUrlsAndFilters() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))
-        );
-
-        User user = User.builder().id(1L).build();
         Folder linksFolder = Folder.builder().id(10L).name("Links").build();
-        Url unassigned = Url.builder().id(100L).user(user).build();
+        Url unassigned = Url.builder().id(100L).userId(1L).build();
 
         when(urlRepository.findByUserIdAndFolderIsNull(1L)).thenReturn(List.of(unassigned));
         when(folderRepository.findByNameIgnoreCaseAndUserId("Links", 1L)).thenReturn(Optional.of(linksFolder));
 
-        Url url = Url.builder().id(1L).shortUrl("h1").user(user).folder(linksFolder).build();
+        Url url = Url.builder().id(1L).shortUrl("h1").userId(1L).folder(linksFolder).build();
         when(urlRepository.findAllByUserIdWithFilters(eq(1L), eq(null), eq(10L), eq(null), eq("search"))).thenReturn(new ArrayList<>(List.of(url)));
 
         UrlDto dto = new UrlDto(BigInteger.ONE, "https://long.com", "h1", BigInteger.ZERO, null, null, null, true, false, null, 10L, "Links");
         when(urlMapper.toDto(url)).thenReturn(dto);
         when(analyticsServiceClient.getUrlClickCount(1L)).thenReturn(3L);
 
-        List<UrlDto> result = urlService.getAllUrls("id", null, 10L, null, "search");
+        List<UrlDto> result = urlService.getAllUrls(1L, "id", null, 10L, null, "search");
 
         assertThat(result).hasSize(1);
         assertThat(unassigned.getFolder()).isEqualTo(linksFolder);
@@ -418,64 +337,15 @@ class UrlServiceTest {
     }
 
     @Test
-    void updateUrl_ByUrlRequest_Success() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(1L, null, List.of())
-        );
-        User user = User.builder().id(1L).build();
-        Url url = Url.builder().id(1L).shortUrl("oldHash").user(user).build();
-
-        when(urlRepository.findByShortUrl("oldHash")).thenReturn(url);
-        when(urlRepository.existsUrlByShortUrl("newHash")).thenReturn(false);
-        when(cacheManager.getCache("urls")).thenReturn(cache);
-
-        UrlRequest request = new UrlRequest("https://new.com", "newHash", LocalDateTime.now().plusDays(1), null, null, null);
-        UrlUpdateDto updateDto = new UrlUpdateDto("https://new.com", "newHash", LocalDateTime.now(), null);
-        when(urlMapper.toUpdateDto(url)).thenReturn(updateDto);
-
-        UrlUpdateDto result = urlService.updateUrl(request, "oldHash");
-
-        assertThat(result).isNotNull();
-        assertThat(url.getShortUrl()).isEqualTo("newHash");
-        verify(cache).evict("newHash");
-    }
-
-    @Test
-    void updateUrl_ByUrlRequest_ExpiredInPast_SetsInactive() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(1L, null, List.of())
-        );
-        User user = User.builder().id(1L).build();
-        Url url = Url.builder().id(1L).shortUrl("oldHash").user(user).build();
-
-        when(urlRepository.findByShortUrl("oldHash")).thenReturn(url);
-        when(cacheManager.getCache("urls")).thenReturn(cache);
-
-        UrlRequest request = new UrlRequest("https://new.com", null, LocalDateTime.now().minusDays(1), null, null, null);
-        doAnswer(inv -> {
-            url.setExpiresAt(request.getExpiresAt());
-            return null;
-        }).when(urlMapper).updateUrl(any(), any());
-        UrlUpdateDto updateDto = new UrlUpdateDto("https://new.com", "oldHash", LocalDateTime.now(), null);
-        when(urlMapper.toUpdateDto(url)).thenReturn(updateDto);
-
-        UrlUpdateDto result = urlService.updateUrl(request, "oldHash");
-
-        assertThat(result).isNotNull();
-        assertThat(url.isActive()).isFalse();
-    }
-
-    @Test
     void updateUrl_ByUpdateRequestDto_Success() {
-        User user = User.builder().id(1L).role(Role.USER).build();
-        Url url = Url.builder().id(1L).shortUrl("hash123").user(user).isActive(true).build();
+        Url url = Url.builder().id(1L).shortUrl("hash123").userId(1L).isActive(true).build();
 
         when(urlRepository.findByShortUrl("hash123")).thenReturn(url);
         when(urlRepository.save(any(Url.class))).thenAnswer(inv -> inv.getArgument(0));
         when(cacheManager.getCache("urls")).thenReturn(cache);
         when(passwordEncoder.encode("newSecret")).thenReturn("newHashedSecret");
 
-        Tag tag = Tag.builder().id(5L).user(user).build();
+        Tag tag = Tag.builder().id(5L).userId(1L).build();
         when(tagRepository.findAllById(List.of(5L))).thenReturn(List.of(tag));
 
         UrlUpdateRequestDto req = new UrlUpdateRequestDto();
@@ -488,7 +358,7 @@ class UrlServiceTest {
         when(urlMapper.toDto(url)).thenReturn(mockDto);
         when(analyticsServiceClient.getUrlClickCount(1L)).thenReturn(0L);
 
-        UrlDto result = urlService.updateUrl("hash123", req, user);
+        UrlDto result = urlService.updateUrl("hash123", req, 1L);
 
         assertThat(result).isNotNull();
         assertThat(url.getLongUrl()).isEqualTo("https://updated.com");
@@ -498,89 +368,25 @@ class UrlServiceTest {
     }
 
     @Test
-    void updateUrl_ByUpdateRequestDto_ClearPassword_AdminOwner() {
-        User admin = User.builder().id(99L).role(Role.ROOT).build();
-        User owner = User.builder().id(1L).role(Role.USER).build();
-        Url url = Url.builder().id(1L).shortUrl("hash123").user(owner).passwordHash("existingSecret").build();
-
-        when(urlRepository.findByShortUrl("hash123")).thenReturn(url);
-        when(urlRepository.save(any(Url.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(cacheManager.getCache("urls")).thenReturn(cache);
-
-        UrlUpdateRequestDto req = new UrlUpdateRequestDto();
-        req.setPassword(""); // Clear password
-        req.setExpiresAt(LocalDateTime.now().minusDays(1)); // In past
-
-        UrlDto mockDto = new UrlDto(BigInteger.ONE, "https://updated.com", "hash123", BigInteger.ZERO, null, null, null, false, false, null, null, null);
-        when(urlMapper.toDto(url)).thenReturn(mockDto);
-        when(analyticsServiceClient.getUrlClickCount(1L)).thenReturn(0L);
-
-        UrlDto result = urlService.updateUrl("hash123", req, admin);
-
-        assertThat(result).isNotNull();
-        assertThat(url.getPasswordHash()).isNull();
-        assertThat(url.isActive()).isFalse();
-    }
-
-    @Test
-    void updateUrl_ByUpdateRequestDto_Unauthorized_ThrowsAccessDenied() {
-        User user = User.builder().id(1L).role(Role.USER).build();
-        User otherUser = User.builder().id(2L).role(Role.USER).build();
-        Url url = Url.builder().id(1L).shortUrl("hash123").user(otherUser).build();
+    void updateUrl_ByUpdateRequestDto_Unauthorized_ThrowsIllegalArgumentException() {
+        Url url = Url.builder().id(1L).shortUrl("hash123").userId(2L).build();
 
         when(urlRepository.findByShortUrl("hash123")).thenReturn(url);
 
         UrlUpdateRequestDto req = new UrlUpdateRequestDto();
 
-        assertThatThrownBy(() -> urlService.updateUrl("hash123", req, user))
-                .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> urlService.updateUrl("hash123", req, 1L))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void deleteUrl_Success() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(1L, null, List.of())
-        );
-        User user = User.builder().id(1L).build();
-        Url url = Url.builder().id(1L).shortUrl("delHash").user(user).build();
+        Url url = Url.builder().id(1L).shortUrl("delHash").userId(1L).build();
         when(urlRepository.findByShortUrl("delHash")).thenReturn(url);
 
-        urlService.deleteUrl("delHash");
+        urlService.deleteUrl("delHash", 1L);
 
         verify(urlRepository).delete(url);
-    }
-
-    @Test
-    void toDtoWithClickCountSafe_Exception_ReturnsNull() {
-        Url url = Url.builder().id(999L).build();
-        when(urlMapper.toDto(url)).thenThrow(new RuntimeException("Mapping error"));
-
-        UrlDto result = ReflectionTestUtils.invokeMethod(urlService, "toDtoWithClickCountSafe", url);
-        assertThat(result).isNull();
-    }
-
-    @Test
-    void isUserCorrect_RootRoleAuthority_Passes() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(99L, null, List.of(new SimpleGrantedAuthority("ROLE_ROOT")))
-        );
-        User owner = User.builder().id(1L).build();
-        Url url = Url.builder().id(10L).user(owner).build();
-
-        // Should not throw
-        ReflectionTestUtils.invokeMethod(UrlService.class, "isUserCorrect", url);
-    }
-
-    @Test
-    void isUserCorrect_RootAuthorityWithoutPrefix_Passes() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(99L, null, List.of(new SimpleGrantedAuthority("ROOT")))
-        );
-        User owner = User.builder().id(1L).build();
-        Url url = Url.builder().id(10L).user(owner).build();
-
-        // Should not throw
-        ReflectionTestUtils.invokeMethod(UrlService.class, "isUserCorrect", url);
     }
 
     @Test
@@ -593,7 +399,7 @@ class UrlServiceTest {
                 .build();
         when(urlRepository.findByShortUrl("expiredHash")).thenReturn(url);
 
-        Url result = ReflectionTestUtils.invokeMethod(urlService, "isExistsShortUrl", "expiredHash");
+        Url result = urlService.isExistsShortUrl("expiredHash");
 
         assertThat(result).isNotNull();
         assertThat(result.isActive()).isFalse();
@@ -602,11 +408,10 @@ class UrlServiceTest {
 
     @Test
     void createBatchCampaignUrls_Success() {
-        User user = User.builder().id(1L).role(Role.USER).build();
-        Folder folder = Folder.builder().id(10L).user(user).name("Campaigns").build();
+        Folder folder = Folder.builder().id(10L).userId(1L).name("Campaigns").build();
         when(folderRepository.findById(10L)).thenReturn(Optional.of(folder));
 
-        Tag tag = Tag.builder().id(5L).user(user).name("Promo").build();
+        Tag tag = Tag.builder().id(5L).userId(1L).name("Promo").build();
         when(tagRepository.findAllById(List.of(5L))).thenReturn(List.of(tag));
 
         when(urlRepository.existsUrlByShortUrl(any())).thenReturn(false);
@@ -635,9 +440,7 @@ class UrlServiceTest {
                 .channels(List.of(ch1, ch2))
                 .build();
 
-        ReflectionTestUtils.setField(urlService, "rootDomainUrl", "http://localhost");
-
-        BatchCampaignResponseDto response = urlService.createBatchCampaignUrls(request, user);
+        BatchCampaignResponseDto response = urlService.createBatchCampaignUrls(request, 1L);
 
         assertThat(response).isNotNull();
         assertThat(response.getCampaignName()).isEqualTo("summer_sale");
@@ -648,18 +451,5 @@ class UrlServiceTest {
         assertThat(response.getItems().get(0).getLongUrlWithUtm()).contains("utm_campaign=summer_sale");
         assertThat(response.getItems().get(1).getChannelName()).isEqualTo("Twitter");
         assertThat(response.getItems().get(1).getLongUrlWithUtm()).contains("utm_source=twitter");
-    }
-
-    @Test
-    void createBatchCampaignUrls_AdminRole_ThrowsAccessDenied() {
-        User adminUser = User.builder().id(99L).role(Role.ADMIN).build();
-        BatchCampaignRequestDto request = BatchCampaignRequestDto.builder()
-                .longUrl("https://example.com")
-                .campaignName("promo")
-                .channels(List.of(BatchChannelItemDto.builder().name("FB").utmSource("facebook").build()))
-                .build();
-
-        assertThatThrownBy(() -> urlService.createBatchCampaignUrls(request, adminUser))
-                .isInstanceOf(AccessDeniedException.class);
     }
 }

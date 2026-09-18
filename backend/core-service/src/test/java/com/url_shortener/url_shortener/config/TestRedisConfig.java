@@ -3,10 +3,12 @@ package com.url_shortener.url_shortener.config;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -17,7 +19,16 @@ public class TestRedisConfig {
     @Bean
     @Primary
     public RedisConnectionFactory redisConnectionFactory() {
-        return mock(RedisConnectionFactory.class);
+        RedisConnectionFactory factory = mock(RedisConnectionFactory.class);
+        RedisConnection connection = mock(RedisConnection.class);
+        when(factory.getConnection()).thenReturn(connection);
+        return factory;
+    }
+
+    @Bean
+    @Primary
+    public RedisMessageListenerContainer redisMessageListenerContainer() {
+        return mock(RedisMessageListenerContainer.class);
     }
 
     @Bean
