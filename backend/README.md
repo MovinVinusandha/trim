@@ -1,63 +1,47 @@
-# Backend API - trim
+# Backend Services - trim
 
-Enterprise-grade Spring Boot 3 REST API powering URL redirection, analytics processing, user management, and organization hierarchies.
+High-performance, decoupled **Spring Boot 3 Multi-Module Microservices Architecture** powering URL redirection, real-time analytics, user authentication, and enterprise administration behind an intelligent Spring Cloud API Gateway.
 
-## Key Features
+## Microservices Modules
 
-- **UTC Everywhere Timezone Standard**: Global UTC timezone enforcement at the JVM level (`TimeZone.setDefault("UTC")`) with ISO-8601 UTC timestamp serialization (`yyyy-MM-dd'T'HH:mm:ss.SSSX`) across all database entities, DTOs, and API responses.
-- **Scheduled Expiration Sweeper**: Automated background worker (`@Scheduled(fixedRate = 60000)`) that queries active URLs past their `expiresAt` threshold, deactivates them (`isActive = false`), and evicts stale cache keys from Redis.
-- **Transactional Account Hard-Delete**: Comprehensive `@Transactional` cascade process that completely purges click events, short URLs, tag associations, custom tags, folders, and user credentials upon account deletion.
-- **Asynchronous Click Analytics**: Non-blocking click processing leveraging Spring thread pools and the Yauaa library for background User-Agent parsing (device, operating system, browser) and IP geo-location logging without delaying HTTP 302 redirects.
-- **Redis Caching & Invalidation**: High-speed Redis cache layer for short URL resolution with aggressive cache eviction upon URL updates, password modifications, expiration, or deletion.
-- **Flyway Database Migrations**: Version-controlled SQL migration scripts managing schema evolution and relational constraints across 12 migrations (V1 to V12).
-- **Stateless JWT Security**: Dual-token architecture issuing short-lived access tokens (5 minutes) and securing long-lived refresh tokens (7 days) in HTTP-only, Secure cookies.
-- **Interactive OpenAPI / Swagger Documentation**: Built-in interactive API documentation via SpringDoc OpenAPI (`/swagger-ui/index.html`).
+| Service | Port | Database | Primary Responsibilities |
+| :--- | :--- | :--- | :--- |
+| **`common-lib`** | - | - | Shared DTOs, events, security constants, and model contracts. |
+| **`api-gateway`** | `8080` | Redis | Single entry point, JWT authentication filter, role authorization, and distributed rate limiting. |
+| **`auth-service`** | `8081` | `url_shortener_auth` | User accounts, registration, email verification, Google/GitHub OAuth2, and perimeter IP blocking. |
+| **`core-service`** | `8082` | `url_shortener_core` | Link shortening, custom slugs, dynamic QR codes, folder organization, tags, and threat scanner. |
+| **`analytics-service`** | `8083` | `url_shortener_analytics` | Asynchronous click tracking, Yauaa User-Agent parsing, IP geolocation, and timeseries stats. |
+| **`redirect-service`** | `8084` | `url_shortener_core` / Redis | High-speed link resolution (`/{hash}`), Redis cache hits, and password protection unlock. |
+| **`admin-service`** | `8085` | `url_shortener_admin` | Platform KPI overview, link triage & moderation, audit logs, dynamic settings, and Redis sync. |
 
-## Setup
+## Key Architectural Features
+
+- **Decoupled Database Boundaries**: Each microservice manages its own dedicated MySQL database schema with zero cross-database JOINs.
+- **Shared Redis Event & Sync Bus**: Administrative domain blacklists, perimeter blocked IPs, and dynamic system settings are pushed to Redis by `admin-service` and consumed in real-time ($O(1)$) by `core-service` and `auth-service`.
+- **Fault-Tolerant Resilience**: `admin-service` incorporates graceful fallback degradation for inter-service REST calls. If an upstream service is temporarily unavailable, the admin dashboard renders with safe fallback defaults instead of failing with HTTP 500.
+- **UTC Everywhere Timezone Standard**: Global UTC timezone enforcement at the JVM level (`TimeZone.setDefault("UTC")`) with ISO-8601 UTC timestamp serialization across all entities, DTOs, and API responses.
+- **Scheduled Expiration Sweeper**: Automated background worker (`@Scheduled(fixedRate = 60000)`) in `core-service` deactivating expired links and evicting stale cache keys from Redis.
+- **Stateless JWT Security**: Dual-token architecture issuing short-lived access tokens (15 minutes) and securing long-lived refresh tokens (7 days) in HTTP-only, Secure cookies.
+
+## Setup & Local Development
 
 ### Prerequisites
 - Java 21 (JDK)
-- Maven 3.8+
+- Maven 3.9+
 - MySQL 8.0+
 - Redis 7.0+
 
-### Steps to Run Locally
-1. Ensure MySQL and Redis services are running locally.
-2. Create the target database in MySQL:
-```sql
-CREATE DATABASE url_shortener;
-```
-3. Configure environment variables in `.env` or your shell environment (refer to the Configuration section).
-4. Run the application using the Maven wrapper:
+### Building All Modules
 ```bash
-./mvnw spring-boot:run
+cd backend
+./mvnw clean package -DskipTests
 ```
-The API server will initialize on `http://localhost:8080`.
 
-## Configuration
-
-The following environment variables configure the backend across development and production profiles:
-
-| Variable | Description | Default | Example |
-| :--- | :--- | :--- | :--- |
-| `APP_SELF_HOSTED` | Enable self-hosted single-admin mode (skips DNS MX validation) | `false` | `true` |
-| `ALLOW_REGISTRATION` | Permit public visitor registration on the instance | `true` | `false` |
-| `REQUIRE_EMAIL_VERIFICATION` | Enforce email verification token before allowing login | `true` | `false` |
-| `SPRING_DATASOURCE_URL` | JDBC connection URL for MySQL | `jdbc:mysql://localhost:3306/url_shortener` | `jdbc:mysql://localhost:3306/url_shortener` |
-| `SPRING_DATASOURCE_USERNAME` | MySQL database username | `root` | `root` |
-| `SPRING_DATASOURCE_PASSWORD` | MySQL database password | `root` | `secure_db_password` |
-| `REDIS_HOST` | Hostname of the Redis cache instance | `localhost` | `localhost` |
-| `REDIS_PORT` | Port of the Redis cache instance | `6379` | `6379` |
-| `JWT_SECRET` | 256-bit secret key for HMAC-SHA token signing | - | `your_256_bit_secret_key_here` |
-| `ROOT_USER_EMAIL` | Initial ROOT administrator account email | `admin@example.com` | `admin@trim.com` |
-| `ROOT_USER_PASSWORD` | Initial ROOT administrator account password | `root` | `secure_admin_password` |
-| `ROOT_DOMAIN_URL` | Base URL used to assemble full short link URLs | `http://localhost:8080` | `https://trim.com` |
-| `APP_DOMAIN_URL` | Allowed origins for Spring Security CORS headers | `http://localhost:5173,http://localhost` | `https://app.trim.com` |
-| `APP_DASHBOARD_URL` | Frontend URL for password unlock and expired link prompts | `http://app.localhost` | `https://app.trim.com` |
-| `FRONTEND_URL` | General frontend application root URL | `http://localhost` | `https://trim.com` |
-| `SPRING_MAIL_HOST` | SMTP server host (leave empty for console fallback) | - | `smtp.gmail.com` |
-| `OAUTH_GOOGLE_CLIENT_ID` | Google OAuth client ID (leave empty if unconfigured) | - | `google-client-id` |
-| `OAUTH_GITHUB_CLIENT_ID` | GitHub OAuth client ID (leave empty if unconfigured) | - | `github-client-id` |
+### Running the Complete Stack
+From the project root:
+```bash
+docker compose up -d --build
+```
 
 ## API Endpoints
 

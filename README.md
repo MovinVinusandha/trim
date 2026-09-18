@@ -30,7 +30,78 @@ High-performance URL shortener with enterprise link attribution, granular analyt
 
 ## Architecture
 
-The system is deployed using a decoupled, domain-driven architecture that segments public traffic, management interfaces, and API services across dedicated subdomains.
+The system is deployed using a modern, decoupled **Microservices Architecture** that segments public traffic, management interfaces, and API services across dedicated subdomains and independent Spring Boot services behind an intelligent Spring Cloud API Gateway:
+
+```
+                            ┌─────────────────────────────────┐
+                            │   Nginx Reverse Proxy (:80)     │
+                            └────────────────┬────────────────┘
+                                             │
+               ┌─────────────────────────────┼─────────────────────────────┐
+               ▼                             ▼                             ▼
+    trim.com / localhost           app.trim.com / app.localhost   api.trim.com / api.localhost
+    (Landing & Redirects)             (React SPA Frontend)             (Spring Cloud Gateway)
+               │                                                                   │
+               ▼                                                                   ▼
+    ┌──────────────────────┐                                       ┌───────────────────────────────┐
+    │ redirect-service     │                                       │ api-gateway (:8080)           │
+    │ (:8084)              │                                       │ (JWT / Role Auth / Rate Limit)│
+    └──────────┬───────────┘                                       └───────────────┬───────────────┘
+               │                                                                   │
+               ├───────────────────────────────┬───────────────────┬───────────────┼───────────────┐
+               ▼                               ▼                   ▼               ▼               ▼
+    ┌──────────────────────┐       ┌──────────────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+    │  auth-service:8081   │       │   core-service:8082  │ │analytics:8083│ │ admin:8085 │ │ redirect:8084 │
+    │  (Users, OAuth, JWT) │       │   (Links, Folders,   │ │ (Clicks,    │ │ (Audit,     │ │ (Fast Hash  │
+    │                      │       │    Tags, Channels)   │ │  Geo, UA)   │ │  Settings)  │ │  Resolution)│
+    └──────────┬───────────┘       └──────────┬───────────┘ └──────┬──────┘ └──────┬──────┘ └──────┬──────┘
+               │                              │                    │               │               │
+               ▼                              ▼                    ▼               ▼               ▼
+        MySQL (auth db)                MySQL (core db)      MySQL (analytics) MySQL (admin)   Redis (Cache)
+```
+
+### Microservices Ecosystem
+
+1. **`api-gateway` (Port `8080`)**:
+   - Single unified entry point for all API requests.
+   - Enforces stateless JWT validation and role-based access control (`ADMIN`, `ROOT`, `USER`).
+   - Built-in distributed Redis rate limiting and fallback handlers.
+   - Injects authenticated user context headers (`X-User-Id`, `X-User-Role`, `X-User-Email`) downstream.
+
+2. **`auth-service` (Port `8081`)**:
+   - Authentication, registration, email verification, and password resets.
+   - Dual-token lifecycle: short-lived access JWTs and HTTP-only refresh tokens.
+   - Google and GitHub OAuth2 social logins.
+   - Real-time perimeter IP blocking synchronized via Redis (`security:blocked_ips`).
+
+3. **`core-service` (Port `8082`)**:
+   - Core link management: URL shortening, custom aliases, dynamic QR codes.
+   - Hierarchical folder organization, color-coded tagging, custom channels, and UTM templates.
+   - Heuristic and Google Safe Browsing threat detection with Redis-synchronized blacklist (`security:blacklisted_domains`).
+   - Scheduled automated link expiration sweeper.
+
+4. **`analytics-service` (Port `8083`)**:
+   - Asynchronous, non-blocking click tracking.
+   - User-Agent device, operating system, and browser parsing (via Yauaa).
+   - Country and IP geolocation attribution.
+   - Aggregated timeseries, country heatmaps, and folder-level metrics.
+
+5. **`redirect-service` (Port `8084`)**:
+   - Ultra-low-latency short link resolution (`/{hash}`).
+   - Direct Redis cache read ($O(1)$) with MySQL fallback.
+   - Password protection challenge unlock interface (`/secure/:hash`).
+   - Asynchronous event publishing on link click.
+
+6. **`admin-service` (Port `8085`)**:
+   - Administrative portal and platform KPI dashboard.
+   - Link moderation, triage hub, and quarantine management.
+   - Immutable SHA-256 hash-chained audit logs with integrity verification.
+   - Dynamic system settings vault (`.env` synchronization and live SMTP testing).
+   - Domain blacklist and perimeter blocked IP management with real-time Redis distribution.
+   - Resilient multi-service aggregation with graceful fallback degradation.
+
+7. **`common-lib`**:
+   - Shared domain entities, DTOs, Kafka/internal events, and security constants used across all services.
 
 ### Three-Pillar Subdomain Design
 The platform divides incoming traffic into three distinct functional pillars:
@@ -38,25 +109,16 @@ The platform divides incoming traffic into three distinct functional pillars:
 1. **Root Domain (`trim.com` / `localhost`)**:
    - Serves the public landing page (`/`).
    - Resolves all short link redirects (`/{hash}`).
-   - Proxies short link resolution directly to the Spring Boot backend while maintaining fast static asset delivery.
-   - Automatically redirects any dashboard paths accessed on the root domain (`/dashboard`, `/analytics`, `/folders`, `/tags`, `/settings`, `/login`, `/register`) to the application subdomain.
+   - Proxies short link resolution directly to `redirect-service:8084`.
+   - Automatically redirects dashboard paths to `app.localhost`.
 
 2. **App Subdomain (`app.trim.com` / `app.localhost`)**:
-   - Serves the authenticated React single-page application (SPA).
-   - Hosts the user dashboard, link manager, folder organization, tag categorization, analytics dashboards, and account settings.
-   - Utilizes client-side routing with fallback for direct deep linking.
+   - Serves the compiled React 19 SPA frontend.
+   - Hosts user dashboard, link manager, analytics charts, and administrative portal.
 
 3. **API Subdomain (`api.trim.com` / `api.localhost`)**:
-   - Exposes the Spring Boot REST API endpoints.
-   - Handles authentication, link CRUD, QR generation, analytics aggregation, and user management.
-   - Manages Cross-Origin Resource Sharing (CORS) preflight requests and enforces stateless JWT validation.
-   - Provides OpenAPI and Swagger UI documentation (`/swagger-ui/index.html`, `/v3/api-docs`).
-
-### Nginx Smart Traffic Routing
-Nginx serves as an intelligent reverse proxy and traffic cop at the perimeter:
-- **Root Domain Traffic**: Checks if the request path matches an authenticated frontend route and performs an HTTP 301 redirect to the `app.` subdomain. All single-segment short link hashes (`/{hash}`) are proxied to the backend for resolution and click tracking. If the backend returns 404, it falls back to the frontend 404 handler.
-- **App Domain Traffic**: Serves compiled static frontend assets with caching and routes all sub-paths to `/index.html` for React Router resolution.
-- **API Domain Traffic**: Intercepts `OPTIONS` preflight requests to terminate CORS at the edge and proxies API requests directly to the Spring Boot service (`backend:8080`).
+   - Proxies requests to `api-gateway:8080`.
+   - Routes traffic downstream to the respective microservices.
 
 ## Key Features
 
@@ -96,20 +158,28 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-This starts MySQL 8.0, Redis 7 (Alpine), the Spring Boot backend, and the Nginx frontend proxy.
-- Public Landing & Short Links: `http://localhost` (or `http://trim.com`)
-- App Dashboard: `http://app.localhost` (or `http://app.trim.com`)
-- API Server: `http://api.localhost` (or `http://api.trim.com`)
-- Direct Backend API: `http://localhost:8080`
+This starts MySQL 8.0, Redis 7 (Alpine), the 6 Spring Boot microservices, and the Nginx perimeter reverse proxy:
+- **Public Landing & Short Links**: `http://localhost` (or `http://trim.com`)
+- **App Dashboard**: `http://app.localhost` (or `http://app.trim.com`)
+- **API Gateway (Edge Router)**: `http://api.localhost` (or `http://api.trim.com` / `http://localhost:8080`)
+- **Direct Service Endpoints**:
+  - `auth-service`: `http://localhost:8081`
+  - `core-service`: `http://localhost:8082`
+  - `analytics-service`: `http://localhost:8083`
+  - `redirect-service`: `http://localhost:8084`
+  - `admin-service`: `http://localhost:8085`
 
 ### Local Development
 
 #### Backend Development
 ```bash
 cd backend
-./mvnw spring-boot:run
+./mvnw clean package -DskipTests
 ```
-API server runs at `http://localhost:8080`. Swagger documentation is accessible at `http://localhost:8080/swagger-ui/index.html`.
+You can run any individual service (e.g. `api-gateway`, `core-service`, `auth-service`) using:
+```bash
+./mvnw spring-boot:run -pl core-service
+```
 
 #### Frontend Development
 ```bash
@@ -160,13 +230,12 @@ Trim is engineered to support two operational profiles out-of-the-box:
 | `APP_DOMAIN_URL` | Allowed origin URL for Spring Security CORS configuration | `http://localhost:5173,http://localhost` | `https://app.trim.com` |
 | `APP_DASHBOARD_URL` | Base URL used for redirecting password-protected and expired links | `http://app.localhost` | `https://app.trim.com` |
 | `FRONTEND_URL` | General frontend origin URL | `http://localhost` | `https://trim.com` |
-| `VITE_API_BASE_URL` | Base API URL used by Axios in the React frontend | `http://localhost:8080` | `https://api.trim.com` |
-| `VITE_ROOT_DOMAIN` | Short link prefix displayed in the frontend link creator | `http://localhost:8080` | `https://trim.com` |
-| `MYSQL_ROOT_PASSWORD` | Root administrative password for MySQL database | `root` | `my_secure_db_password` |
-| `MYSQL_DATABASE` | Target MySQL database name | `url_shortener` | `url_shortener` |
-| `SPRING_DATASOURCE_URL` | JDBC connection string for Spring Boot | `jdbc:mysql://mysql:3306/url_shortener...` | `jdbc:mysql://mysql:3306/url_shortener` |
-| `SPRING_DATASOURCE_USERNAME` | Database username for Spring Boot connection | `root` | `root` |
-| `SPRING_DATASOURCE_PASSWORD` | Database password for Spring Boot connection | `root` | `my_secure_db_password` |
+| `VITE_API_BASE_URL` | Base API URL used by Axios in the React frontend | `http://api.localhost` | `https://api.trim.com` |
+| `VITE_ROOT_DOMAIN` | Short link prefix displayed in the frontend link creator | `http://localhost` | `https://trim.com` |
+| `MYSQL_ROOT_PASSWORD` | Root administrative password for MySQL database | `rootpassword123` | `my_secure_db_password` |
+| `MYSQL_DATABASE` | Primary database name (individual services use `_auth`, `_core`, `_analytics`, `_admin`) | `url_shortener_core` | `url_shortener_core` |
+| `SPRING_DATASOURCE_USERNAME` | Database username for service connections | `root` | `root` |
+| `SPRING_DATASOURCE_PASSWORD` | Database password for service connections | `root` | `my_secure_db_password` |
 | `REDIS_HOST` | Hostname of the Redis instance | `redis` | `redis` |
 | `REDIS_PORT` | Port of the Redis instance | `6379` | `6379` |
 | `JWT_SECRET` | 256-bit secret key used to sign and verify HMAC-SHA JWT tokens | - | `your_256_bit_secure_random_key` |
@@ -200,43 +269,28 @@ The application defines a multi-tier network topology via Docker Compose:
 ```text
 trim/
 ├── backend/
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/com/url_shortener/url_shortener/
-│   │   │   │   ├── admin/             # Admin provisioning & security rules
-│   │   │   │   ├── analytics/         # Async click tracking, geo & user-agent parsers
-│   │   │   │   ├── auth/              # JWT tokens, security filter chain & cookies
-│   │   │   │   ├── common/            # Global exception handlers, startup runners
-│   │   │   │   ├── config/            # Async, Redis, and User-Agent configurations
-│   │   │   │   ├── controllers/       # Health check & system diagnostics
-│   │   │   │   ├── exception/         # Domain-specific error definitions
-│   │   │   │   ├── statistics/        # Legacy aggregate click counters
-│   │   │   │   ├── urls/              # URL shortening, aliases, QR, folders, tags, expiration
-│   │   │   │   └── users/             # User accounts, authentication, profile management
-│   │   │   └── resources/
-│   │   │       ├── db/migration/      # Flyway SQL migrations (V1 to V12)
-│   │   │       ├── application.yaml   # Base configuration
-│   │   │       ├── application-dev.yaml
-│   │   │       └── application-prod.yaml
-│   │   └── test/                      # Unit & integration test suites
-│   ├── pom.xml
-│   ├── .env.example
-│   └── Dockerfile
+│   ├── common-lib/             # Shared DTOs, events, and security constants
+│   ├── api-gateway/            # Spring Cloud Gateway (Port 8080)
+│   ├── auth-service/           # User Auth, OAuth2, JWT & IP Blocking (Port 8081)
+│   ├── core-service/           # Links, Folders, Tags, QR Codes (Port 8082)
+│   ├── analytics-service/      # Click Tracking, Geolocation, Device Analytics (Port 8083)
+│   ├── redirect-service/       # High-speed Hash Resolution & Cache (Port 8084)
+│   ├── admin-service/          # Admin Portal, Audit Logs, Settings, Blacklist (Port 8085)
+│   └── pom.xml                 # Maven Multi-Module Root POM
 ├── frontend/
 │   ├── src/
-│   │   ├── api/                       # Axios instance & token refresh interceptors
-│   │   ├── components/                # Modals, forms, tables, logos, theme toggle
-│   │   ├── context/                   # AuthContext & ThemeContext providers
-│   │   ├── layouts/                   # DashboardLayout shell with responsive sidebar
-│   │   ├── pages/                     # Public & protected route views
-│   │   ├── types/                     # TypeScript interfaces and data types
-│   │   ├── utils/                     # Color palettes & helper functions
-│   │   └── test/                      # Vitest setup & mocks
+│   │   ├── api/                # Axios instance & token refresh interceptors
+│   │   ├── components/         # Modals, forms, tables, logos, theme toggle
+│   │   ├── context/            # AuthContext & ThemeContext providers
+│   │   ├── layouts/            # DashboardLayout shell with responsive sidebar
+│   │   ├── pages/              # Public & protected route views
+│   │   ├── types/              # TypeScript interfaces and data types
+│   │   ├── utils/              # Color palettes & helper functions
+│   │   └── test/               # Vitest setup & mocks
 │   ├── nginx/
-│   │   └── templates/default.conf.template  # Subdomain routing template
+│   │   └── templates/default.conf.template  # Perimeter Subdomain routing template
 │   ├── package.json
 │   ├── vite.config.ts
-│   ├── .env.example
 │   └── Dockerfile
 ├── docker-compose.yml
 ├── .env.example

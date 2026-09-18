@@ -7,6 +7,6 @@ RUN if [ ! -f api-gateway/target/*.jar ]; then \
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=build /app/api-gateway/target/*.jar app.jar
+COPY --from=build /app/api-gateway/target/api-gateway-2.0.0.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
