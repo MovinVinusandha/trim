@@ -2,20 +2,139 @@ server:
   port: 8080
 
 spring:
+  main:
+    web-application-type: reactive
   application:
     name: api-gateway
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+
+  jwt:
+    secret: ${JWT_SECRET:oXjH3rKR3nK35ar9U6g0T3kJSdSpiciT4vcPV/fdxZ0=}
+
   cloud:
     gateway:
       routes:
+        # 1. Fallback & Internal Controller endpoints
+        - id: gateway-fallback
+          uri: forward:/fallback
+          predicates:
+            - Path=/fallback/**
+
+        # 2. Auth Service Routes
         - id: auth-service
           uri: ${AUTH_SERVICE_URI:http://auth-service:8081}
           predicates:
             - Path=/auth/**, /oauth2/**, /api/auth/**, /user, /user/**, /users/**
+          filters:
+            - name: JwtAuth
+              args:
+                optional: true
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@userOrIpKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: authCircuitBreaker
+                fallbackUri: forward:/fallback/auth
+
+        # 3. Analytics Service Routes (Real-time SSE stream & authenticated dashboard metrics)
         - id: analytics-service
           uri: ${ANALYTICS_SERVICE_URI:http://analytics-service:8083}
           predicates:
             - Path=/analytics/**
+          filters:
+            - name: JwtAuth
+              args:
+                optional: false
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 30
+                redis-rate-limiter.burstCapacity: 60
+                key-resolver: "#{@userOrIpKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: analyticsCircuitBreaker
+                fallbackUri: forward:/fallback/analytics
+
+        # 4. Core Service: Admin Portal (Strict ADMIN/ROOT verification)
+        - id: core-admin-service
+          uri: ${CORE_SERVICE_URI:http://core-service:8082}
+          predicates:
+            - Path=/admin/**
+          filters:
+            - name: JwtAuth
+              args:
+                optional: false
+            - name: RoleAuth
+              args:
+                requiredRoles:
+                  - ADMIN
+                  - ROOT
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
+                key-resolver: "#{@userOrIpKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: adminCircuitBreaker
+                fallbackUri: forward:/fallback/core
+
+        # 5. Core Service: Shorten Endpoint (Rate-limited, Optional Auth)
+        - id: core-shorten-service
+          uri: ${CORE_SERVICE_URI:http://core-service:8082}
+          predicates:
+            - Path=/shorten
+          filters:
+            - name: JwtAuth
+              args:
+                optional: true
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 15
+                redis-rate-limiter.burstCapacity: 30
+                key-resolver: "#{@userOrIpKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: coreCircuitBreaker
+                fallbackUri: forward:/fallback/core
+
+        # 6. Core Service: All other endpoints (URLs, Folders, Tags, Redirects, QR)
         - id: core-service
           uri: ${CORE_SERVICE_URI:http://core-service:8082}
           predicates:
             - Path=/**
+          filters:
+            - name: JwtAuth
+              args:
+                optional: true
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+                key-resolver: "#{@userOrIpKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: coreCircuitBreaker
+                fallbackUri: forward:/fallback/core
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 20
+        permittedNumberOfCallsInHalfOpenState: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000
+        slowCallDurationThreshold: 3000
+        slowCallRateThreshold: 70
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 5000
