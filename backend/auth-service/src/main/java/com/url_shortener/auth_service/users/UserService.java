@@ -26,10 +26,12 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final UserOAuthAccountRepository userOAuthAccountRepository;
     private final EmailService emailService;
     private final OAuthService oauthService;
     private final EmailDomainValidator emailDomainValidator;
     private final com.url_shortener.auth_service.auth.TokenRevocationService tokenRevocationService;
+    private final com.url_shortener.auth_service.event.EventPublisher eventPublisher;
 
     @org.springframework.beans.factory.annotation.Value("${app.require-email-verification:true}")
     private boolean requireEmailVerification;
@@ -40,26 +42,25 @@ public class UserService {
     public UserService(UserMapper userMapper,
                        UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
-                       
-                       
-                       
                        EmailVerificationTokenRepository emailVerificationTokenRepository,
                        PasswordResetTokenRepository passwordResetTokenRepository,
-                       
-                       
+                       UserOAuthAccountRepository userOAuthAccountRepository,
                        EmailService emailService,
                        OAuthService oauthService,
                        EmailDomainValidator emailDomainValidator,
-                       com.url_shortener.auth_service.auth.TokenRevocationService tokenRevocationService) {
+                       com.url_shortener.auth_service.auth.TokenRevocationService tokenRevocationService,
+                       com.url_shortener.auth_service.event.EventPublisher eventPublisher) {
         this.userMapper = userMapper;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailVerificationTokenRepository = emailVerificationTokenRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.userOAuthAccountRepository = userOAuthAccountRepository;
         this.emailService = emailService;
         this.oauthService = oauthService;
         this.emailDomainValidator = emailDomainValidator;
         this.tokenRevocationService = tokenRevocationService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -296,16 +297,24 @@ public class UserService {
         var userId = getUserId();
         var user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
-        // 1. Delete all tokens
+        String publicId = user.getPublicId();
+        String email = user.getEmail();
+        String username = user.getUsername();
+
+        tokenRevocationService.revokeAllUserTokens(user.getId());
         emailVerificationTokenRepository.deleteByUser(user);
         passwordResetTokenRepository.deleteByUser(user);
+        var oauthAccounts = userOAuthAccountRepository.findByUser(user);
+        userOAuthAccountRepository.deleteAll(oauthAccounts);
+        userRepository.delete(user);
 
-        // 2. Delete all UTM templates and Custom Channels
-
-        // 3. Delete all Click Events for the user's URLs
-
-        // 4. Delete all tags and tag associations
-
+        eventPublisher.publish(com.url_shortener.common.event.EventTopics.TOPIC_USER_DELETED,
+                com.url_shortener.common.event.UserDeletedEvent.builder()
+                        .userId(userId)
+                        .publicId(publicId)
+                        .email(email)
+                        .username(username)
+                        .build());
     }
 
     private static Long getUserId() {

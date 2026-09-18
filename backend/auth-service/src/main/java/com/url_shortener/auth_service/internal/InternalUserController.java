@@ -34,6 +34,7 @@ public class InternalUserController {
     private final com.url_shortener.auth_service.auth.EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final com.url_shortener.auth_service.auth.PasswordResetTokenRepository passwordResetTokenRepository;
     private final com.url_shortener.auth_service.users.UserOAuthAccountRepository userOAuthAccountRepository;
+    private final com.url_shortener.auth_service.event.EventPublisher eventPublisher;
 
     @GetMapping("/counts")
     public ResponseEntity<UserCountsDto> getUserCounts() {
@@ -105,6 +106,15 @@ public class InternalUserController {
         if (willSuspend) {
             tokenRevocationService.revokeAllUserTokens(user.getId());
         }
+
+        eventPublisher.publish(com.url_shortener.common.event.EventTopics.TOPIC_USER_SUSPENDED,
+                com.url_shortener.common.event.UserSuspendedEvent.builder()
+                        .userId(user.getId())
+                        .publicId(user.getPublicId())
+                        .email(user.getEmail())
+                        .suspended(willSuspend)
+                        .reason(user.getSuspendedReason())
+                        .build());
 
         return ResponseEntity.ok(toSummaryDto(user));
     }
@@ -203,6 +213,14 @@ public class InternalUserController {
         var oauthAccounts = userOAuthAccountRepository.findByUser(user);
         userOAuthAccountRepository.deleteAll(oauthAccounts);
         userRepository.delete(user);
+
+        eventPublisher.publish(com.url_shortener.common.event.EventTopics.TOPIC_USER_DELETED,
+                com.url_shortener.common.event.UserDeletedEvent.builder()
+                        .userId(summary.getId())
+                        .publicId(summary.getPublicId())
+                        .email(summary.getEmail())
+                        .username(summary.getUsername())
+                        .build());
 
         return ResponseEntity.ok(summary);
     }

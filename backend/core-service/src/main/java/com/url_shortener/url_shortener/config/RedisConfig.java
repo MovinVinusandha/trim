@@ -15,6 +15,11 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import com.url_shortener.common.event.EventTopics;
+import com.url_shortener.url_shortener.event.UserEventListener;
+
 import java.time.Duration;
 
 /**
@@ -26,6 +31,18 @@ import java.time.Duration;
 @Configuration
 @EnableCaching
 public class RedisConfig {
+
+    @Bean
+    public RedisMessageListenerContainer redisMessageListenerContainer(
+            RedisConnectionFactory connectionFactory,
+            UserEventListener userEventListener
+    ) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        container.addMessageListener(userEventListener, new ChannelTopic(EventTopics.TOPIC_USER_DELETED));
+        container.addMessageListener(userEventListener, new ChannelTopic(EventTopics.TOPIC_USER_SUSPENDED));
+        return container;
+    }
 
     /**
      * Configures a typed RedisTemplate with JSON serialization.
