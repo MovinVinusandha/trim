@@ -1,0 +1,56 @@
+server:
+  port: 8085
+  forward-headers-strategy: framework
+  max-http-request-header-size: 2MB
+  max-http-header-size: 2MB
+  tomcat:
+    max-http-form-post-size: 2MB
+    max-swallow-size: 2MB
+
+spring:
+  application:
+    name: admin-service
+  profiles:
+    active: dev
+  mail:
+    host: ${SPRING_MAIL_HOST:}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SPRING_MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${SPRING_MAIL_SMTP_STARTTLS_ENABLE:true}
+            required: ${SPRING_MAIL_SMTP_STARTTLS_REQUIRED:true}
+
+oauth:
+  google:
+    client-id: ${OAUTH_GOOGLE_CLIENT_ID:${GOOGLE_CLIENT_ID:}}
+    client-secret: ${OAUTH_GOOGLE_CLIENT_SECRET:${GOOGLE_CLIENT_SECRET:}}
+  github:
+    client-id: ${OAUTH_GITHUB_CLIENT_ID:${GITHUB_CLIENT_ID:}}
+    client-secret: ${OAUTH_GITHUB_CLIENT_SECRET:${GITHUB_CLIENT_SECRET:}}
+
+root:
+  user:
+    email: ${ROOT_USER_EMAIL:admin@trim.com}
+    password: ${ROOT_USER_PASSWORD:}
+
+app:
+  self-hosted: ${APP_SELF_HOSTED:false}
+  allow-registration: ${ALLOW_REGISTRATION:true}
+  require-email-verification: ${REQUIRE_EMAIL_VERIFICATION:true}
+  domain:
+    root: ${ROOT_DOMAIN_URL:http://localhost:8080}
+  frontend:
+    url: ${FRONTEND_URL:http://localhost}
+  dashboard:
+    url: ${APP_DASHBOARD_URL:http://app.localhost}
+  services:
+    auth-service-url: ${AUTH_SERVICE_INTERNAL_URL:http://auth-service:8081}
+    core-service-url: ${CORE_SERVICE_INTERNAL_URL:http://core-service:8082}
+    analytics-service-url: ${ANALYTICS_SERVICE_INTERNAL_URL:http://analytics-service:8083}
+  security:
+    safe-browsing-api-key: ${SAFE_BROWSING_API_KEY:}

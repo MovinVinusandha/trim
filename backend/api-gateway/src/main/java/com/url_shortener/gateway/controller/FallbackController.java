@@ -46,4 +46,13 @@ public class FallbackController {
                 "message", "Redirect Service is temporarily experiencing high load. Please try again shortly."
         ));
     }
+
+    @RequestMapping("/admin")
+    public ResponseEntity<Map<String, Object>> adminFallback() {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of(
+                "status", 503,
+                "error", "Service Unavailable",
+                "message", "Admin Service is currently unavailable. Please try again shortly."
+        ));
+    }
 }

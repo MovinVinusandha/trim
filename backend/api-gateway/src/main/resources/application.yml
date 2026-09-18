@@ -62,9 +62,9 @@ spring:
                 name: analyticsCircuitBreaker
                 fallbackUri: forward:/fallback/analytics
 
-        # 4. Core Service: Admin Portal (Strict ADMIN/ROOT verification)
-        - id: core-admin-service
-          uri: ${CORE_SERVICE_URI:http://core-service:8082}
+        # 4. Admin Service: Admin Portal (Strict ADMIN/ROOT verification)
+        - id: admin-service
+          uri: ${ADMIN_SERVICE_URI:http://admin-service:8085}
           predicates:
             - Path=/admin/**
           filters:
@@ -84,7 +84,7 @@ spring:
             - name: CircuitBreaker
               args:
                 name: adminCircuitBreaker
-                fallbackUri: forward:/fallback/core
+                fallbackUri: forward:/fallback/admin
 
         # 5. Core Service: Shorten Endpoint (Rate-limited, Optional Auth)
         - id: core-shorten-service

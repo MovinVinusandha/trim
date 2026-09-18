@@ -28,6 +28,7 @@
 		<module>auth-service</module>
 		<module>analytics-service</module>
 		<module>redirect-service</module>
+		<module>admin-service</module>
 	</modules>
 
 	<dependencyManagement>
