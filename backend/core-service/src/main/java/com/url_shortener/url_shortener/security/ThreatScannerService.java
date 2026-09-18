@@ -2,9 +2,6 @@ package com.url_shortener.url_shortener.security;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.url_shortener.url_shortener.admin.BlacklistedDomain;
-import com.url_shortener.url_shortener.admin.BlacklistedDomainRepository;
-import com.url_shortener.url_shortener.admin.SystemSettingRepository;
 import com.url_shortener.url_shortener.security.dto.ThreatScanResultDto;
 import com.url_shortener.url_shortener.urls.Url;
 import com.url_shortener.url_shortener.urls.UrlRepository;
@@ -35,8 +32,6 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class ThreatScannerService {
 
-    private final BlacklistedDomainRepository blacklistedDomainRepository;
-    private final SystemSettingRepository systemSettingRepository;
     private final SecurityIncidentRepository incidentRepository;
     private final UrlRepository urlRepository;
     private final StringRedisTemplate redisTemplate;
@@ -163,15 +158,21 @@ public class ThreatScannerService {
             threatType = "PHISHING_HEURISTIC";
         }
 
-        // 7. Heuristic: Administrative Domain Blacklist
-        List<BlacklistedDomain> blacklisted = blacklistedDomainRepository.findAll();
-        for (BlacklistedDomain b : blacklisted) {
-            if (matchesDomainPattern(host, b.getDomainPattern())) {
-                threats.add("Domain matches administrative blacklist: " + b.getDomainPattern() + " (" + b.getReason() + ")");
-                riskScore = 100;
-                threatType = "BLACKLISTED_DOMAIN";
-                break;
+        // 7. Heuristic: Administrative Domain Blacklist (Synchronized via Redis)
+        try {
+            Set<String> blacklisted = redisTemplate.opsForSet().members("security:blacklisted_domains");
+            if (blacklisted != null && !blacklisted.isEmpty()) {
+                for (String pattern : blacklisted) {
+                    if (matchesDomainPattern(host, pattern)) {
+                        threats.add("Domain matches administrative blacklist: " + pattern);
+                        riskScore = 100;
+                        threatType = "BLACKLISTED_DOMAIN";
+                        break;
+                    }
+                }
             }
+        } catch (Exception e) {
+            log.warn("Failed to check Redis domain blacklist: {}", e.getMessage());
         }
 
         // 8. Google Safe Browsing API v4 Integration (Optional)
@@ -298,9 +299,9 @@ public class ThreatScannerService {
 
     public String getEffectiveSafeBrowsingKey() {
         try {
-            var setting = systemSettingRepository.findBySettingKey("SAFE_BROWSING_API_KEY");
-            if (setting.isPresent() && !setting.get().getSettingValue().isBlank()) {
-                return setting.get().getSettingValue().trim();
+            String val = redisTemplate.opsForValue().get("system:setting:SAFE_BROWSING_API_KEY");
+            if (val != null && !val.isBlank()) {
+                return val.trim();
             }
         } catch (Exception ignored) {}
         return configuredSafeBrowsingApiKey != null ? configuredSafeBrowsingApiKey.trim() : "";

@@ -13,6 +13,7 @@ import com.url_shortener.admin_service.security.SecurityIncidentRepository;
 import com.url_shortener.common.Role;
 import com.url_shortener.common.dto.InternalUserSummaryDto;
 import com.url_shortener.common.dto.UserCountsDto;
+import com.url_shortener.common.dto.analytics.AnalyticsAdminOverviewDto;
 import com.url_shortener.common.dto.core.CoreLinkCountsDto;
 import com.url_shortener.common.dto.core.CoreLinkDetailDto;
 import com.url_shortener.common.dto.core.CoreTriageSummaryDto;
@@ -79,6 +80,35 @@ public class AdminService {
     @Value("${oauth.github.client-id:${GITHUB_CLIENT_ID:}}")
     private String githubClientId;
 
+    public static final String REDIS_BLACKLISTED_DOMAINS_KEY = "security:blacklisted_domains";
+    public static final String REDIS_SETTING_KEY_PREFIX = "system:setting:";
+
+    @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
+    public void warmupRedis() {
+        try {
+            List<BlacklistedDomain> domains = blacklistedDomainRepository.findAll();
+            if (!domains.isEmpty()) {
+                String[] domainPatterns = domains.stream().map(BlacklistedDomain::getDomainPattern).toArray(String[]::new);
+                redisTemplate.opsForSet().add(REDIS_BLACKLISTED_DOMAINS_KEY, domainPatterns);
+            }
+            log.info("Warmed up {} blacklisted domains to Redis key '{}'", domains.size(), REDIS_BLACKLISTED_DOMAINS_KEY);
+        } catch (Exception e) {
+            log.warn("Failed to warmup blacklisted domains in Redis: {}", e.getMessage());
+        }
+
+        try {
+            List<SystemSetting> settings = systemSettingRepository.findAll();
+            for (SystemSetting s : settings) {
+                if (s.getSettingKey() != null && s.getSettingValue() != null) {
+                    redisTemplate.opsForValue().set(REDIS_SETTING_KEY_PREFIX + s.getSettingKey(), s.getSettingValue());
+                }
+            }
+            log.info("Warmed up {} system settings to Redis", settings.size());
+        } catch (Exception e) {
+            log.warn("Failed to warmup system settings in Redis: {}", e.getMessage());
+        }
+    }
+
     public AdminOverviewDto getOverviewStats() {
         return getOverviewStats(7);
     }
@@ -87,17 +117,34 @@ public class AdminService {
         if (days < 1) days = 7;
         if (days > 90) days = 90;
 
-        CoreLinkCountsDto linkCounts = coreServiceClient.getLinkCounts();
+        CoreLinkCountsDto linkCounts;
+        try {
+            linkCounts = coreServiceClient.getLinkCounts();
+        } catch (Exception e) {
+            log.warn("Failed to fetch link counts from core-service (using fallback): {}", e.getMessage());
+            linkCounts = new CoreLinkCountsDto(0L, 0L, 0L, 0L, 0L);
+        }
         long totalLinks = linkCounts.getTotalLinks();
         long activeLinks = linkCounts.getActiveLinks();
         long expiredLinks = linkCounts.getExpiredLinks();
         long quarantinedLinks = linkCounts.getQuarantinedLinks();
 
-        var analyticsOverview = analyticsServiceClient.getAdminOverview(days);
+        AnalyticsAdminOverviewDto analyticsOverview = null;
+        try {
+            analyticsOverview = analyticsServiceClient.getAdminOverview(days);
+        } catch (Exception e) {
+            log.warn("Failed to fetch analytics overview from analytics-service (using fallback): {}", e.getMessage());
+        }
         long totalClicks = analyticsOverview != null ? analyticsOverview.getTotalClicks() : 0L;
         long clicksLast24Hours = analyticsOverview != null ? analyticsOverview.getClicksLast24Hours() : 0L;
 
-        UserCountsDto userCounts = authServiceClient.getUserCounts();
+        UserCountsDto userCounts;
+        try {
+            userCounts = authServiceClient.getUserCounts();
+        } catch (Exception e) {
+            log.warn("Failed to fetch user counts from auth-service (using fallback): {}", e.getMessage());
+            userCounts = new UserCountsDto(0L, 0L, 0L);
+        }
         long totalUsers = userCounts.getTotalUsers();
         long suspendedUsers = userCounts.getSuspendedUsers();
         long activeUsers = userCounts.getActiveUsers();
@@ -169,7 +216,12 @@ public class AdminService {
                 ? analyticsOverview.getClicksByDate()
                 : Collections.emptyMap();
 
-        Map<String, Long> linksByDateMap = coreServiceClient.getLinksCreatedByDate(rangeStart);
+        Map<String, Long> linksByDateMap = Collections.emptyMap();
+        try {
+            linksByDateMap = coreServiceClient.getLinksCreatedByDate(rangeStart);
+        } catch (Exception e) {
+            log.warn("Failed to fetch links by date from core-service (using fallback): {}", e.getMessage());
+        }
 
         List<AdminOverviewDto.DailyActivityDataPoint> activitySeries = new ArrayList<>();
         java.time.LocalDate currentDay = rangeStart.toLocalDate();
@@ -534,6 +586,11 @@ public class AdminService {
                 .reason(reason != null ? reason.trim() : "Flagged malicious domain")
                 .build();
         item = blacklistedDomainRepository.save(item);
+        try {
+            redisTemplate.opsForSet().add(REDIS_BLACKLISTED_DOMAINS_KEY, cleanPattern);
+        } catch (Exception e) {
+            log.warn("Failed to sync blacklisted domain to Redis: {}", e.getMessage());
+        }
 
         recordAudit("DOMAIN_BLOCKED", "DOMAIN", cleanPattern,
                 "Added domain to blacklist: " + cleanPattern + ". Reason: " + item.getReason(),
@@ -546,6 +603,13 @@ public class AdminService {
     public void deleteBlacklistDomain(Long id) {
         var domainObj = blacklistedDomainRepository.findById(id).orElse(null);
         blacklistedDomainRepository.deleteById(id);
+        if (domainObj != null) {
+            try {
+                redisTemplate.opsForSet().remove(REDIS_BLACKLISTED_DOMAINS_KEY, domainObj.getDomainPattern());
+            } catch (Exception e) {
+                log.warn("Failed to remove blacklisted domain from Redis: {}", e.getMessage());
+            }
+        }
 
         recordAudit("DOMAIN_UNBLOCKED", "DOMAIN", domainObj != null ? domainObj.getDomainPattern() : String.valueOf(id),
                 "Removed domain from blacklist: " + (domainObj != null ? domainObj.getDomainPattern() : id), null);
@@ -578,6 +642,11 @@ public class AdminService {
             setting.setDescription(description.trim());
         }
         setting = systemSettingRepository.save(setting);
+        try {
+            redisTemplate.opsForValue().set(REDIS_SETTING_KEY_PREFIX + key.trim(), setting.getSettingValue());
+        } catch (Exception e) {
+            log.warn("Failed to sync system setting to Redis: {}", e.getMessage());
+        }
 
         recordAudit("SETTING_UPDATED", "SETTING", key.trim(),
                 "Updated setting " + key.trim() + " = " + value,
@@ -728,6 +797,13 @@ public class AdminService {
 
     public String getEffectiveSetting(String key, String defaultValue) {
         if (key == null) return defaultValue;
+        try {
+            String redisVal = redisTemplate.opsForValue().get(REDIS_SETTING_KEY_PREFIX + key.trim());
+            if (redisVal != null && !redisVal.isBlank()) {
+                return redisVal.trim();
+            }
+        } catch (Exception ignored) {}
+
         try {
             var dbSetting = systemSettingRepository.findBySettingKey(key.trim());
             if (dbSetting.isPresent() && !dbSetting.get().getSettingValue().isBlank()) {

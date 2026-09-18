@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +19,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @RequiredArgsConstructor
 public class BlockedIpService {
 
+    public static final String REDIS_BLOCKED_IPS_KEY = "security:blocked_ips";
+
     private final BlockedIpRepository blockedIpRepository;
+    private final StringRedisTemplate stringRedisTemplate;
     private final List<IpAddressMatcher> cachedMatchers = new CopyOnWriteArrayList<>();
 
     @PostConstruct
@@ -51,13 +55,23 @@ public class BlockedIpService {
 
     /**
      * High-speed in-memory check whether a client IP matches any blocked IP or CIDR block.
+     * First checks Redis set security:blocked_ips for real-time sync with admin-service.
      */
     public boolean isIpBlocked(String clientIp) {
         if (clientIp == null || clientIp.isBlank()) {
             return false;
         }
+        String cleanIp = clientIp.trim();
+        try {
+            if (Boolean.TRUE.equals(stringRedisTemplate.opsForSet().isMember(REDIS_BLOCKED_IPS_KEY, cleanIp))) {
+                return true;
+            }
+        } catch (Exception e) {
+            log.debug("Redis blocked IP check failed, falling back to local matchers: {}", e.getMessage());
+        }
+
         for (IpAddressMatcher matcher : cachedMatchers) {
-            if (matcher.matches(clientIp)) {
+            if (matcher.matches(cleanIp)) {
                 return true;
             }
         }

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +18,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @RequiredArgsConstructor
 public class BlockedIpService {
 
+    public static final String REDIS_BLOCKED_IPS_KEY = "security:blocked_ips";
+
     private final BlockedIpRepository blockedIpRepository;
+    private final StringRedisTemplate stringRedisTemplate;
     private final List<String> cachedMatchers = new CopyOnWriteArrayList<>();
 
     @PostConstruct
@@ -43,6 +47,16 @@ public class BlockedIpService {
             cachedMatchers.clear();
             cachedMatchers.addAll(newMatchers);
             log.info("Loaded {} IP blacklist matchers into memory", cachedMatchers.size());
+
+            try {
+                stringRedisTemplate.delete(REDIS_BLOCKED_IPS_KEY);
+                if (!newMatchers.isEmpty()) {
+                    stringRedisTemplate.opsForSet().add(REDIS_BLOCKED_IPS_KEY, newMatchers.toArray(new String[0]));
+                }
+                log.info("Synchronized {} blocked IPs to Redis key '{}'", newMatchers.size(), REDIS_BLOCKED_IPS_KEY);
+            } catch (Exception re) {
+                log.warn("Failed to synchronize blocked IPs to Redis: {}", re.getMessage());
+            }
         } catch (Exception e) {
             log.error("Failed to load blocked IP matchers: {}", e.getMessage());
         }
@@ -90,13 +104,26 @@ public class BlockedIpService {
                 .build();
 
         BlockedIp saved = blockedIpRepository.save(blockedIp);
+        try {
+            stringRedisTemplate.opsForSet().add(REDIS_BLOCKED_IPS_KEY, cleanIp);
+        } catch (Exception e) {
+            log.warn("Failed to add IP to Redis blacklist: {}", e.getMessage());
+        }
         reloadMatchers();
         return saved;
     }
 
     @Transactional
     public void unblockIp(Long id) {
+        var entity = blockedIpRepository.findById(id).orElse(null);
         blockedIpRepository.deleteById(id);
+        if (entity != null) {
+            try {
+                stringRedisTemplate.opsForSet().remove(REDIS_BLOCKED_IPS_KEY, entity.getIpAddress());
+            } catch (Exception e) {
+                log.warn("Failed to remove IP from Redis blacklist: {}", e.getMessage());
+            }
+        }
         reloadMatchers();
     }
 }

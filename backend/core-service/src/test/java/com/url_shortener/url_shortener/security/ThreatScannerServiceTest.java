@@ -1,8 +1,5 @@
 package com.url_shortener.url_shortener.security;
 
-import com.url_shortener.url_shortener.admin.BlacklistedDomain;
-import com.url_shortener.url_shortener.admin.BlacklistedDomainRepository;
-import com.url_shortener.url_shortener.admin.SystemSettingRepository;
 import com.url_shortener.url_shortener.security.dto.ThreatScanResultDto;
 import com.url_shortener.url_shortener.urls.UrlRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,21 +9,20 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ThreatScannerServiceTest {
 
-    @Mock
-    private BlacklistedDomainRepository blacklistedDomainRepository;
-    @Mock
-    private SystemSettingRepository systemSettingRepository;
     @Mock
     private SecurityIncidentRepository incidentRepository;
     @Mock
@@ -35,13 +31,19 @@ class ThreatScannerServiceTest {
     private StringRedisTemplate redisTemplate;
     @Mock
     private CacheManager cacheManager;
+    @Mock
+    private SetOperations<String, String> setOperations;
+    @Mock
+    private ValueOperations<String, String> valueOperations;
 
     @InjectMocks
     private ThreatScannerService threatScannerService;
 
     @BeforeEach
     void setUp() {
-        when(blacklistedDomainRepository.findAll()).thenReturn(Collections.emptyList());
+        lenient().when(redisTemplate.opsForSet()).thenReturn(setOperations);
+        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        lenient().when(setOperations.members("security:blacklisted_domains")).thenReturn(Collections.emptySet());
     }
 
     @Test
@@ -83,11 +85,7 @@ class ThreatScannerServiceTest {
 
     @Test
     void scanUrl_BlacklistedDomain_FlagsImmediately() {
-        BlacklistedDomain blocked = BlacklistedDomain.builder()
-                .domainPattern("*.phishing-lure.xyz")
-                .reason("Known credential harvester")
-                .build();
-        when(blacklistedDomainRepository.findAll()).thenReturn(List.of(blocked));
+        when(setOperations.members("security:blacklisted_domains")).thenReturn(Set.of("*.phishing-lure.xyz"));
 
         ThreatScanResultDto result = threatScannerService.scanUrl("https://login.phishing-lure.xyz/account");
 

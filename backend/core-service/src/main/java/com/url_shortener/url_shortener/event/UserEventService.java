@@ -2,7 +2,6 @@ package com.url_shortener.url_shortener.event;
 
 import com.url_shortener.common.event.UserDeletedEvent;
 import com.url_shortener.common.event.UserSuspendedEvent;
-import com.url_shortener.url_shortener.admin.audit.AdminAuditService;
 import com.url_shortener.url_shortener.urls.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +23,6 @@ public class UserEventService {
     private final CustomChannelRepository customChannelRepository;
     private final UtmTemplateRepository utmTemplateRepository;
     private final CacheManager cacheManager;
-    private final AdminAuditService adminAuditService;
 
     @Transactional
     public void handleUserDeleted(UserDeletedEvent event) {
@@ -82,24 +80,7 @@ public class UserEventService {
         // 7. Delete URLs
         urlRepository.deleteAll(userUrls);
 
-        // 8. Record audit log
-        try {
-            adminAuditService.record(
-                    null,
-                    "system",
-                    "SYSTEM",
-                    "127.0.0.1",
-                    "USER_DELETED_ASYNC_PURGE",
-                    "USER",
-                    event.getEmail() != null ? event.getEmail() : String.valueOf(userId),
-                    "Asynchronously purged " + linkCount + " links and associated data for deleted user " + event.getEmail(),
-                    "{\"userId\":" + userId + ",\"linkCount\":" + linkCount + "}"
-            );
-        } catch (Exception e) {
-            log.warn("[EVENT] Failed to record audit log for user purge: {}", e.getMessage());
-        }
-
-        log.info("[EVENT] Successfully purged resources for user id={}", userId);
+        log.info("[EVENT] Successfully purged {} links and resources for deleted user id={}, email={}", linkCount, userId, event.getEmail());
     }
 
     @Transactional
