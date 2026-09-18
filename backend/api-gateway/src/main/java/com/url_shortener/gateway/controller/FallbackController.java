@@ -37,4 +37,13 @@ public class FallbackController {
                 "message", "Analytics Service is currently unavailable. Historical metrics will resume once connection recovers."
         ));
     }
+
+    @RequestMapping("/redirect")
+    public ResponseEntity<Map<String, Object>> redirectFallback() {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of(
+                "status", 503,
+                "error", "Service Unavailable",
+                "message", "Redirect Service is temporarily experiencing high load. Please try again shortly."
+        ));
+    }
 }

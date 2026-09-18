@@ -105,7 +105,23 @@ spring:
                 name: coreCircuitBreaker
                 fallbackUri: forward:/fallback/core
 
-        # 6. Core Service: All other endpoints (URLs, Folders, Tags, Redirects, QR)
+        # 6. Redirect Service: High-throughput URL redirection and unlock
+        - id: redirect-service
+          uri: ${REDIRECT_SERVICE_URI:http://redirect-service:8084}
+          predicates:
+            - Path=/{hash:[a-zA-Z0-9-_]+}, /unlock/{hash:[a-zA-Z0-9-_]+}
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 500
+                redis-rate-limiter.burstCapacity: 1000
+                key-resolver: "#{@userOrIpKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: redirectCircuitBreaker
+                fallbackUri: forward:/fallback/redirect
+
+        # 7. Core Service: All other endpoints (URLs, Folders, Tags, QR)
         - id: core-service
           uri: ${CORE_SERVICE_URI:http://core-service:8082}
           predicates:
