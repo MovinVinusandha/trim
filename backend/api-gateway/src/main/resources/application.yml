@@ -11,6 +11,10 @@ spring:
           uri: ${AUTH_SERVICE_URI:http://auth-service:8081}
           predicates:
             - Path=/auth/**, /oauth2/**, /api/auth/**, /user, /user/**, /users/**
+        - id: analytics-service
+          uri: ${ANALYTICS_SERVICE_URI:http://analytics-service:8083}
+          predicates:
+            - Path=/analytics/**
         - id: core-service
           uri: ${CORE_SERVICE_URI:http://core-service:8082}
           predicates:

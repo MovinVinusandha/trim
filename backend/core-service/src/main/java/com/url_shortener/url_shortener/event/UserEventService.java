@@ -3,7 +3,6 @@ package com.url_shortener.url_shortener.event;
 import com.url_shortener.common.event.UserDeletedEvent;
 import com.url_shortener.common.event.UserSuspendedEvent;
 import com.url_shortener.url_shortener.admin.audit.AdminAuditService;
-import com.url_shortener.url_shortener.analytics.ClickEventRepository;
 import com.url_shortener.url_shortener.urls.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +23,6 @@ public class UserEventService {
     private final TagRepository tagRepository;
     private final CustomChannelRepository customChannelRepository;
     private final UtmTemplateRepository utmTemplateRepository;
-    private final ClickEventRepository clickEventRepository;
     private final CacheManager cacheManager;
     private final AdminAuditService adminAuditService;
 
@@ -44,13 +42,6 @@ public class UserEventService {
         // 1. Evict cache for all user URLs
         for (Url url : userUrls) {
             evictCache(url.getShortUrl());
-        }
-
-        // 2. Delete click events
-        try {
-            clickEventRepository.deleteByUserId(userId);
-        } catch (Exception e) {
-            log.warn("[EVENT] Failed to delete click events for user id {}: {}", userId, e.getMessage());
         }
 
         // 3. Delete folders

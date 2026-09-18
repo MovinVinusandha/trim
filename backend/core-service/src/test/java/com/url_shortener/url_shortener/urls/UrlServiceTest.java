@@ -1,6 +1,6 @@
 package com.url_shortener.url_shortener.urls;
 
-import com.url_shortener.url_shortener.analytics.ClickEventRepository;
+import com.url_shortener.url_shortener.client.AnalyticsServiceClient;
 import com.url_shortener.url_shortener.users.Role;
 import com.url_shortener.url_shortener.users.User;
 import com.url_shortener.url_shortener.users.UserNotFoundException;
@@ -46,7 +46,7 @@ class UrlServiceTest {
     @Mock
     private UserRepository userRepository;
     @Mock
-    private ClickEventRepository clickEventRepository;
+    private AnalyticsServiceClient analyticsServiceClient;
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
@@ -355,7 +355,7 @@ class UrlServiceTest {
         when(urlRepository.findByShortUrl("hash1")).thenReturn(url);
         UrlDto dto = new UrlDto(BigInteger.ONE, "https://long.com", "hash1", BigInteger.ZERO, null, null, null, true, false, null, null, null);
         when(urlMapper.toDto(url)).thenReturn(dto);
-        when(clickEventRepository.countByUrl_Id(eq(1L), any(), any())).thenReturn(10L);
+        when(analyticsServiceClient.getUrlClickCount(1L)).thenReturn(10L);
 
         UrlDto result = urlService.getUrl("hash1");
 
@@ -380,8 +380,8 @@ class UrlServiceTest {
 
         when(urlMapper.toDto(url1)).thenReturn(dto1);
         when(urlMapper.toDto(url2)).thenReturn(dto2);
-        when(clickEventRepository.countByUrl_Id(eq(1L), any(), any())).thenReturn(5L);
-        when(clickEventRepository.countByUrl_Id(eq(2L), any(), any())).thenReturn(20L);
+        when(analyticsServiceClient.getUrlClickCount(1L)).thenReturn(5L);
+        when(analyticsServiceClient.getUrlClickCount(2L)).thenReturn(20L);
 
         List<UrlDto> result = urlService.getAllUrls("accessed_times", null, null, null, null);
 
@@ -408,7 +408,7 @@ class UrlServiceTest {
 
         UrlDto dto = new UrlDto(BigInteger.ONE, "https://long.com", "h1", BigInteger.ZERO, null, null, null, true, false, null, 10L, "Links");
         when(urlMapper.toDto(url)).thenReturn(dto);
-        when(clickEventRepository.countByUrl_Id(eq(1L), any(), any())).thenReturn(3L);
+        when(analyticsServiceClient.getUrlClickCount(1L)).thenReturn(3L);
 
         List<UrlDto> result = urlService.getAllUrls("id", null, 10L, null, "search");
 
@@ -486,7 +486,7 @@ class UrlServiceTest {
 
         UrlDto mockDto = new UrlDto(BigInteger.ONE, "https://updated.com", "hash123", BigInteger.ZERO, null, null, null, true, true, null, null, null);
         when(urlMapper.toDto(url)).thenReturn(mockDto);
-        when(clickEventRepository.countByUrl_Id(eq(1L), any(), any())).thenReturn(0L);
+        when(analyticsServiceClient.getUrlClickCount(1L)).thenReturn(0L);
 
         UrlDto result = urlService.updateUrl("hash123", req, user);
 
@@ -513,7 +513,7 @@ class UrlServiceTest {
 
         UrlDto mockDto = new UrlDto(BigInteger.ONE, "https://updated.com", "hash123", BigInteger.ZERO, null, null, null, false, false, null, null, null);
         when(urlMapper.toDto(url)).thenReturn(mockDto);
-        when(clickEventRepository.countByUrl_Id(eq(1L), any(), any())).thenReturn(0L);
+        when(analyticsServiceClient.getUrlClickCount(1L)).thenReturn(0L);
 
         UrlDto result = urlService.updateUrl("hash123", req, admin);
 

@@ -72,8 +72,29 @@ services:
       - .env
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/url_shortener_core?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - ANALYTICS_SERVICE_INTERNAL_URL=http://analytics-service:8083
     ports:
       - "8082:8082"
+    networks:
+      - db_network
+      - backend_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  analytics-service:
+    build:
+      context: ./backend
+      dockerfile: analytics-service/Dockerfile
+    container_name: url_shortener_analytics
+    env_file:
+      - .env
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/url_shortener_analytics?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    ports:
+      - "8083:8083"
     networks:
       - db_network
       - backend_network

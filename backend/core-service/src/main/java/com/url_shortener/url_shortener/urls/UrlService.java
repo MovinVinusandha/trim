@@ -1,6 +1,5 @@
 package com.url_shortener.url_shortener.urls;
 
-import com.url_shortener.url_shortener.analytics.ClickEventRepository;
 import com.url_shortener.url_shortener.statistics.Statistic;
 import lombok.AllArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -23,7 +22,7 @@ import java.util.zip.CRC32;
 public class UrlService {
     private final UrlMapper urlMapper;
     private final UrlRepository urlRepository;
-        private final ClickEventRepository clickEventRepository;
+    private final com.url_shortener.url_shortener.client.AnalyticsServiceClient analyticsServiceClient;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     private final TagRepository tagRepository;
     private final FolderRepository folderRepository;
@@ -466,7 +465,7 @@ public class UrlService {
      */
     private UrlDto toDtoWithClickCount(Url url) {
         var dto = urlMapper.toDto(url);
-        long clicks = clickEventRepository.countByUrl_Id(url.getId(), java.time.LocalDateTime.of(1970, 1, 1, 0, 0), null);
+        long clicks = analyticsServiceClient.getUrlClickCount(url.getId());
 
         dto.setShortUrl(rootDomainUrl + "/" + url.getShortUrl());
 
@@ -615,7 +614,7 @@ public class UrlService {
         }
     }
 
-    private Url isExistsShortUrl(String shortUrl) {
+    public Url isExistsShortUrl(String shortUrl) {
         var url = urlRepository.findByShortUrl(shortUrl);
         if (url == null){
             throw new UrlNotFoundException();

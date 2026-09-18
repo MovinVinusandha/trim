@@ -1,7 +1,9 @@
 package com.url_shortener.url_shortener.urls;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.url_shortener.url_shortener.analytics.AnalyticsService;
+import com.url_shortener.common.event.EventTopics;
+import com.url_shortener.common.event.UrlClickedEvent;
+import com.url_shortener.url_shortener.event.EventPublisher;
 import com.url_shortener.url_shortener.users.User;
 import com.url_shortener.url_shortener.users.UserRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -43,7 +45,7 @@ class UrlControllerTest {
     @MockBean
     private UrlService urlService;
     @MockBean
-    private AnalyticsService analyticsService;
+    private EventPublisher eventPublisher;
     @MockBean
     private QrCodeService qrCodeService;
     @MockBean
@@ -111,6 +113,7 @@ class UrlControllerTest {
     @Test
     void redirectToNewUrl_Success_WithXForwardedFor() throws Exception {
         when(urlService.getLongUrlForRedirect("hash123")).thenReturn("https://example.com");
+        when(urlService.isExistsShortUrl("hash123")).thenReturn(Url.builder().id(1L).shortUrl("hash123").build());
 
         mockMvc.perform(get("/hash123")
                 .header("User-Agent", "Mozilla/5.0")
@@ -118,12 +121,13 @@ class UrlControllerTest {
                 .andExpect(status().isFound())
                 .andExpect(header().string("Location", "https://example.com"));
 
-        verify(analyticsService).trackClick(eq("hash123"), eq("Mozilla/5.0"), eq("203.0.113.195"), any(), any());
+        verify(eventPublisher).publish(eq(EventTopics.TOPIC_URL_CLICKED), any(UrlClickedEvent.class));
     }
 
     @Test
     void redirectToNewUrl_Success_WithXRealIp() throws Exception {
         when(urlService.getLongUrlForRedirect("hash123")).thenReturn("https://example.com");
+        when(urlService.isExistsShortUrl("hash123")).thenReturn(Url.builder().id(1L).shortUrl("hash123").build());
 
         mockMvc.perform(get("/hash123")
                 .header("User-Agent", "Mozilla/5.0")
@@ -131,19 +135,20 @@ class UrlControllerTest {
                 .andExpect(status().isFound())
                 .andExpect(header().string("Location", "https://example.com"));
 
-        verify(analyticsService).trackClick(eq("hash123"), eq("Mozilla/5.0"), eq("198.51.100.1"), any(), any());
+        verify(eventPublisher).publish(eq(EventTopics.TOPIC_URL_CLICKED), any(UrlClickedEvent.class));
     }
 
     @Test
     void redirectToNewUrl_Success_DirectRemoteAddr() throws Exception {
         when(urlService.getLongUrlForRedirect("hash123")).thenReturn("https://example.com");
+        when(urlService.isExistsShortUrl("hash123")).thenReturn(Url.builder().id(1L).shortUrl("hash123").build());
 
         mockMvc.perform(get("/hash123")
                 .header("User-Agent", "Mozilla/5.0"))
                 .andExpect(status().isFound())
                 .andExpect(header().string("Location", "https://example.com"));
 
-        verify(analyticsService).trackClick(eq("hash123"), eq("Mozilla/5.0"), any(), any(), any());
+        verify(eventPublisher).publish(eq(EventTopics.TOPIC_URL_CLICKED), any(UrlClickedEvent.class));
     }
 
     @Test
@@ -179,6 +184,7 @@ class UrlControllerTest {
         UnlockRequest unlockRequest = new UnlockRequest();
         unlockRequest.setPassword("mySecret");
         when(urlService.getUrlForUnlock("sec123", "mySecret")).thenReturn("https://secret-destination.com");
+        when(urlService.isExistsShortUrl("sec123")).thenReturn(Url.builder().id(2L).shortUrl("sec123").build());
 
         mockMvc.perform(post("/unlock/sec123")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -186,7 +192,7 @@ class UrlControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.longUrl").value("https://secret-destination.com"));
 
-        verify(analyticsService).trackClick(eq("sec123"), any(), any(), any(), any());
+        verify(eventPublisher).publish(eq(EventTopics.TOPIC_URL_CLICKED), any(UrlClickedEvent.class));
     }
 
     @Test

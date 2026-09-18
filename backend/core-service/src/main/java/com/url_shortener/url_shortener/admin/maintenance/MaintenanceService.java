@@ -6,7 +6,7 @@ import com.url_shortener.url_shortener.admin.audit.AdminAuditService;
 import com.url_shortener.url_shortener.admin.maintenance.dto.CleanupCriteriaDto;
 import com.url_shortener.url_shortener.admin.maintenance.dto.CleanupResultDto;
 import com.url_shortener.url_shortener.admin.maintenance.dto.MaintenanceOverviewDto;
-import com.url_shortener.url_shortener.analytics.ClickEventRepository;
+import com.url_shortener.url_shortener.client.AnalyticsServiceClient;
 import com.url_shortener.url_shortener.urls.Url;
 import com.url_shortener.url_shortener.urls.UrlRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +34,7 @@ public class MaintenanceService {
 
     private final StringRedisTemplate redisTemplate;
     private final UrlRepository urlRepository;
-    private final ClickEventRepository clickEventRepository;
+    private final AnalyticsServiceClient analyticsServiceClient;
     private final AdminAuditService auditService;
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -278,8 +278,7 @@ public class MaintenanceService {
      * Preview click events older than threshold.
      */
     public CleanupResultDto previewClickPruning(int daysOlderThan) {
-        LocalDateTime cutoff = LocalDateTime.now().minusDays(daysOlderThan);
-        long count = clickEventRepository.countByTimestampBefore(cutoff);
+        long count = analyticsServiceClient.previewClickPruning(daysOlderThan);
 
         return CleanupResultDto.builder()
                 .dryRun(true)
@@ -294,10 +293,8 @@ public class MaintenanceService {
     /**
      * Execute click event pruning.
      */
-    @Transactional
     public CleanupResultDto executeClickPruning(int daysOlderThan) {
-        LocalDateTime cutoff = LocalDateTime.now().minusDays(daysOlderThan);
-        int deleted = clickEventRepository.deleteByTimestampBefore(cutoff);
+        int deleted = analyticsServiceClient.executeClickPruning(daysOlderThan);
 
         recordAudit(
                 "CLICK_EVENTS_PRUNED",

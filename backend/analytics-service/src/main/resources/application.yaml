@@ -1,0 +1,25 @@
+server:
+  port: 8083
+  forward-headers-strategy: framework
+  max-http-request-header-size: 2MB
+  max-http-header-size: 2MB
+
+spring:
+  application:
+    name: analytics-service
+  profiles:
+    active: dev
+
+analytics:
+  async:
+    core-pool-size: 4
+    max-pool-size: 16
+    queue-capacity: 500
+
+app:
+  domain:
+    root: ${ROOT_DOMAIN_URL:http://localhost:8080}
+  frontend:
+    url: ${FRONTEND_URL:http://localhost}
+  dashboard:
+    url: ${APP_DASHBOARD_URL:http://app.localhost}

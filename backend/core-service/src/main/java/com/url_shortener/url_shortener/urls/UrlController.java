@@ -1,6 +1,5 @@
 package com.url_shortener.url_shortener.urls;
 
-import com.url_shortener.url_shortener.analytics.AnalyticsService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -23,7 +22,7 @@ import java.util.Map;
 public class UrlController {
 
     private final UrlService urlService;
-    private final AnalyticsService analyticsService;
+    private final com.url_shortener.url_shortener.event.EventPublisher eventPublisher;
     private final QrCodeService qrCodeService;
     
     @Value("${app.frontend.url:http://localhost:5173}")
@@ -67,13 +66,30 @@ public class UrlController {
         try {
             var longUrl = urlService.getLongUrlForRedirect(hash);
 
-            // Fire async click tracking — does not block the redirect response
+            // Fire async click tracking via Redis event publisher
             String userAgent = request.getHeader("User-Agent");
             String clientIp  = resolveClientIp(request);
             String referer   = request.getHeader("Referer");
             Map<String, String> queryParams = extractQueryParams(request);
 
-            analyticsService.trackClick(hash, userAgent, clientIp, referer, queryParams);
+            try {
+                var url = urlService.isExistsShortUrl(hash);
+                com.url_shortener.common.event.UrlClickedEvent event = com.url_shortener.common.event.UrlClickedEvent.builder()
+                        .urlId(url.getId())
+                        .userId(url.getUserId())
+                        .folderId(url.getFolder() != null ? url.getFolder().getId() : null)
+                        .shortUrlHash(hash)
+                        .longUrl(longUrl)
+                        .clientIp(clientIp)
+                        .userAgent(userAgent)
+                        .referer(referer)
+                        .queryParams(queryParams)
+                        .timestamp(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC))
+                        .build();
+                eventPublisher.publish(com.url_shortener.common.event.EventTopics.TOPIC_URL_CLICKED, event);
+            } catch (Exception e) {
+                log.warn("Failed to publish UrlClickedEvent for hash {}: {}", hash, e.getMessage());
+            }
 
             // Query parameter pass-through: append any dynamic query params to destination
             if (request.getQueryString() != null && !request.getQueryString().isBlank()) {
@@ -118,7 +134,24 @@ public class UrlController {
         String referer   = request.getHeader("Referer");
         Map<String, String> queryParams = extractQueryParams(request);
 
-        analyticsService.trackClick(hash, userAgent, clientIp, referer, queryParams);
+        try {
+            var url = urlService.isExistsShortUrl(hash);
+            com.url_shortener.common.event.UrlClickedEvent event = com.url_shortener.common.event.UrlClickedEvent.builder()
+                    .urlId(url.getId())
+                    .userId(url.getUserId())
+                    .folderId(url.getFolder() != null ? url.getFolder().getId() : null)
+                    .shortUrlHash(hash)
+                    .longUrl(longUrl)
+                    .clientIp(clientIp)
+                    .userAgent(userAgent)
+                    .referer(referer)
+                    .queryParams(queryParams)
+                    .timestamp(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC))
+                    .build();
+            eventPublisher.publish(com.url_shortener.common.event.EventTopics.TOPIC_URL_CLICKED, event);
+        } catch (Exception e) {
+            log.warn("Failed to publish UrlClickedEvent on unlock for hash {}: {}", hash, e.getMessage());
+        }
 
         return ResponseEntity.ok(new UnlockResponse(longUrl));
     }

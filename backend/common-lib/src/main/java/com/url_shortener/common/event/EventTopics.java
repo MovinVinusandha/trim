@@ -5,4 +5,5 @@ public final class EventTopics {
 
     public static final String TOPIC_USER_DELETED = "events.user.deleted";
     public static final String TOPIC_USER_SUSPENDED = "events.user.suspended";
+    public static final String TOPIC_URL_CLICKED = "events.url.clicked";
 }

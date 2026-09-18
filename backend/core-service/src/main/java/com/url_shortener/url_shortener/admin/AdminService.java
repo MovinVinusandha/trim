@@ -4,7 +4,7 @@ import com.url_shortener.common.Role;
 import com.url_shortener.common.dto.InternalUserSummaryDto;
 import com.url_shortener.url_shortener.admin.audit.AdminAuditLogDto;
 import com.url_shortener.url_shortener.admin.dto.*;
-import com.url_shortener.url_shortener.analytics.ClickEventRepository;
+import com.url_shortener.url_shortener.client.AnalyticsServiceClient;
 import com.url_shortener.url_shortener.auth.TokenRevocationService;
 import com.url_shortener.url_shortener.urls.Url;
 import com.url_shortener.url_shortener.urls.UrlRepository;
@@ -34,7 +34,7 @@ public class AdminService {
 
     private final AuthServiceClient authServiceClient;
     private final UrlRepository urlRepository;
-    private final ClickEventRepository clickEventRepository;
+    private final AnalyticsServiceClient analyticsServiceClient;
     private final BlacklistedDomainRepository blacklistedDomainRepository;
     private final SystemSettingRepository systemSettingRepository;
     private final TokenRevocationService tokenRevocationService;
@@ -99,21 +99,9 @@ public class AdminService {
         long expiredLinks = urlRepository.countByIsActiveFalse();
         long quarantinedLinks = urlRepository.countByIsQuarantinedTrue();
 
-        long totalClicks = 0;
-        try {
-            Long clickCount = clickEventRepository.count();
-            totalClicks = clickCount != null ? clickCount : 0;
-        } catch (Exception e) {
-            log.warn("Failed to count click events: {}", e.getMessage());
-        }
-
-        LocalDateTime past24h = LocalDateTime.now().minusHours(24);
-        long clicksLast24Hours = 0;
-        try {
-            clicksLast24Hours = clickEventRepository.countByTimestampAfter(past24h);
-        } catch (Exception e) {
-            log.warn("Failed to count 24h click events: {}", e.getMessage());
-        }
+        com.url_shortener.common.dto.analytics.AnalyticsAdminOverviewDto analyticsOverview = analyticsServiceClient.getAdminOverview(days);
+        long totalClicks = analyticsOverview != null ? analyticsOverview.getTotalClicks() : 0L;
+        long clicksLast24Hours = analyticsOverview != null ? analyticsOverview.getClicksLast24Hours() : 0L;
 
         com.url_shortener.common.dto.UserCountsDto userCounts = authServiceClient.getUserCounts();
         long totalUsers = userCounts.getTotalUsers();
@@ -183,17 +171,9 @@ public class AdminService {
 
         // 4. Time-series Daily Activity (Clicks & Links Created)
         LocalDateTime rangeStart = LocalDateTime.now().minusDays(days).withHour(0).withMinute(0).withSecond(0).withNano(0);
-        Map<String, Long> clicksByDateMap = new HashMap<>();
-        try {
-            List<Object[]> clickRows = clickEventRepository.countClicksByDateInstance(rangeStart);
-            for (Object[] row : clickRows) {
-                if (row != null && row.length >= 2 && row[0] != null) {
-                    clicksByDateMap.put(row[0].toString(), ((Number) row[1]).longValue());
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Failed to query clicks by date: {}", e.getMessage());
-        }
+        Map<String, Long> clicksByDateMap = (analyticsOverview != null && analyticsOverview.getClicksByDate() != null)
+                ? analyticsOverview.getClicksByDate()
+                : Collections.emptyMap();
 
         Map<String, Long> linksByDateMap = new HashMap<>();
         try {
@@ -220,48 +200,31 @@ public class AdminService {
 
         // 5. Device Distribution
         List<AdminOverviewDto.DistributionDataPoint> deviceDistribution = new ArrayList<>();
-        try {
-            List<Object[]> devRows = clickEventRepository.countClicksByDeviceInstance(rangeStart);
-            long totalDevClicks = 0;
-            for (Object[] row : devRows) {
-                if (row != null && row.length >= 2 && row[1] != null) {
-                    totalDevClicks += ((Number) row[1]).longValue();
-                }
+        if (analyticsOverview != null && analyticsOverview.getDeviceDistribution() != null) {
+            long totalDevClicks = analyticsOverview.getDeviceDistribution().stream()
+                    .mapToLong(dp -> dp.getCount() != null ? dp.getCount() : 0L)
+                    .sum();
+            for (var dp : analyticsOverview.getDeviceDistribution()) {
+                long cnt = dp.getCount() != null ? dp.getCount() : 0L;
+                double pct = totalDevClicks > 0 ? (cnt * 100.0) / totalDevClicks : 0.0;
+                deviceDistribution.add(new AdminOverviewDto.DistributionDataPoint(dp.getDevice(), cnt, Math.round(pct * 10.0) / 10.0));
             }
-            for (Object[] row : devRows) {
-                if (row != null && row.length >= 2) {
-                    String devName = row[0] != null ? row[0].toString() : "Other";
-                    long cnt = ((Number) row[1]).longValue();
-                    double pct = totalDevClicks > 0 ? (cnt * 100.0) / totalDevClicks : 0.0;
-                    deviceDistribution.add(new AdminOverviewDto.DistributionDataPoint(devName, cnt, Math.round(pct * 10.0) / 10.0));
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Failed to query device distribution: {}", e.getMessage());
         }
 
         // 6. Country Distribution
         List<AdminOverviewDto.DistributionDataPoint> countryDistribution = new ArrayList<>();
-        try {
-            List<Object[]> ctryRows = clickEventRepository.countClicksByCountryInstance(rangeStart);
-            long totalCtryClicks = 0;
-            for (Object[] row : ctryRows) {
-                if (row != null && row.length >= 2 && row[1] != null) {
-                    totalCtryClicks += ((Number) row[1]).longValue();
-                }
-            }
+        if (analyticsOverview != null && analyticsOverview.getCountryDistribution() != null) {
+            long totalCtryClicks = analyticsOverview.getCountryDistribution().stream()
+                    .mapToLong(dp -> dp.getCount() != null ? dp.getCount() : 0L)
+                    .sum();
             int limit = 0;
-            for (Object[] row : ctryRows) {
-                if (row != null && row.length >= 2 && limit < 6) {
-                    String ctryName = row[0] != null ? row[0].toString() : "Unknown";
-                    long cnt = ((Number) row[1]).longValue();
-                    double pct = totalCtryClicks > 0 ? (cnt * 100.0) / totalCtryClicks : 0.0;
-                    countryDistribution.add(new AdminOverviewDto.DistributionDataPoint(ctryName, cnt, Math.round(pct * 10.0) / 10.0));
-                    limit++;
-                }
+            for (var dp : analyticsOverview.getCountryDistribution()) {
+                if (limit >= 6) break;
+                long cnt = dp.getCount() != null ? dp.getCount() : 0L;
+                double pct = totalCtryClicks > 0 ? (cnt * 100.0) / totalCtryClicks : 0.0;
+                countryDistribution.add(new AdminOverviewDto.DistributionDataPoint(dp.getCountry(), cnt, Math.round(pct * 10.0) / 10.0));
+                limit++;
             }
-        } catch (Exception e) {
-            log.warn("Failed to query country distribution: {}", e.getMessage());
         }
 
         // 7. Recent Audit Actions (Top 4)
@@ -667,7 +630,11 @@ public class AdminService {
         for (Url url : userUrls) {
             evictCache(url.getShortUrl());
         }
-        clickEventRepository.deleteByUserId(user.getId());
+        try {
+            analyticsServiceClient.purgeUserData(user.getId());
+        } catch (Exception e) {
+            log.warn("Failed to purge user analytics data: {}", e.getMessage());
+        }
 
         // 2. Delete user's folders, tags, custom channels, UTM templates
         var folders = folderRepository.findByUserId(user.getId());
