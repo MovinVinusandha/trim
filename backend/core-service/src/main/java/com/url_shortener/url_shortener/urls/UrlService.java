@@ -26,6 +26,7 @@ public class UrlService {
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     private final TagRepository tagRepository;
     private final FolderRepository folderRepository;
+    private final org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
     
     @org.springframework.beans.factory.annotation.Autowired 
     private org.springframework.cache.CacheManager cacheManager;
@@ -45,6 +46,12 @@ public class UrlService {
 
     public UrlSend generateShortUrl(UrlRequest urlRequest, String clientIp, Long currentUserId) {
         String panicMode = "NORMAL";
+        try {
+            String val = redisTemplate.opsForValue().get("system:setting:PANIC_MODE");
+            if (val != null && !val.isBlank()) {
+                panicMode = val.trim();
+            }
+        } catch (Exception ignored) {}
 
         if ("MAINTENANCE".equals(panicMode)) {
             throw new IllegalStateException("The system is currently undergoing scheduled maintenance. Link creation is paused.");
@@ -91,7 +98,17 @@ public class UrlService {
         url.setActive(true);
 
         // Apply default link expiration if not explicitly provided
-        if (url.getExpiresAt() == null) { }
+        if (url.getExpiresAt() == null) {
+            try {
+                String expDaysVal = redisTemplate.opsForValue().get("system:setting:DEFAULT_LINK_EXPIRATION_DAYS");
+                if (expDaysVal != null && !expDaysVal.isBlank()) {
+                    int days = Integer.parseInt(expDaysVal.trim());
+                    if (days > 0) {
+                        url.setExpiresAt(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC).plusDays(days));
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
 
         if (url.getExpiresAt() != null && url.getExpiresAt().isBefore(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC))) {
             url.setActive(false);
@@ -121,7 +138,22 @@ public class UrlService {
         }
 
         if (currentUserId != null) {
-                        if (urlRequest.getFolderId() != null) {
+            try {
+                String maxLinksVal = redisTemplate.opsForValue().get("system:setting:MAX_LINKS_PER_USER");
+                if (maxLinksVal != null && !maxLinksVal.isBlank()) {
+                    int maxLinks = Integer.parseInt(maxLinksVal.trim());
+                    if (maxLinks > 0) {
+                        long userLinkCount = urlRepository.countByUserId(currentUserId);
+                        if (userLinkCount >= maxLinks) {
+                            throw new IllegalArgumentException("Link creation limit exceeded. Your current limit is " + maxLinks + " links.");
+                        }
+                    }
+                }
+            } catch (IllegalArgumentException e) {
+                throw e;
+            } catch (Exception ignored) {}
+
+            if (urlRequest.getFolderId() != null) {
                 Folder folder = folderRepository.findById(urlRequest.getFolderId())
                         .orElseThrow(FolderNotFoundException::new);
                 
@@ -327,10 +359,14 @@ public class UrlService {
         return String.format(Locale.US,"%08X", CRC32.getValue());
     }
 
-    private final org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
-
     public String getLongUrlForRedirect(String shortUrl) {
         String panicMode = "NORMAL";
+        try {
+            String val = redisTemplate.opsForValue().get("system:setting:PANIC_MODE");
+            if (val != null && !val.isBlank()) {
+                panicMode = val.trim();
+            }
+        } catch (Exception ignored) {}
 
         if ("MAINTENANCE".equals(panicMode)) {
             throw new com.url_shortener.url_shortener.common.SystemMaintenanceException(shortUrl);
@@ -751,14 +787,21 @@ public class UrlService {
                 } catch (Exception ignored) {}
             }
 
-            var blacklist = java.util.Collections.emptyList();
-            for (Object b : blacklist) {
-                String pattern = b.toString().toLowerCase().trim();
-                if (pattern.startsWith("*.")) {
-                    String root = pattern.substring(2);
-                    if (host.equals(root) || host.endsWith("." + root)) return true;
-                } else if (host.equals(pattern) || host.endsWith("." + pattern)) {
-                    return true;
+            java.util.Set<String> blacklist = null;
+            try {
+                blacklist = redisTemplate.opsForSet().members("security:blacklisted_domains");
+            } catch (Exception ignored) {}
+
+            if (blacklist != null) {
+                for (String b : blacklist) {
+                    if (b == null) continue;
+                    String pattern = b.toLowerCase().trim();
+                    if (pattern.startsWith("*.")) {
+                        String root = pattern.substring(2);
+                        if (host.equals(root) || host.endsWith("." + root)) return true;
+                    } else if (host.equals(pattern) || host.endsWith("." + pattern)) {
+                        return true;
+                    }
                 }
             }
         } catch (Exception e) {

@@ -41,6 +41,7 @@ public class AuthController {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final TokenRevocationService tokenRevocationService;
+    private final org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
 
     @Value("${app.dashboard.url:http://localhost:5173}")
     private String dashboardUrl;
@@ -75,7 +76,8 @@ public class AuthController {
                           PasswordEncoder passwordEncoder,
                           PasswordResetTokenRepository passwordResetTokenRepository,
                           EmailVerificationTokenRepository emailVerificationTokenRepository,
-                          TokenRevocationService tokenRevocationService) {
+                          TokenRevocationService tokenRevocationService,
+                          org.springframework.data.redis.core.StringRedisTemplate redisTemplate) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.jwtConfig = jwtConfig;
@@ -89,19 +91,39 @@ public class AuthController {
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.emailVerificationTokenRepository = emailVerificationTokenRepository;
         this.tokenRevocationService = tokenRevocationService;
+        this.redisTemplate = redisTemplate;
     }
 
     @GetMapping("/config")
     public ResponseEntity<PublicAuthConfigDto> getAuthConfig() {
-        boolean dynamicAllowRegistration = true;
+        boolean dynamicAllowRegistration = allowRegistration;
+        boolean dynamicRequireEmailVerification = requireEmailVerification;
+        String systemMode = "NORMAL";
 
-        boolean dynamicRequireEmailVerification = false;
+        try {
+            String regVal = redisTemplate.opsForValue().get("system:setting:ALLOW_REGISTRATION");
+            if (regVal != null && !regVal.isBlank()) {
+                dynamicAllowRegistration = Boolean.parseBoolean(regVal.trim());
+            }
+        } catch (Exception ignored) {}
+
+        try {
+            String emailVal = redisTemplate.opsForValue().get("system:setting:REQUIRE_EMAIL_VERIFICATION");
+            if (emailVal != null && !emailVal.isBlank()) {
+                dynamicRequireEmailVerification = Boolean.parseBoolean(emailVal.trim());
+            }
+        } catch (Exception ignored) {}
+
+        try {
+            String panicVal = redisTemplate.opsForValue().get("system:setting:PANIC_MODE");
+            if (panicVal != null && !panicVal.isBlank()) {
+                systemMode = panicVal.trim();
+            }
+        } catch (Exception ignored) {}
 
         boolean googleEnabled = googleClientId != null && !googleClientId.isBlank();
         boolean githubEnabled = githubClientId != null && !githubClientId.isBlank();
         boolean smtpEnabled = mailHost != null && !mailHost.isBlank();
-
-        String systemMode = "false";
 
         return ResponseEntity.ok(PublicAuthConfigDto.builder()
                 .isSelfHosted(isSelfHosted)

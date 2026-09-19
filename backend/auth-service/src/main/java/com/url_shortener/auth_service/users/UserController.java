@@ -16,19 +16,28 @@ public class UserController {
     private final UserMapper userMapper;
     private final UserService userService;
     private final RateLimiterService rateLimiterService;
+    private final org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
 
     @org.springframework.beans.factory.annotation.Value("${app.allow-registration:true}")
     private boolean allowRegistration;
 
-    public UserController(UserMapper userMapper, UserService userService, RateLimiterService rateLimiterService) {
+    public UserController(UserMapper userMapper, UserService userService, RateLimiterService rateLimiterService,
+                          org.springframework.data.redis.core.StringRedisTemplate redisTemplate) {
         this.userMapper = userMapper;
         this.userService = userService;
         this.rateLimiterService = rateLimiterService;
+        this.redisTemplate = redisTemplate;
     }
 
     @PostMapping
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegister userRegister, HttpServletRequest request) {
-        boolean dynamicAllowRegistration = true;
+        boolean dynamicAllowRegistration = allowRegistration;
+        try {
+            String val = redisTemplate.opsForValue().get("system:setting:ALLOW_REGISTRATION");
+            if (val != null && !val.isBlank()) {
+                dynamicAllowRegistration = Boolean.parseBoolean(val.trim());
+            }
+        } catch (Exception ignored) {}
 
         if (!dynamicAllowRegistration) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)

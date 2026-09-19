@@ -83,6 +83,14 @@ public class AdminService {
     public static final String REDIS_BLACKLISTED_DOMAINS_KEY = "security:blacklisted_domains";
     public static final String REDIS_SETTING_KEY_PREFIX = "system:setting:";
 
+    private static final Map<String, String> DEFAULT_SETTINGS = Map.of(
+            "ALLOW_REGISTRATION", "true",
+            "REQUIRE_EMAIL_VERIFICATION", "true",
+            "PANIC_MODE", "NORMAL",
+            "MAX_LINKS_PER_USER", "1000",
+            "DEFAULT_LINK_EXPIRATION_DAYS", "0"
+    );
+
     @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
     public void warmupRedis() {
         try {
@@ -97,6 +105,17 @@ public class AdminService {
         }
 
         try {
+            // Seed default settings into database if not present
+            for (Map.Entry<String, String> entry : DEFAULT_SETTINGS.entrySet()) {
+                if (systemSettingRepository.findBySettingKey(entry.getKey()).isEmpty()) {
+                    systemSettingRepository.save(SystemSetting.builder()
+                            .settingKey(entry.getKey())
+                            .settingValue(entry.getValue())
+                            .description("Default system configuration")
+                            .build());
+                }
+            }
+
             List<SystemSetting> settings = systemSettingRepository.findAll();
             for (SystemSetting s : settings) {
                 if (s.getSettingKey() != null && s.getSettingValue() != null) {
@@ -736,23 +755,112 @@ public class AdminService {
     }
 
     public com.url_shortener.admin_service.security.dto.ThreatScanResultDto testThreatScanner(String url) {
-        // Run heuristic scan on URL
+        if (url == null || url.trim().isBlank()) {
+            return com.url_shortener.admin_service.security.dto.ThreatScanResultDto.builder()
+                    .safe(false)
+                    .riskScore(100)
+                    .threatType("MALFORMED_URL")
+                    .detectedThreats(List.of("URL is empty or null"))
+                    .engine("HEURISTIC")
+                    .scanDurationMs(1L)
+                    .build();
+        }
+
+        try {
+            var remoteResult = coreServiceClient.testThreatScanner(url);
+            if (remoteResult != null) {
+                return remoteResult;
+            }
+        } catch (Exception e) {
+            log.warn("Failed to delegate threat scan to core-service: {}", e.getMessage());
+        }
+
+        // Fallback local heuristic analysis
+        long start = System.currentTimeMillis();
+        String lower = url.trim().toLowerCase();
+        List<String> threats = new ArrayList<>();
+        int risk = 0;
+        String threatType = "CLEAN";
+
+        if (lower.contains("testsafebrowsing.appspot.com/s/malware.html")) {
+            threats.add("Google Safe Browsing Test Vector: Confirmed Malware Payload Simulation");
+            risk = 100;
+            threatType = "GOOGLE_SAFE_BROWSING_ALERT";
+        } else if (lower.contains("testsafebrowsing.appspot.com/s/phishing.html")) {
+            threats.add("Google Safe Browsing Test Vector: Confirmed Social Engineering / Phishing Simulation");
+            risk = 100;
+            threatType = "PHISHING_HEURISTIC";
+        } else if (lower.endsWith(".exe") || lower.contains(".exe/") || lower.contains(".exe?")) {
+            threats.add("Executable dropper payload detected (.exe)");
+            risk = 80;
+            threatType = "MALWARE_PAYLOAD";
+        }
+
         return com.url_shortener.admin_service.security.dto.ThreatScanResultDto.builder()
-                .safe(true)
-                .riskScore(0)
-                .threatType("CLEAN")
-                .detectedThreats(Collections.emptyList())
+                .safe(risk < 50 && threats.isEmpty())
+                .riskScore(risk)
+                .threatType(threatType)
+                .detectedThreats(threats)
                 .engine("HEURISTIC")
-                .scanDurationMs(1L)
+                .scanDurationMs(System.currentTimeMillis() - start)
                 .build();
     }
 
     public SafeBrowsingDiagnosticResultDto testSafeBrowsingKey(String key) {
-        return SafeBrowsingDiagnosticResultDto.builder()
-                .valid(true)
-                .latencyMs(10L)
-                .message("Safe browsing diagnostic check complete")
-                .build();
+        String effectiveKey = (key != null && !key.trim().isBlank()) ? key.trim() : getEffectiveSetting("SAFE_BROWSING_API_KEY", "");
+        if (effectiveKey.isBlank()) {
+            return SafeBrowsingDiagnosticResultDto.builder()
+                    .valid(false)
+                    .latencyMs(0L)
+                    .message("No Google Safe Browsing API Key provided or configured.")
+                    .testThreatResult(null)
+                    .build();
+        }
+
+        long start = System.currentTimeMillis();
+        try {
+            var rest = new org.springframework.web.client.RestTemplate();
+            String endpoint = "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=" + effectiveKey;
+            var requestBody = Map.of(
+                    "client", Map.of("clientId", "trim-url-shortener", "clientVersion", "2.0.0"),
+                    "threatInfo", Map.of(
+                            "threatTypes", List.of("MALWARE"),
+                            "platformTypes", List.of("ANY_PLATFORM"),
+                            "threatEntryTypes", List.of("URL"),
+                            "threatEntries", List.of(Map.of("url", "http://testsafebrowsing.appspot.com/s/malware.html"))
+                    )
+            );
+            var headers = new org.springframework.http.HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+            var entity = new org.springframework.http.HttpEntity<>(requestBody, headers);
+
+            var resp = rest.postForEntity(endpoint, entity, String.class);
+            long latency = System.currentTimeMillis() - start;
+            boolean matched = resp.getBody() != null && resp.getBody().contains("matches");
+
+            return SafeBrowsingDiagnosticResultDto.builder()
+                    .valid(true)
+                    .latencyMs(latency)
+                    .message("Google Safe Browsing API key is active and responding.")
+                    .testThreatResult(matched ? "MALWARE_MATCH_CONFIRMED" : "CLEAN")
+                    .build();
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            long latency = System.currentTimeMillis() - start;
+            return SafeBrowsingDiagnosticResultDto.builder()
+                    .valid(false)
+                    .latencyMs(latency)
+                    .message("Google Safe Browsing API returned error: " + e.getStatusCode())
+                    .testThreatResult(null)
+                    .build();
+        } catch (Exception e) {
+            long latency = System.currentTimeMillis() - start;
+            return SafeBrowsingDiagnosticResultDto.builder()
+                    .valid(false)
+                    .latencyMs(latency)
+                    .message("Failed to reach Google Safe Browsing API: " + e.getMessage())
+                    .testThreatResult(null)
+                    .build();
+        }
     }
 
     public List<BlockedIp> getBlockedIps() {
@@ -883,6 +991,11 @@ public class AdminService {
         setting.setSettingValue(cleanVal);
         setting.setDescription("Configured via Admin Environment Vault");
         systemSettingRepository.save(setting);
+        try {
+            redisTemplate.opsForValue().set(REDIS_SETTING_KEY_PREFIX + cleanKey, cleanVal);
+        } catch (Exception e) {
+            log.warn("Failed to sync env variable setting to Redis: {}", e.getMessage());
+        }
 
         recordAudit("ENV_VARIABLE_UPDATED", "VAULT", cleanKey,
                 "Updated environment variable " + cleanKey + " (synced to .env: " + syncedToEnv + ")",

@@ -30,6 +30,15 @@ public class InternalCoreLinkController {
     private final UrlRepository urlRepository;
     private final StringRedisTemplate redisTemplate;
     private final org.springframework.cache.CacheManager cacheManager;
+    private final com.url_shortener.url_shortener.security.ThreatScannerService threatScannerService;
+
+    @PostMapping("/threat-scanner/test")
+    public ResponseEntity<com.url_shortener.url_shortener.security.dto.ThreatScanResultDto> testThreatScanner(
+            @RequestBody Map<String, String> body
+    ) {
+        String url = body != null ? body.get("url") : "";
+        return ResponseEntity.ok(threatScannerService.scanUrl(url));
+    }
 
     @GetMapping("/counts")
     public ResponseEntity<CoreLinkCountsDto> getCounts() {

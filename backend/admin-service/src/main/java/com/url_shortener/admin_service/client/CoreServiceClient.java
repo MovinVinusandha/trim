@@ -201,6 +201,19 @@ public class CoreServiceClient {
         return 0;
     }
 
+    public com.url_shortener.admin_service.security.dto.ThreatScanResultDto testThreatScanner(String url) {
+        try {
+            return restTemplate.postForObject(
+                    coreServiceUrl + "/internal/core/links/threat-scanner/test",
+                    Map.of("url", url != null ? url : ""),
+                    com.url_shortener.admin_service.security.dto.ThreatScanResultDto.class
+            );
+        } catch (Exception e) {
+            log.warn("Failed to delegate threat scan to core-service: {}", e.getMessage());
+            return null;
+        }
+    }
+
     public static class RestResponsePage<T> extends PageImpl<T> {
         @com.fasterxml.jackson.annotation.JsonCreator(mode = com.fasterxml.jackson.annotation.JsonCreator.Mode.PROPERTIES)
         public RestResponsePage(

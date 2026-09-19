@@ -59,6 +59,13 @@ public class RedirectService {
 
     public RedirectUrl getRedirectTarget(String shortUrl) {
         String panicMode = "NORMAL";
+        try {
+            String val = redisTemplate.opsForValue().get("system:setting:PANIC_MODE");
+            if (val != null && !val.isBlank()) {
+                panicMode = val.trim();
+            }
+        } catch (Exception ignored) {}
+
         if ("MAINTENANCE".equals(panicMode)) {
             throw new SystemMaintenanceException(shortUrl);
         }

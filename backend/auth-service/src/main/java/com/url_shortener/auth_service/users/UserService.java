@@ -32,6 +32,7 @@ public class UserService {
     private final EmailDomainValidator emailDomainValidator;
     private final com.url_shortener.auth_service.auth.TokenRevocationService tokenRevocationService;
     private final com.url_shortener.auth_service.event.EventPublisher eventPublisher;
+    private final org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
 
     @org.springframework.beans.factory.annotation.Value("${app.require-email-verification:true}")
     private boolean requireEmailVerification;
@@ -49,7 +50,8 @@ public class UserService {
                        OAuthService oauthService,
                        EmailDomainValidator emailDomainValidator,
                        com.url_shortener.auth_service.auth.TokenRevocationService tokenRevocationService,
-                       com.url_shortener.auth_service.event.EventPublisher eventPublisher) {
+                       com.url_shortener.auth_service.event.EventPublisher eventPublisher,
+                       org.springframework.data.redis.core.StringRedisTemplate redisTemplate) {
         this.userMapper = userMapper;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -61,6 +63,7 @@ public class UserService {
         this.emailDomainValidator = emailDomainValidator;
         this.tokenRevocationService = tokenRevocationService;
         this.eventPublisher = eventPublisher;
+        this.redisTemplate = redisTemplate;
     }
 
     @Transactional
@@ -76,7 +79,15 @@ public class UserService {
             throw new IllegalArgumentException("Username '" + username + "' is already taken");
         }
 
-        boolean shouldVerify = requireEmailVerification && mailHost != null && !mailHost.isBlank();
+        boolean dynamicRequireEmailVerification = requireEmailVerification;
+        try {
+            String emailVal = redisTemplate.opsForValue().get("system:setting:REQUIRE_EMAIL_VERIFICATION");
+            if (emailVal != null && !emailVal.isBlank()) {
+                dynamicRequireEmailVerification = Boolean.parseBoolean(emailVal.trim());
+            }
+        } catch (Exception ignored) {}
+
+        boolean shouldVerify = dynamicRequireEmailVerification && mailHost != null && !mailHost.isBlank();
 
         var user = userMapper.toEntity(userRegister);
         user.setEmail(email);
