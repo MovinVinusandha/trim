@@ -48,6 +48,12 @@ public class AdminAuditController {
         return ResponseEntity.ok(auditService.verifyChainIntegrity());
     }
 
+    @PostMapping("/repair")
+    @Operation(summary = "Root-only sequential cryptographic repair of broken hash links")
+    public ResponseEntity<AuditChainVerificationDto> repairChain() {
+        return ResponseEntity.ok(auditService.repairChainIntegrity());
+    }
+
     @GetMapping("/export")
     @Operation(summary = "Export complete audit trail as JSON or CSV")
     public ResponseEntity<List<AdminAuditLogDto>> exportLogs() {

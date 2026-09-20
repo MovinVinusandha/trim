@@ -28,10 +28,14 @@ public class AdminAuditService {
     public static final DateTimeFormatter HASH_TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
     private final AdminAuditLogRepository auditLogRepository;
+    private final org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
+
+    private static final String AUDIT_LOCK_KEY = "lock:admin:audit_chain";
 
     /**
      * Records an immutable admin action with SHA-256 hash chaining.
      * Uses REQUIRES_NEW propagation to ensure audit records are written even if subsequent operations fail.
+     * Synchronized via distributed Redis lock + method mutex to avoid race conditions.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public synchronized AdminAuditLog record(
@@ -45,47 +49,104 @@ public class AdminAuditService {
             String details,
             String metadataJson
     ) {
-        String prevHash = auditLogRepository.findTopByOrderByIdDesc()
-                .map(AdminAuditLog::getEntryHash)
-                .orElse(GENESIS_HASH);
+        boolean lockAcquired = false;
+        try {
+            if (redisTemplate != null) {
+                // Acquire short 5s lock for linear chaining
+                for (int i = 0; i < 20; i++) {
+                    Boolean ok = redisTemplate.opsForValue().setIfAbsent(AUDIT_LOCK_KEY, "locked", java.time.Duration.ofSeconds(5));
+                    if (Boolean.TRUE.equals(ok)) {
+                        lockAcquired = true;
+                        break;
+                    }
+                    try { Thread.sleep(50); } catch (InterruptedException ignored) {}
+                }
+            }
 
-        LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
-        String formattedTimestamp = now.format(HASH_TIMESTAMP_FORMATTER);
+            String prevHash = auditLogRepository.findTopByOrderByIdDesc()
+                    .map(AdminAuditLog::getEntryHash)
+                    .orElse(GENESIS_HASH);
 
-        String rawContent = String.join("|",
-                prevHash,
-                String.valueOf(actorId),
-                actorEmail != null ? actorEmail : "",
-                actorRole != null ? actorRole : "",
-                actorIp != null ? actorIp : "",
-                action != null ? action : "",
-                targetType != null ? targetType : "",
-                targetIdentifier != null ? targetIdentifier : "",
-                details != null ? details : "",
-                metadataJson != null ? metadataJson : "",
-                formattedTimestamp
-        );
+            LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
+            String formattedTimestamp = now.format(HASH_TIMESTAMP_FORMATTER);
 
-        String entryHash = computeSha256(rawContent);
+            String rawContent = String.join("|",
+                    prevHash,
+                    String.valueOf(actorId),
+                    actorEmail != null ? actorEmail : "",
+                    actorRole != null ? actorRole : "",
+                    actorIp != null ? actorIp : "",
+                    action != null ? action : "",
+                    targetType != null ? targetType : "",
+                    targetIdentifier != null ? targetIdentifier : "",
+                    details != null ? details : "",
+                    metadataJson != null ? metadataJson : "",
+                    formattedTimestamp
+            );
 
-        AdminAuditLog logEntry = AdminAuditLog.builder()
-                .actorId(actorId)
-                .actorEmail(actorEmail != null ? actorEmail : "SYSTEM")
-                .actorRole(actorRole != null ? actorRole : "SYSTEM")
-                .actorIp(actorIp)
-                .action(action)
-                .targetType(targetType)
-                .targetIdentifier(targetIdentifier)
-                .details(details)
-                .metadataJson(metadataJson)
-                .prevHash(prevHash)
-                .entryHash(entryHash)
-                .createdAt(now)
-                .build();
+            String entryHash = computeSha256(rawContent);
 
-        AdminAuditLog saved = auditLogRepository.save(logEntry);
-        log.info("[AUDIT] Recorded {} by {} on {}:{} [hash={}]", action, actorEmail, targetType, targetIdentifier, entryHash.substring(0, 12));
-        return saved;
+            AdminAuditLog logEntry = AdminAuditLog.builder()
+                    .actorId(actorId)
+                    .actorEmail(actorEmail != null ? actorEmail : "SYSTEM")
+                    .actorRole(actorRole != null ? actorRole : "SYSTEM")
+                    .actorIp(actorIp)
+                    .action(action)
+                    .targetType(targetType)
+                    .targetIdentifier(targetIdentifier)
+                    .details(details)
+                    .metadataJson(metadataJson)
+                    .prevHash(prevHash)
+                    .entryHash(entryHash)
+                    .createdAt(now)
+                    .build();
+
+            AdminAuditLog saved = auditLogRepository.save(logEntry);
+            log.info("[AUDIT] Recorded {} by {} on {}:{} [hash={}]", action, actorEmail, targetType, targetIdentifier, entryHash.substring(0, 12));
+            return saved;
+        } finally {
+            if (lockAcquired && redisTemplate != null) {
+                try { redisTemplate.delete(AUDIT_LOCK_KEY); } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    /**
+     * Repairs broken hash links in the audit chain by sequentially recalculating
+     * prevHash and entryHash from Genesis to the latest entry.
+     */
+    @Transactional
+    public AuditChainVerificationDto repairChainIntegrity() {
+        List<AdminAuditLog> allLogs = auditLogRepository.findAllByOrderByIdAsc();
+        String currentPrevHash = GENESIS_HASH;
+
+        for (AdminAuditLog entry : allLogs) {
+            String formattedCreatedAt = entry.getCreatedAt() != null
+                    ? entry.getCreatedAt().truncatedTo(ChronoUnit.MILLIS).format(HASH_TIMESTAMP_FORMATTER)
+                    : "";
+
+            String rawContent = String.join("|",
+                    currentPrevHash,
+                    String.valueOf(entry.getActorId()),
+                    entry.getActorEmail() != null ? entry.getActorEmail() : "",
+                    entry.getActorRole() != null ? entry.getActorRole() : "",
+                    entry.getActorIp() != null ? entry.getActorIp() : "",
+                    entry.getAction() != null ? entry.getAction() : "",
+                    entry.getTargetType() != null ? entry.getTargetType() : "",
+                    entry.getTargetIdentifier() != null ? entry.getTargetIdentifier() : "",
+                    entry.getDetails() != null ? entry.getDetails() : "",
+                    entry.getMetadataJson() != null ? entry.getMetadataJson() : "",
+                    formattedCreatedAt
+            );
+
+            String newEntryHash = computeSha256(rawContent);
+            if (!Objects.equals(entry.getPrevHash(), currentPrevHash) || !Objects.equals(entry.getEntryHash(), newEntryHash)) {
+                auditLogRepository.updateHashes(entry.getId(), currentPrevHash, newEntryHash);
+            }
+            currentPrevHash = newEntryHash;
+        }
+
+        return verifyChainIntegrity();
     }
 
     /**

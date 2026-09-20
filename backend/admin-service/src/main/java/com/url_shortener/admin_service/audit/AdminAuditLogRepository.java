@@ -15,4 +15,10 @@ public interface AdminAuditLogRepository extends JpaRepository<AdminAuditLog, Lo
     Optional<AdminAuditLog> findTopByOrderByIdDesc();
 
     List<AdminAuditLog> findAllByOrderByIdAsc();
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query(value = "UPDATE admin_audit_logs SET prev_hash = :prevHash, entry_hash = :entryHash WHERE id = :id", nativeQuery = true)
+    void updateHashes(@org.springframework.data.repository.query.Param("id") Long id,
+                      @org.springframework.data.repository.query.Param("prevHash") String prevHash,
+                      @org.springframework.data.repository.query.Param("entryHash") String entryHash);
 }
