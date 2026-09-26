@@ -195,12 +195,27 @@ public class ThreatScannerService {
                 engine = "HYBRID";
             }
             try {
-                List<String> gsbThreats = queryGoogleSafeBrowsing(target, safeBrowsingKey);
-                if (!gsbThreats.isEmpty()) {
-                    threats.addAll(gsbThreats);
+                List<SafeBrowsingMatch> gsbMatches = queryGoogleSafeBrowsing(target, safeBrowsingKey);
+                if (!gsbMatches.isEmpty()) {
+                    for (SafeBrowsingMatch match : gsbMatches) {
+                        threats.add("Google Safe Browsing Match: " + match.threatType() + " on " + match.platformType());
+                    }
                     riskScore = 100;
-                    threatType = "GOOGLE_SAFE_BROWSING_ALERT";
                     engine = "GOOGLE_SAFE_BROWSING";
+
+                    // Map specific threat type
+                    String primaryThreat = gsbMatches.get(0).threatType();
+                    if ("MALWARE".equalsIgnoreCase(primaryThreat)) {
+                        threatType = "MALWARE_PAYLOAD";
+                    } else if ("SOCIAL_ENGINEERING".equalsIgnoreCase(primaryThreat)) {
+                        threatType = "PHISHING_URL";
+                    } else if ("UNWANTED_SOFTWARE".equalsIgnoreCase(primaryThreat)) {
+                        threatType = "UNWANTED_SOFTWARE";
+                    } else if ("POTENTIALLY_HARMFUL_APPLICATION".equalsIgnoreCase(primaryThreat)) {
+                        threatType = "POTENTIALLY_HARMFUL_APPLICATION";
+                    } else {
+                        threatType = "GOOGLE_SAFE_BROWSING_ALERT";
+                    }
                 }
             } catch (Exception e) {
                 log.warn("Google Safe Browsing query failed (falling back to heuristics): {}", e.getMessage());
@@ -267,7 +282,9 @@ public class ThreatScannerService {
         }
     }
 
-    private List<String> queryGoogleSafeBrowsing(String url, String apiKey) {
+    private record SafeBrowsingMatch(String threatType, String platformType) {}
+
+    private List<SafeBrowsingMatch> queryGoogleSafeBrowsing(String url, String apiKey) {
         String endpoint = "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=" + apiKey;
 
         Map<String, Object> requestBody = Map.of(
@@ -284,7 +301,7 @@ public class ThreatScannerService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
-        List<String> results = new ArrayList<>();
+        List<SafeBrowsingMatch> results = new ArrayList<>();
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(endpoint, entity, String.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
@@ -294,7 +311,7 @@ public class ThreatScannerService {
                     for (JsonNode match : matches) {
                         String threatType = match.path("threatType").asText("THREAT");
                         String platformType = match.path("platformType").asText("ANY");
-                        results.add("Google Safe Browsing Match: " + threatType + " on " + platformType);
+                        results.add(new SafeBrowsingMatch(threatType, platformType));
                     }
                 }
             }

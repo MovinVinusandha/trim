@@ -47,3 +47,5 @@ app:
     allowed-origins: ${APP_DOMAIN_URL:http://localhost,http://localhost:5173}
   services:
     auth-service-url: ${AUTH_SERVICE_INTERNAL_URL:http://auth-service:8081}
+  security:
+    safe-browsing-api-key: ${SAFE_BROWSING_API_KEY:}

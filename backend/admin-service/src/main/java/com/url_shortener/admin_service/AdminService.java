@@ -80,6 +80,9 @@ public class AdminService {
     @Value("${oauth.github.client-id:${GITHUB_CLIENT_ID:}}")
     private String githubClientId;
 
+    @Value("${app.security.safe-browsing-api-key:${SAFE_BROWSING_API_KEY:}}")
+    private String safeBrowsingApiKey;
+
     public static final String REDIS_BLACKLISTED_DOMAINS_KEY = "security:blacklisted_domains";
     public static final String REDIS_SETTING_KEY_PREFIX = "system:setting:";
 
@@ -949,7 +952,8 @@ public class AdminService {
                 new EnvDef("OAUTH_GOOGLE_CLIENT_ID", "OAUTH", false, "Google OAuth 2.0 Web Client ID", googleClientId),
                 new EnvDef("OAUTH_GOOGLE_CLIENT_SECRET", "OAUTH", true, "Google OAuth 2.0 Client Secret", ""),
                 new EnvDef("OAUTH_GITHUB_CLIENT_ID", "OAUTH", false, "GitHub OAuth App Client ID", githubClientId),
-                new EnvDef("OAUTH_GITHUB_CLIENT_SECRET", "OAUTH", true, "GitHub OAuth App Client Secret", "")
+                new EnvDef("OAUTH_GITHUB_CLIENT_SECRET", "OAUTH", true, "GitHub OAuth App Client Secret", ""),
+                new EnvDef("SAFE_BROWSING_API_KEY", "SECURITY", true, "Google Safe Browsing v4 Threat Intelligence API Key", safeBrowsingApiKey)
         );
 
         for (EnvDef def : definitions) {
