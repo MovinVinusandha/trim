@@ -126,6 +126,27 @@ const AdminAuditLogsPage: React.FC = () => {
     }
   };
 
+  const [isRepairing, setIsRepairing] = useState(false);
+
+  const handleRepairChain = async () => {
+    if (!window.confirm('Recalculate cryptographic hash chain to repair broken linkage?')) return;
+    try {
+      setIsRepairing(true);
+      const { data } = await axiosInstance.post<AuditChainVerification>('/admin/audit-logs/repair');
+      setVerification(data);
+      if (data.valid) {
+        toast.success(`Cryptographic chain repaired and verified (${data.totalVerified} entries intact)`);
+        fetchAuditLogs(search, page, sortDir, actionFilter, targetTypeFilter);
+      } else {
+        toast.error(`Failed to repair chain: ${data.failureReason}`);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to repair chain');
+    } finally {
+      setIsRepairing(false);
+    }
+  };
+
   const handleExportJson = async () => {
     try {
       toast.loading('Exporting audit trail...', { id: 'export' });
@@ -237,8 +258,21 @@ const AdminAuditLogsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="text-[10px] font-mono text-muted-foreground shrink-0 self-end sm:self-center">
-            Validated at {new Date(verification.verifiedAt).toLocaleTimeString()}
+          <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+            {isRoot && !verification.valid && (
+              <button
+                onClick={handleRepairChain}
+                disabled={isRepairing}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-600 hover:bg-red-700 text-white transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                title="Recalculate SHA-256 chain links sequentially"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isRepairing ? 'animate-spin' : ''}`} />
+                <span>{isRepairing ? 'Repairing Chain...' : 'Repair Chain Linkage'}</span>
+              </button>
+            )}
+            <div className="text-[10px] font-mono text-muted-foreground">
+              Validated at {new Date(verification.verifiedAt).toLocaleTimeString()}
+            </div>
           </div>
         </motion.div>
       )}

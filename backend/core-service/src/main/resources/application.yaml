@@ -1,0 +1,51 @@
+server:
+  port: 8082
+  forward-headers-strategy: framework
+  max-http-request-header-size: 2MB
+  max-http-header-size: 2MB
+  error:
+    include-message: always
+    include-binding-errors: always
+  tomcat:
+    max-http-form-post-size: 2MB
+    max-swallow-size: 2MB
+
+spring:
+  application:
+    name: url-shortener
+  jwt:
+    secret: ${JWT_SECRET}
+    accessTokenExpiration: ${JWT_ACCESS_TOKEN_EXPIRATION:900}  # 15m (short-lived)
+    refreshTokenExpiration: ${JWT_REFRESH_TOKEN_EXPIRATION:604800}  # 7d
+  profiles:
+    active: dev
+
+
+root:
+  user:
+    email: ${ROOT_USER_EMAIL}
+    password: ${ROOT_USER_PASSWORD}
+
+# Async thread pool configuration for click analytics
+analytics:
+  async:
+    core-pool-size: 4
+    max-pool-size: 16
+    queue-capacity: 500
+
+app:
+  self-hosted: ${APP_SELF_HOSTED:false}
+  allow-registration: ${ALLOW_REGISTRATION:true}
+  require-email-verification: ${REQUIRE_EMAIL_VERIFICATION:true}
+  domain:
+    root: ${ROOT_DOMAIN_URL:http://localhost:8080}
+  frontend:
+    url: ${FRONTEND_URL:http://localhost}
+  dashboard:
+    url: ${APP_DASHBOARD_URL:http://app.localhost}
+  cors:
+    allowed-origins: ${APP_DOMAIN_URL:http://localhost,http://localhost:5173}
+  services:
+    auth-service-url: ${AUTH_SERVICE_INTERNAL_URL:http://auth-service:8081}
+  security:
+    safe-browsing-api-key: ${SAFE_BROWSING_API_KEY:}

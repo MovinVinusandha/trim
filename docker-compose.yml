@@ -32,22 +32,119 @@ services:
       timeout: 5s
       retries: 5
 
-  backend:
+  api-gateway:
     build:
       context: ./backend
-      dockerfile: Dockerfile
-      args:
-        COMMIT_SHA: ${COMMIT_SHA:-local-dev-build}
-    container_name: url_shortener_backend
+      dockerfile: api-gateway/Dockerfile
+    container_name: url_shortener_gateway
     env_file:
       - .env
-    volumes:
-      - ./.env:/app/.env
     ports:
       - "8080:8080"
     networks:
-      - db_network
       - web_network
+      - backend_network
+      - db_network
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  auth-service:
+    build:
+      context: ./backend
+      dockerfile: auth-service/Dockerfile
+    container_name: url_shortener_auth
+    env_file:
+      - .env
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/url_shortener_auth?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    ports:
+      - "8081:8081"
+    networks:
+      - db_network
+      - backend_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  core-service:
+    build:
+      context: ./backend
+      dockerfile: core-service/Dockerfile
+    container_name: url_shortener_core
+    env_file:
+      - .env
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/url_shortener_core?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - ANALYTICS_SERVICE_INTERNAL_URL=http://analytics-service:8083
+    ports:
+      - "8082:8082"
+    networks:
+      - db_network
+      - backend_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  analytics-service:
+    build:
+      context: ./backend
+      dockerfile: analytics-service/Dockerfile
+    container_name: url_shortener_analytics
+    env_file:
+      - .env
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/url_shortener_analytics?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    ports:
+      - "8083:8083"
+    networks:
+      - db_network
+      - backend_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  redirect-service:
+    build:
+      context: ./backend
+      dockerfile: redirect-service/Dockerfile
+    container_name: url_shortener_redirect
+    env_file:
+      - .env
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/url_shortener_core?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    ports:
+      - "8084:8084"
+    networks:
+      - db_network
+      - backend_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  admin-service:
+    build:
+      context: ./backend
+      dockerfile: admin-service/Dockerfile
+    container_name: url_shortener_admin
+    env_file:
+      - .env
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/url_shortener_admin?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - CORE_SERVICE_INTERNAL_URL=http://core-service:8082
+      - AUTH_SERVICE_INTERNAL_URL=http://auth-service:8081
+      - ANALYTICS_SERVICE_INTERNAL_URL=http://analytics-service:8083
+    ports:
+      - "8085:8085"
+    networks:
+      - db_network
+      - backend_network
     depends_on:
       mysql:
         condition: service_healthy
@@ -60,20 +157,15 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
-        COMMIT_SHA: ${COMMIT_SHA:-local-dev-build}
     container_name: url_shortener_frontend
     env_file:
       - .env
-    environment:
-      - API_DOMAIN_NAME=${API_DOMAIN_NAME:-api.localhost}
-      - APP_DOMAIN_NAME=${APP_DOMAIN_NAME:-app.localhost}
-      - ROOT_DOMAIN_NAME=${ROOT_DOMAIN_NAME:-localhost}
     ports:
       - "80:8080"
     networks:
       - web_network
     depends_on:
-      - backend
+      - api-gateway
 
 volumes:
   mysql_data:
@@ -81,6 +173,8 @@ volumes:
 
 networks:
   db_network:
+    driver: bridge
+  backend_network:
     driver: bridge
   web_network:
     driver: bridge

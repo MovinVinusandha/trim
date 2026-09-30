@@ -1,0 +1,149 @@
+package com.url_shortener.url_shortener.urls;
+
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
+
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
+@RestController
+@RequiredArgsConstructor
+public class UrlController {
+
+    private final UrlService urlService;
+    private final com.url_shortener.url_shortener.event.EventPublisher eventPublisher;
+    private final QrCodeService qrCodeService;
+    
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
+    @Value("${app.dashboard.url:http://app.localhost}")
+    private String dashboardUrl;
+
+    public ResponseEntity<UrlSend> generateShortUrl(UrlRequest urlRequest) {
+        return generateShortUrl(urlRequest, (HttpServletRequest) null, null);
+    }
+
+    @PostMapping("/shorten")
+    @Operation(summary = "Generate short url")
+    public ResponseEntity<UrlSend> generateShortUrl(
+            @Valid @RequestBody UrlRequest urlRequest,
+            HttpServletRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId
+    ) {
+        if (urlRequest.getCustomAlias() != null && !urlRequest.getCustomAlias().trim().isEmpty()) {
+            if (userId == null) {
+                throw new RuntimeException("You must be logged in to use a custom alias.");
+            }
+        }
+        if (urlRequest.getExpiresAt() != null) {
+            if (userId == null) {
+                throw new RuntimeException("You must be logged in to set an expiration date.");
+            }
+        }
+        String clientIp = request != null ? resolveClientIp(request) : null;
+        var urlDto = urlService.generateShortUrl(urlRequest, clientIp, userId);
+        return ResponseEntity.ok(urlDto);
+    }
+
+
+
+    @GetMapping("/url/{hash}")
+    @Operation(summary = "Get details about url")
+    public ResponseEntity<UrlDto> getUrl(@PathVariable String hash) {
+        var urlDto = urlService.getUrl(hash);
+        return ResponseEntity.ok(urlDto);
+    }
+
+    @GetMapping("url/all")
+    public Iterable<UrlDto> getAllUsers(
+            @org.springframework.web.bind.annotation.RequestHeader(value = "X-User-Id", required = false) Long userId,
+            @RequestParam(required = false, defaultValue = "", name = "sort") String sortBy,
+            @RequestParam(required = false) Long tagId,
+            @RequestParam(required = false) Long folderId,
+            @RequestParam(required = false) String folderSlug,
+            @RequestParam(required = false) String search
+    ) {
+        return urlService.getAllUrls(userId, sortBy, tagId, folderId, folderSlug, search);
+    }
+
+    @PutMapping("/url/{hash}")
+    public ResponseEntity<UrlDto> updateUrl(
+            @PathVariable String hash,
+            @RequestBody UrlUpdateRequestDto request,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "X-User-Id", required = false) Long userId
+    ) {
+        if (userId == null) {
+            throw new RuntimeException("You must be logged in to update a URL.");
+        }
+        var urlDto = urlService.updateUrl(hash, request, userId);
+        return ResponseEntity.ok(urlDto);
+    }
+
+    @DeleteMapping("/url/{hash}")
+    public ResponseEntity<Void> deleteUrl(@PathVariable String hash, @org.springframework.web.bind.annotation.RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        urlService.deleteUrl(hash, userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/url/batch-campaign")
+    @Operation(summary = "Generate multi-channel campaign short urls in batch")
+    public ResponseEntity<BatchCampaignResponseDto> createBatchCampaignUrls(
+            @Valid @RequestBody BatchCampaignRequestDto request,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "X-User-Id", required = false) Long userId
+    ) {
+        if (userId == null) {
+            throw new RuntimeException("You must be logged in to create multi-channel campaign links.");
+        }
+        var response = urlService.createBatchCampaignUrls(request, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/url/bulk-action")
+    @Operation(summary = "Execute bulk actions on multiple short URLs")
+    public ResponseEntity<BulkUrlActionResponseDto> executeBulkAction(
+            @Valid @RequestBody BulkUrlActionRequestDto request,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "X-User-Id", required = false) Long userId
+    ) {
+        if (userId == null) {
+            throw new RuntimeException("You must be logged in to execute bulk actions.");
+        }
+        var response = urlService.executeBulkAction(request, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/url/{hash}/qr")
+    @Operation(summary = "Generate a QR code for a short url")
+    public ResponseEntity<byte[]> getQrCode(
+            @PathVariable String hash,
+            @RequestParam(defaultValue = "300") int size
+    ) {
+        byte[] imageBytes = qrCodeService.generateQrCode(hash, size, size);
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_PNG)
+                .body(imageBytes);
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isBlank()) {
+            return xRealIp.trim();
+        }
+        return request.getRemoteAddr();
+    }
+}

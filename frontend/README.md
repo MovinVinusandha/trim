@@ -43,8 +43,8 @@ The frontend application requires the following environment variables:
 
 | Variable | Description | Default | Example |
 | :--- | :--- | :--- | :--- |
-| `VITE_API_BASE_URL` | Base endpoint of the Spring Boot REST API | `http://localhost:8080` | `https://api.trim.com` |
-| `VITE_ROOT_DOMAIN` | Base domain displayed in short link input prefixes | `http://localhost:8080` | `https://trim.com` |
+| `VITE_API_BASE_URL` | Base endpoint of the API Gateway (or proxied API subdomain) | `http://api.localhost` | `https://api.trim.com` |
+| `VITE_ROOT_DOMAIN` | Base domain displayed in short link input prefixes | `http://localhost` | `https://trim.com` |
 
 ## Pages & Routing
 
@@ -75,6 +75,9 @@ The client-side routing is organized into public access pages and authenticated 
 | `/tags` | `TagsPage` | Custom colored tag creation, editing, and deletion for multi-dimensional link classification. |
 | `/settings` | `SettingsPage` | User profile details, account update forms, and account hard-delete controls. |
 | `/settings/security` | `SecurityPage` | Password change form and security credentials management. |
+| `/admin` | `AdminPage` | Platform KPI overview, link triage & moderation, user management, and security hub. |
+| `/admin/users` | `AdminUsersPage` | User management, role elevation, suspension toggles, and quota overrides. |
+| `/admin/audit` | `AdminAuditPage` | SHA-256 hash-chained immutable audit log viewer with verification check. |
 
 ## Core Components
 

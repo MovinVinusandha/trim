@@ -1,0 +1,63 @@
+server:
+  port: 8081
+  forward-headers-strategy: framework
+  max-http-request-header-size: 2MB
+  max-http-header-size: 2MB
+  tomcat:
+    max-http-form-post-size: 2MB
+    max-swallow-size: 2MB
+
+spring:
+  application:
+    name: auth-service
+  jwt:
+    secret: ${JWT_SECRET}
+    accessTokenExpiration: ${JWT_ACCESS_TOKEN_EXPIRATION:900}  # 15m (short-lived)
+    refreshTokenExpiration: ${JWT_REFRESH_TOKEN_EXPIRATION:604800}  # 7d
+  profiles:
+    active: dev
+  mail:
+    host: ${SPRING_MAIL_HOST:}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SPRING_MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${SPRING_MAIL_SMTP_STARTTLS_ENABLE:true}
+            required: ${SPRING_MAIL_SMTP_STARTTLS_REQUIRED:true}
+
+oauth:
+  google:
+    client-id: ${OAUTH_GOOGLE_CLIENT_ID:${GOOGLE_CLIENT_ID:}}
+    client-secret: ${OAUTH_GOOGLE_CLIENT_SECRET:${GOOGLE_CLIENT_SECRET:}}
+  github:
+    client-id: ${OAUTH_GITHUB_CLIENT_ID:${GITHUB_CLIENT_ID:}}
+    client-secret: ${OAUTH_GITHUB_CLIENT_SECRET:${GITHUB_CLIENT_SECRET:}}
+
+root:
+  user:
+    email: ${ROOT_USER_EMAIL}
+    password: ${ROOT_USER_PASSWORD}
+
+# Async thread pool configuration for click analytics
+analytics:
+  async:
+    core-pool-size: 4
+    max-pool-size: 16
+    queue-capacity: 500
+
+app:
+  self-hosted: ${APP_SELF_HOSTED:false}
+  allow-registration: ${ALLOW_REGISTRATION:true}
+  require-email-verification: ${REQUIRE_EMAIL_VERIFICATION:true}
+  domain:
+    root: ${ROOT_DOMAIN_URL:http://localhost:8080}
+  frontend:
+    url: ${FRONTEND_URL:http://localhost}
+  dashboard:
+    url: ${APP_DASHBOARD_URL:http://app.localhost}
+  cors:
+    allowed-origins: ${APP_DOMAIN_URL:http://localhost,http://localhost:5173}

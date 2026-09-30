@@ -1,0 +1,19 @@
+server:
+  port: 8084
+  forward-headers-strategy: framework
+  max-http-request-header-size: 2MB
+  max-http-header-size: 2MB
+
+spring:
+  application:
+    name: redirect-service
+  profiles:
+    active: dev
+
+app:
+  domain:
+    root: ${ROOT_DOMAIN_URL:http://localhost:8080}
+  frontend:
+    url: ${FRONTEND_URL:http://localhost}
+  dashboard:
+    url: ${APP_DASHBOARD_URL:http://app.localhost}

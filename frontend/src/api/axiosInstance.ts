@@ -122,6 +122,12 @@ export const extractBackendError = (
 
     // 1. Raw string response
     if (typeof data === 'string' && data.trim()) {
+      if (data.includes('<html') || data.includes('<!DOCTYPE') || data.includes('<title>502') || data.includes('502 Bad Gateway')) {
+        return 'Server is temporarily unavailable (502 Bad Gateway). Please try again in a few seconds.';
+      }
+      if (data.includes('<title>504') || data.includes('504 Gateway Timeout')) {
+        return 'Server timed out. Please try again in a moment.';
+      }
       return data;
     }
 
