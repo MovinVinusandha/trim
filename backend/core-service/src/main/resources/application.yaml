@@ -12,13 +12,22 @@ server:
 
 spring:
   application:
-    name: url-shortener
+    name: core-service
   jwt:
     secret: ${JWT_SECRET}
     accessTokenExpiration: ${JWT_ACCESS_TOKEN_EXPIRATION:900}  # 15m (short-lived)
     refreshTokenExpiration: ${JWT_REFRESH_TOKEN_EXPIRATION:604800}  # 7d
   profiles:
     active: dev
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
 
 
 root:

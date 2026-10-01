@@ -154,3 +154,13 @@ resilience4j:
     configs:
       default:
         timeoutDuration: 5000
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
