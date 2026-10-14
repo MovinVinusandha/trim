@@ -21,6 +21,10 @@ High-performance URL shortener with enterprise link attribution, granular analyt
   - [Prerequisites](#prerequisites)
   - [Docker Compose Quickstart](#docker-compose-quickstart)
   - [Local Development](#local-development)
+- [Observability & Monitoring](#observability--monitoring)
+  - [Structured JSON Logging (EFK Ready)](#structured-json-logging-efk-ready)
+  - [Distributed Tracing (OpenTelemetry & W3C)](#distributed-tracing-opentelemetry--w3c)
+  - [Prometheus Metrics & Health Endpoints](#prometheus-metrics--health-endpoints)
 - [Configuration](#configuration)
 - [Network Architecture](#network-architecture)
 - [Technology Stack](#technology-stack)
@@ -189,6 +193,40 @@ npm run dev
 ```
 Development server runs at `http://localhost:5173`.
 
+## Observability & Monitoring
+
+The platform includes production-grade observability pre-configured across all microservices and reverse proxies for both distributed logging (**EFK Stack**) and system metrics (**Prometheus & Grafana**).
+
+### Structured JSON Logging (EFK Ready)
+All 6 backend microservices (`api-gateway`, `auth-service`, `core-service`, `analytics-service`, `redirect-service`, `admin-service`) and the Nginx web proxy output single-line, structured JSON directly to `stdout`.
+
+- **Logback Encoder**: Standardized via `net.logstash.logback:logstash-logback-encoder:7.4` in `common-lib/src/main/resources/logback-base-json.xml`.
+- **Fields Captured**: `timestamp` (UTC ISO-8601), `level`, `service`, `traceId`, `spanId`, `userId`, `thread`, `logger`, `message`, and sanitized single-line `stack_trace`.
+- **Nginx Ingress Logs**: Emits `json_combined` access logs to `/dev/stdout` including HTTP request method, URI, status, latency, and client IPs.
+- **Fluent Bit / Fluentd**: Can ingest container stdout (`/var/lib/docker/containers/*/*-json.log`) with zero multiline regex complexity and ship straight to Elasticsearch.
+
+### Distributed Tracing (OpenTelemetry & W3C)
+End-to-end request tracing is integrated with **Spring Boot 3 Micrometer Tracing** and the **OpenTelemetry bridge** (`micrometer-tracing-bridge-otel`).
+
+- **Trace Correlation**: Every request receives a globally unique `traceId` and `spanId`.
+- **W3C TraceContext**: The API Gateway propagates standard W3C `traceparent` headers downstream across internal service calls.
+- **Client Trace Visibility**: The Gateway filter (`TraceIdGatewayFilter`) injects and returns the `X-Request-Id` response header to clients.
+- **MDC Context Enrichment**: Servlet services automatically populate SLF4J MDC with `traceId` and `userId` via `TraceContextFilter`.
+
+### Prometheus Metrics & Health Endpoints
+All microservices expose standardized OpenMetrics / Prometheus endpoints ready to be scraped:
+
+| Service | Port | Prometheus Scrape URL | Health Check URL |
+| :--- | :--- | :--- | :--- |
+| **`api-gateway`** | `8080` | `http://localhost:8080/actuator/prometheus` | `http://localhost:8080/actuator/health` |
+| **`auth-service`** | `8081` | `http://localhost:8081/actuator/prometheus` | `http://localhost:8081/actuator/health` |
+| **`core-service`** | `8082` | `http://localhost:8082/actuator/prometheus` | `http://localhost:8082/actuator/health` |
+| **`analytics-service`** | `8083` | `http://localhost:8083/actuator/prometheus` | `http://localhost:8083/actuator/health` |
+| **`redirect-service`** | `8084` | `http://localhost:8084/actuator/prometheus` | `http://localhost:8084/actuator/health` |
+| **`admin-service`** | `8085` | `http://localhost:8085/actuator/prometheus` | `http://localhost:8085/actuator/health` |
+
+Metrics include JVM memory/heap, garbage collection cycles, HikariCP database pool utilization, HTTP server request latencies (P50/P95/P99), and Gateway circuit breaker status.
+
 ## Configuration
 
 Before running the application, copy `.env.example` to `.env` and configure your environment values:
@@ -262,6 +300,7 @@ The application defines a multi-tier network topology via Docker Compose:
 | **Frontend** | React 19, TypeScript 5, Vite 8, Tailwind CSS 3, Framer Motion 12, Recharts 3, Lucide Icons, React Router 7, React Hot Toast, React Loading Skeleton, Axios |
 | **Database & Cache** | MySQL 8.0, Redis 7.0 (Alpine) |
 | **Infrastructure & DevOps** | Nginx (Alpine), Docker, Docker Compose, AWS Application Load Balancer (ALB) |
+| **Observability & Monitoring** | OpenTelemetry, Micrometer Tracing (W3C), Logstash Logback JSON Encoder, Prometheus, Spring Boot Actuator |
 | **Testing** | JUnit 5, Mockito, Spring Boot Test, H2 Database, Vitest 4, React Testing Library 16, Playwright, Oxlint |
 
 ## Project Structure

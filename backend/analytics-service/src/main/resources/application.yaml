@@ -23,3 +23,13 @@ app:
     url: ${FRONTEND_URL:http://localhost}
   dashboard:
     url: ${APP_DASHBOARD_URL:http://app.localhost}
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+

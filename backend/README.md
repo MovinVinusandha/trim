@@ -22,6 +22,9 @@ High-performance, decoupled **Spring Boot 3 Multi-Module Microservices Architect
 - **UTC Everywhere Timezone Standard**: Global UTC timezone enforcement at the JVM level (`TimeZone.setDefault("UTC")`) with ISO-8601 UTC timestamp serialization across all entities, DTOs, and API responses.
 - **Scheduled Expiration Sweeper**: Automated background worker (`@Scheduled(fixedRate = 60000)`) in `core-service` deactivating expired links and evicting stale cache keys from Redis.
 - **Stateless JWT Security**: Dual-token architecture issuing short-lived access tokens (15 minutes) and securing long-lived refresh tokens (7 days) in HTTP-only, Secure cookies.
+- **Unified Observability & Structured JSON Logging**: All services emit single-line, parse-ready JSON via Logstash Logback Encoder (`common-lib/src/main/resources/logback-base-json.xml`) with ISO-8601 UTC timestamps and shortened single-line stack traces for EFK stack ingestion.
+- **Distributed Tracing (OpenTelemetry)**: Spring Boot 3 Micrometer Tracing bridge (`micrometer-tracing-bridge-otel`) generates and propagates standard W3C `traceparent` headers and populates `traceId`, `spanId`, and `userId` in SLF4J MDC.
+- **Prometheus Time-Series Metrics**: `micrometer-registry-prometheus` configured across all services, exposing OpenMetrics scrape endpoints at `/actuator/prometheus` for Prometheus and Grafana monitoring.
 
 ## Setup & Local Development
 
@@ -50,6 +53,8 @@ docker compose up -d --build
 | Method | Endpoint | Auth Required | Description |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/health` / `/api/health` | No | System health status and application version check. |
+| `GET` | `/actuator/health` | No | Detailed Spring Boot Actuator subsystem health status. |
+| `GET` | `/actuator/prometheus` | No | OpenMetrics / Prometheus scrape endpoint for time-series metrics. |
 | `GET` | `/swagger-ui/index.html` | No | Interactive Swagger UI API documentation. |
 | `GET` | `/v3/api-docs` | No | OpenAPI 3.0 specification JSON schema. |
 
